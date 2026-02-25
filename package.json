@@ -1,6 +1,6 @@
 {
   "name": "monochrome",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Accessible UI component library. Best-in-class performance. HTML-first, React supported.",
   "author": "Colin van Eenige",
   "license": "MIT",
@@ -10,9 +10,33 @@
   },
   "homepage": "https://github.com/vaneenige/monochrome-ui#readme",
   "bugs": "https://github.com/vaneenige/monochrome-ui/issues",
-  "keywords": ["accessible", "a11y", "aria", "wai-aria", "ui", "component", "components", "component-library", "library", "headless", "unstyled", "lightweight", "keyboard-navigation", "html", "react", "typescript", "accordion", "collapsible", "menu", "tabs"],
+  "keywords": [
+    "accessible",
+    "a11y",
+    "aria",
+    "wai-aria",
+    "ui",
+    "component",
+    "components",
+    "component-library",
+    "library",
+    "headless",
+    "unstyled",
+    "lightweight",
+    "keyboard-navigation",
+    "html",
+    "react",
+    "typescript",
+    "accordion",
+    "collapsible",
+    "menu",
+    "tabs"
+  ],
   "type": "module",
-  "sideEffects": ["./dist/index.js", "./src/index.ts"],
+  "sideEffects": [
+    "./dist/index.js",
+    "./src/index.ts"
+  ],
   "exports": {
     ".": {
       "types": "./src/index.ts",
@@ -26,10 +50,15 @@
   },
   "typesVersions": {
     "*": {
-      "react": ["./src/react/index.ts"]
+      "react": [
+        "./src/react/index.ts"
+      ]
     }
   },
-  "files": ["dist", "src"],
+  "files": [
+    "dist",
+    "src"
+  ],
   "scripts": {
     "build": "NODE_ENV=production bun build.ts",
     "test": "playwright test",
@@ -58,5 +87,15 @@
     "@types/react-dom": "19.2.3",
     "react": "19.2.4",
     "react-dom": "19.2.4"
+  },
+  "versionMeta": {
+    "gzipSize": 2219,
+    "tests": {
+      "total": 350,
+      "collapsible": 41,
+      "accordion": 65,
+      "menu": 175,
+      "tabs": 69
+    }
   }
 }
