@@ -21,7 +21,7 @@
     "./src": "./src/index.ts",
     "./react": {
       "types": "./src/react/index.ts",
-      "default": "./src/react/index.ts"
+      "default": "./dist/react/index.js"
     }
   },
   "typesVersions": {
@@ -31,7 +31,7 @@
   },
   "files": ["dist", "src"],
   "scripts": {
-    "build": "bun build.ts",
+    "build": "NODE_ENV=production bun build.ts",
     "test": "playwright test",
     "lint": "biome check src tests",
     "lint:fix": "biome check --write src tests",

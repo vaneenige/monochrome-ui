@@ -15,15 +15,22 @@ if (!core.success) {
   process.exit(1)
 }
 
-const { outputs } = await Bun.build({
-  entrypoints: ["src/index.ts"],
+const react = await Bun.build({
+  entrypoints: ["src/react/index.ts"],
+  outdir: "dist/react",
+  format: "esm",
+  target: "browser",
+  external: ["react", "react-dom"],
   minify: true,
+  banner: '"use client";',
 })
 
-const output = outputs[0]
-if (!output) throw new Error("Build produced no output")
+if (!react.success) {
+  for (const log of react.logs) console.error(log)
+  process.exit(1)
+}
 
-const gzipped = Bun.gzipSync(await output.arrayBuffer())
+const gzipped = Bun.gzipSync(await Bun.file("dist/index.js").arrayBuffer())
 const sizeKB = `${(gzipped.length / 1024).toFixed(1)}kB`
 
 const glob = new Bun.Glob("tests/*.spec.ts")
