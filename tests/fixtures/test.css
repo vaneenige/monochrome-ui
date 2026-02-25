@@ -1,0 +1,47 @@
+/* Minimal styles required for tests */
+
+ul[popover]:popover-open {
+  display: flex;
+}
+
+[popover] {
+  border: none;
+}
+
+ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  flex-direction: column;
+}
+
+/* Menu positioning */
+
+.mc-menu {
+  position: relative;
+  display: inline-block;
+}
+
+.mc-menu [role="menu"] {
+  position: fixed;
+  inset: auto;
+  z-index: 100;
+  margin: 0;
+  min-width: 160px;
+  list-style: none;
+  top: var(--bottom);
+  left: var(--left);
+}
+
+.mc-menu [role="menu"]:not(:popover-open) {
+  display: none;
+}
+
+.mc-menu [role="menu"]:popover-open {
+  display: flex;
+}
+
+.mc-menu [role="menu"] [role="menu"] {
+  top: var(--top);
+  left: var(--right);
+}
