@@ -1,0 +1,32 @@
+<style>.menu {
+        position: relative;
+        display: inline-block;
+      }
+      [role="menu"] {
+        position: fixed;
+        inset: auto;
+        margin: 0;
+        top: var(--bottom);
+        left: var(--left);
+      }</style>
+<div data-testid="sidebar" style="width:250px;height:400px;overflow:auto">
+  <div>
+    <button data-testid="collapsible-trigger" type="button" id="mct:collapsible:1" aria-expanded="true" aria-controls="mcc:collapsible:1">Section</button>
+    <div data-testid="collapsible-panel" id="mcc:collapsible:1" aria-labelledby="mct:collapsible:1" aria-hidden="false">
+      <div class="menu" id="mcr:menu:2">
+        <button data-testid="nested-menu-trigger" type="button" id="mct:menu:2" aria-controls="mcc:menu:2" aria-expanded="false" aria-haspopup="menu" tabindex="0" role="button">Nested Menu</button>
+        <ul data-testid="nested-menu-list" role="menu" id="mcc:menu:2" aria-labelledby="mct:menu:2" aria-hidden="true" popover="manual">
+          <li role="none">
+            <button data-testid="nested-menu-item-1" type="button" role="menuitem" tabindex="-1">Item 1</button>
+          </li>
+          <li role="none">
+            <button data-testid="nested-menu-item-2" type="button" role="menuitem" tabindex="-1">Item 2</button>
+          </li>
+          <li role="none">
+            <button data-testid="nested-menu-item-3" type="button" role="menuitem" tabindex="-1">Item 3</button>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>

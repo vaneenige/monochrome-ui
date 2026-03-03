@@ -1,0 +1,18 @@
+<button type="button" data-testid="focus-before">Focus before</button>
+<div data-testid="tabs-container" data-orientation="horizontal" id="mcr:tabs:1">
+  <div data-testid="tablist" role="tablist" aria-orientation="horizontal">
+    <button data-testid="dtab-1" type="button" role="tab" id="mct:tabs:1:tab1" aria-selected="true" aria-controls="mcc:tabs:1:tab1" tabindex="0">Tab 1</button>
+    <button data-testid="dtab-2" type="button" role="tab" id="mct:tabs:1:tab2" aria-selected="false" aria-controls="mcc:tabs:1:tab2" tabindex="-1" aria-disabled="true">Tab 2 (Disabled)</button>
+    <button data-testid="dtab-3" type="button" role="tab" id="mct:tabs:1:tab3" aria-selected="false" aria-controls="mcc:tabs:1:tab3" tabindex="-1">Tab 3</button>
+  </div>
+  <div data-testid="dpanel-1" role="tabpanel" id="mcc:tabs:1:tab1" aria-labelledby="mct:tabs:1:tab1" aria-hidden="false" tabindex="0" data-orientation="horizontal">
+    <p>Content for Tab 1</p>
+  </div>
+  <div data-testid="dpanel-2" role="tabpanel" id="mcc:tabs:1:tab2" aria-labelledby="mct:tabs:1:tab2" aria-hidden="true" hidden="until-found" tabindex="-1" data-orientation="horizontal">
+    <p>Content for Tab 2</p>
+  </div>
+  <div data-testid="dpanel-3" role="tabpanel" id="mcc:tabs:1:tab3" aria-labelledby="mct:tabs:1:tab3" aria-hidden="true" hidden="until-found" tabindex="-1" data-orientation="horizontal">
+    <p>Content for Tab 3</p>
+  </div>
+</div>
+<button type="button" data-testid="focus-after">Focus after</button>

@@ -1,0 +1,125 @@
+<style>.menu {
+        position: relative;
+        display: inline-block;
+      }
+      [role="menu"] {
+        position: fixed;
+        inset: auto;
+        margin: 0;
+        top: var(--bottom);
+        left: var(--left);
+      }
+      [role="menu"] [role="menu"] {
+        top: var(--top);
+        left: var(--right);
+        margin-left: 16px;
+      }</style>
+<div id="output" data-testid="output">
+</div>
+<script>document.addEventListener('click', (e) => {
+            const item = e.target.closest('[data-action]')
+            if (item) document.getElementById('output').textContent = item.dataset.action
+          })</script>
+<div data-testid="scroll-container" style="width:200px;height:200px;overflow:auto">
+  <div style="height:1000px;width:100%">
+    Scroll me!
+    <br/>
+    <div>Item 1</div>
+    <div>Item 2</div>
+    <div>Item 3</div>
+    <div>Item 4</div>
+    <div>Item 5</div>
+    <div>Item 6</div>
+    <div>Item 7</div>
+    <div>Item 8</div>
+    <div>Item 9</div>
+    <div>Item 10</div>
+    <div>Item 11</div>
+    <div>Item 12</div>
+    <div>Item 13</div>
+    <div>Item 14</div>
+    <div>Item 15</div>
+    <div>Item 16</div>
+    <div>Item 17</div>
+    <div>Item 18</div>
+    <div>Item 19</div>
+    <div>Item 20</div>
+  </div>
+</div>
+<div>
+  <button type="button" data-testid="focus-before">Focus before</button>
+  <div class="menu" id="mcr:menu:1">
+    <button data-testid="root-trigger" type="button" id="mct:menu:1" aria-controls="mcc:menu:1" aria-expanded="false" aria-haspopup="menu" tabindex="0" role="button">MenuTrigger</button>
+    <ul data-testid="root-list" role="menu" id="mcc:menu:1" aria-labelledby="mct:menu:1" aria-hidden="true" popover="manual">
+      <li role="none">
+        <button data-testid="root-item-1" type="button" role="menuitem" tabindex="-1">MenuItem 1</button>
+      </li>
+      <li role="none">
+        <button data-testid="root-item-2" type="button" role="menuitem" tabindex="-1">MenuItem 2</button>
+      </li>
+      <li role="none">
+        <button data-testid="root-item-3" type="button" role="menuitem" tabindex="-1">MenuItem 3</button>
+      </li>
+      <li role="none">
+        <button data-testid="root-submenu-trigger" type="button" id="mct:menu:2" aria-controls="mcc:menu:2" aria-expanded="false" aria-haspopup="menu" tabindex="-1" role="menuitem">Submenu Trigger</button>
+        <ul data-testid="root-submenu-list" role="menu" id="mcc:menu:2" aria-labelledby="mct:menu:2" aria-hidden="true" popover="manual">
+          <li role="none">
+            <button data-testid="root-submenu-item-1" type="button" role="menuitem" tabindex="-1">Submenu Item 1</button>
+          </li>
+          <li role="none">
+            <button data-testid="root-submenu-item-2" type="button" role="menuitem" tabindex="-1">Submenu Item 2</button>
+          </li>
+          <li role="none">
+            <button data-testid="root-submenu-item-3" type="button" role="menuitem" tabindex="-1">Submenu Item 3</button>
+          </li>
+        </ul>
+      </li>
+    </ul>
+  </div>
+  <button type="button" data-testid="focus-after">Focus after</button>
+  <div class="menu" id="mcr:menu:3">
+    <button data-testid="second-trigger" type="button" id="mct:menu:3" aria-controls="mcc:menu:3" aria-expanded="false" aria-haspopup="menu" tabindex="0" role="button">Second Menu</button>
+    <ul data-testid="second-list" role="menu" id="mcc:menu:3" aria-labelledby="mct:menu:3" aria-hidden="true" popover="manual">
+      <li role="none">
+        <button data-testid="second-item-1" type="button" role="menuitem" tabindex="-1">Second Item 1</button>
+      </li>
+      <li role="none">
+        <button data-testid="second-item-2" type="button" role="menuitem" tabindex="-1">Second Item 2</button>
+      </li>
+    </ul>
+  </div>
+</div>
+<div id="mcr:menu:4">
+  <button data-testid="svg-trigger" type="button" id="mct:menu:4" aria-controls="mcc:menu:4" aria-expanded="false" aria-haspopup="menu" tabindex="0" role="button">
+    <svg data-testid="svg-icon" aria-hidden="true" width="16" height="16" viewBox="0 0 16 16">
+      <path d="M4 6l4 4 4-4">
+      </path>
+    </svg>
+    Menu with SVG
+  </button>
+  <ul data-testid="svg-list" role="menu" id="mcc:menu:4" aria-labelledby="mct:menu:4" aria-hidden="true" popover="manual">
+    <li role="none">
+      <button data-testid="svg-item-1" type="button" role="menuitem" tabindex="-1">SVG Menu Item 1</button>
+    </li>
+    <li role="none">
+      <button data-testid="svg-item-2" type="button" role="menuitem" tabindex="-1">SVG Menu Item 2</button>
+    </li>
+  </ul>
+</div>
+<div id="mcr:menu:5">
+  <button data-testid="trigger" data-action="trigger-clicked" type="button" id="mct:menu:5" aria-controls="mcc:menu:5" aria-expanded="false" aria-haspopup="menu" tabindex="0" role="button">Open Menu</button>
+  <ul data-testid="list" role="menu" id="mcc:menu:5" aria-labelledby="mct:menu:5" aria-hidden="true" popover="manual">
+    <li role="none">
+      <button data-testid="item" data-action="item-clicked" type="button" role="menuitem" tabindex="-1">Action</button>
+    </li>
+    <li role="none">
+      <button data-testid="checkbox" data-action="checkbox-clicked" type="button" role="menuitemcheckbox" aria-checked="false" tabindex="-1">Bold</button>
+    </li>
+    <li role="none">
+      <button data-testid="radio-1" data-action="radio-1-clicked" type="button" role="menuitemradio" aria-checked="true" tabindex="-1">Light</button>
+    </li>
+    <li role="none">
+      <button data-testid="radio-2" data-action="radio-2-clicked" type="button" role="menuitemradio" aria-checked="false" tabindex="-1">Dark</button>
+    </li>
+  </ul>
+</div>

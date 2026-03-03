@@ -1,0 +1,22 @@
+<div>
+  <button data-testid="focusable-trigger" type="button" id="mct:collapsible:1" aria-expanded="false" aria-controls="mcc:collapsible:1">Toggle focusable content</button>
+  <div data-testid="focusable-content" id="mcc:collapsible:1" aria-labelledby="mct:collapsible:1" aria-hidden="true" hidden="until-found">
+    <p>This content has focusable elements:</p>
+    <input type="text" data-testid="focusable-input" placeholder="Input field"/>
+    <a href="#" data-testid="focusable-link">A link</a>
+    <button type="button" data-testid="focusable-button">A button</button>
+  </div>
+</div>
+<div>
+  <button data-testid="rich-trigger" type="button" id="mct:collapsible:2" aria-expanded="false" aria-controls="mcc:collapsible:2">Show Details</button>
+  <div data-testid="rich-content" id="mcc:collapsible:2" aria-labelledby="mct:collapsible:2" aria-hidden="true" hidden="until-found">
+    <h4>Detailed Information</h4>
+    <p>This collapsible contains various HTML elements:</p>
+    <ul>
+      <li>List item 1</li>
+      <li>List item 2</li>
+      <li>List item 3</li>
+    </ul>
+    <button type="button" data-testid="rich-content-button">Button inside collapsible</button>
+  </div>
+</div>

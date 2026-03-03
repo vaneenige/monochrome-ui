@@ -1,0 +1,16 @@
+<div data-testid="default-second-container" data-orientation="horizontal" id="mcr:tabs:1">
+  <div data-testid="default-second-tablist" role="tablist" aria-orientation="horizontal">
+    <button data-testid="dtab-1" type="button" role="tab" id="mct:tabs:1:dtab1" aria-selected="false" aria-controls="mcc:tabs:1:dtab1" tabindex="-1">Tab 1</button>
+    <button data-testid="dtab-2" type="button" role="tab" id="mct:tabs:1:dtab2" aria-selected="true" aria-controls="mcc:tabs:1:dtab2" tabindex="0">Tab 2 (Default)</button>
+    <button data-testid="dtab-3" type="button" role="tab" id="mct:tabs:1:dtab3" aria-selected="false" aria-controls="mcc:tabs:1:dtab3" tabindex="-1">Tab 3</button>
+  </div>
+  <div data-testid="dpanel-1" role="tabpanel" id="mcc:tabs:1:dtab1" aria-labelledby="mct:tabs:1:dtab1" aria-hidden="true" hidden="until-found" tabindex="-1" data-orientation="horizontal">
+    <p>Content for Tab 1</p>
+  </div>
+  <div data-testid="dpanel-2" role="tabpanel" id="mcc:tabs:1:dtab2" aria-labelledby="mct:tabs:1:dtab2" aria-hidden="false" tabindex="0" data-orientation="horizontal">
+    <p>Content for Tab 2 (default selected)</p>
+  </div>
+  <div data-testid="dpanel-3" role="tabpanel" id="mcc:tabs:1:dtab3" aria-labelledby="mct:tabs:1:dtab3" aria-hidden="true" hidden="until-found" tabindex="-1" data-orientation="horizontal">
+    <p>Content for Tab 3</p>
+  </div>
+</div>

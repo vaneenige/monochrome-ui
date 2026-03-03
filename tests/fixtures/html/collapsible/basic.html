@@ -1,0 +1,26 @@
+<div id="output" data-testid="output">
+</div>
+<script>document.addEventListener('click', (e) => {
+            const item = e.target.closest('[data-action]')
+            if (item) document.getElementById('output').textContent = item.dataset.action
+          })</script>
+<button type="button" data-testid="focus-before">Focus before</button>
+<div>
+  <button data-testid="collapsible-trigger" data-action="trigger-clicked" type="button" id="mct:collapsible:1" aria-expanded="false" aria-controls="mcc:collapsible:1">
+    <svg data-testid="svg-icon" aria-hidden="true" width="16" height="16" viewBox="0 0 16 16">
+      <path d="M4 6l4 4 4-4">
+      </path>
+    </svg>
+    Show more information
+  </button>
+  <div data-testid="collapsible-content" id="mcc:collapsible:1" aria-labelledby="mct:collapsible:1" aria-hidden="true" hidden="until-found">
+    <p>This is the hidden content that is revealed when you click the trigger.</p>
+  </div>
+</div>
+<button type="button" data-testid="focus-after">Focus after</button>
+<div>
+  <button data-testid="search-trigger" type="button" id="mct:collapsible:2" aria-expanded="false" aria-controls="mcc:collapsible:2">Hidden searchable content</button>
+  <div data-testid="search-content" id="mcc:collapsible:2" aria-labelledby="mct:collapsible:2" aria-hidden="true" hidden="until-found">
+    <p>UNIQUE_SEARCH_STRING_COLLAPSIBLE is hidden here</p>
+  </div>
+</div>

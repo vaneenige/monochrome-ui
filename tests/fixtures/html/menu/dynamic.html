@@ -1,0 +1,132 @@
+<style>
+  [role="menu"] {
+    position: fixed;
+    inset: auto;
+    margin: 0;
+    top: var(--bottom);
+    left: var(--left);
+  }
+  [role="menu"] [role="menu"] {
+    top: var(--top);
+    left: var(--right);
+    margin-left: 16px;
+  }
+</style>
+<div id="output" data-testid="output"></div>
+<div style="margin-bottom:8px">
+  <button type="button" data-testid="add-item">Add Item</button>
+  <button type="button" data-testid="remove-item">Remove Item</button>
+  <button type="button" data-testid="add-submenu">Add Submenu</button>
+  <button type="button" data-testid="toggle-checked">Toggle Checked</button>
+  <button type="button" data-testid="select-radio-b">Select Radio B</button>
+  <button type="button" data-testid="toggle-disabled">Toggle Disabled</button>
+</div>
+<div class="menu-root" data-testid="menu-root" id="mcr:menu:d1">
+  <button data-testid="trigger" data-action="trigger-clicked" type="button" id="mct:menu:d1" aria-controls="mcc:menu:d1" aria-expanded="false" aria-haspopup="menu" tabindex="0" role="button">Open Menu</button>
+  <ul data-testid="list" role="menu" id="mcc:menu:d1" aria-labelledby="mct:menu:d1" aria-hidden="true" popover="manual">
+    <li role="none"><button data-testid="item-1" type="button" role="menuitem" tabindex="-1">Item 1</button></li>
+    <li role="none"><button data-testid="item-2" type="button" role="menuitem" tabindex="-1">Item 2</button></li>
+    <li role="none"><button data-testid="item-3" type="button" role="menuitem" tabindex="-1">Item 3</button></li>
+    <li role="none"><a data-testid="item-href" href="https://example.com" role="menuitem" tabindex="-1">Link Item</a></li>
+    <li data-testid="label" role="presentation">Group Label</li>
+    <li data-testid="separator" role="separator"></li>
+    <li role="none"><button data-testid="checkbox-item" type="button" role="menuitemcheckbox" aria-checked="false" tabindex="-1">Checkbox</button></li>
+    <li role="none"><button data-testid="radio-a" type="button" role="menuitemradio" aria-checked="true" tabindex="-1">Radio A</button></li>
+    <li role="none"><button data-testid="radio-b" type="button" role="menuitemradio" aria-checked="false" tabindex="-1">Radio B</button></li>
+  </ul>
+</div>
+<div data-testid="menu2-root" id="mcr:menu:d2">
+  <button data-testid="menu2-trigger" type="button" id="mct:menu:d2" aria-controls="mcc:menu:d2" aria-expanded="false" aria-haspopup="menu" tabindex="0" role="button">Open Menu 2</button>
+  <ul data-testid="menu2-list" role="menu" id="mcc:menu:d2" aria-labelledby="mct:menu:d2" aria-hidden="true" popover="manual">
+    <li role="none"><button data-testid="menu2-item-1" type="button" role="menuitem" tabindex="-1">Menu2 Item 1</button></li>
+  </ul>
+</div>
+<script>
+(function() {
+  var output = document.getElementById('output');
+  var list = document.querySelector('[data-testid="list"]');
+  var hrefLi = document.querySelector('[data-testid="item-href"]').parentElement;
+  var itemCount = 3;
+
+  list.addEventListener('click', function(e) {
+    var btn = e.target.closest('[role="menuitem"]');
+    if (btn && /^item-\d+$/.test(btn.getAttribute('data-testid') || '')) {
+      output.textContent = btn.getAttribute('data-testid') + '-clicked';
+    }
+  });
+
+  document.querySelector('[data-testid="add-item"]').addEventListener('click', function() {
+    itemCount++;
+    var li = document.createElement('li');
+    li.setAttribute('role', 'none');
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.setAttribute('data-testid', 'item-' + itemCount);
+    btn.setAttribute('role', 'menuitem');
+    btn.tabIndex = -1;
+    btn.textContent = 'Item ' + itemCount;
+    li.appendChild(btn);
+    list.insertBefore(li, hrefLi);
+  });
+
+  document.querySelector('[data-testid="remove-item"]').addEventListener('click', function() {
+    if (itemCount > 0) {
+      var item = document.querySelector('[data-testid="item-' + itemCount + '"]');
+      if (item && item.parentElement) {
+        list.removeChild(item.parentElement);
+        itemCount--;
+      }
+    }
+  });
+
+  document.querySelector('[data-testid="add-submenu"]').addEventListener('click', function() {
+    var li = document.createElement('li');
+    li.setAttribute('role', 'none');
+
+    var trigger = document.createElement('button');
+    trigger.type = 'button';
+    trigger.setAttribute('data-testid', 'submenu-trigger');
+    trigger.id = 'mct:menu:d1sub';
+    trigger.setAttribute('aria-controls', 'mcc:menu:d1sub');
+    trigger.setAttribute('aria-expanded', 'false');
+    trigger.setAttribute('aria-haspopup', 'menu');
+    trigger.tabIndex = -1;
+    trigger.setAttribute('role', 'menuitem');
+    trigger.textContent = 'Submenu';
+
+    var ul = document.createElement('ul');
+    ul.setAttribute('data-testid', 'submenu-list');
+    ul.setAttribute('role', 'menu');
+    ul.id = 'mcc:menu:d1sub';
+    ul.setAttribute('aria-labelledby', 'mct:menu:d1sub');
+    ul.setAttribute('aria-hidden', 'true');
+    ul.setAttribute('popover', 'manual');
+    ul.innerHTML = '<li role="none"><button data-testid="submenu-item-1" type="button" role="menuitem" tabindex="-1">Sub Item 1</button></li><li role="none"><button data-testid="submenu-item-2" type="button" role="menuitem" tabindex="-1">Sub Item 2</button></li>';
+
+    li.appendChild(trigger);
+    li.appendChild(ul);
+    list.appendChild(li);
+  });
+
+  document.querySelector('[data-testid="toggle-checked"]').addEventListener('click', function() {
+    var cb = document.querySelector('[data-testid="checkbox-item"]');
+    cb.setAttribute('aria-checked', cb.getAttribute('aria-checked') === 'true' ? 'false' : 'true');
+  });
+
+  document.querySelector('[data-testid="select-radio-b"]').addEventListener('click', function() {
+    document.querySelector('[data-testid="radio-a"]').setAttribute('aria-checked', 'false');
+    document.querySelector('[data-testid="radio-b"]').setAttribute('aria-checked', 'true');
+  });
+
+  document.querySelector('[data-testid="toggle-disabled"]').addEventListener('click', function() {
+    var item2 = document.querySelector('[data-testid="item-2"]');
+    if (item2) {
+      if (item2.getAttribute('aria-disabled') === 'true') {
+        item2.removeAttribute('aria-disabled');
+      } else {
+        item2.setAttribute('aria-disabled', 'true');
+      }
+    }
+  });
+})();
+</script>

@@ -1,0 +1,104 @@
+<div id="output" data-testid="output"></div>
+<div style="margin-bottom:8px">
+  <button type="button" data-testid="add-tab">Add Tab</button>
+  <button type="button" data-testid="remove-tab">Remove Tab</button>
+  <button type="button" data-testid="toggle-orientation">Toggle Orientation</button>
+  <button type="button" data-testid="toggle-disabled">Toggle Disabled Tab 2</button>
+</div>
+<div class="tabs-root" data-testid="tabs-root" data-orientation="horizontal" id="mcr:tabs:d1">
+  <div data-testid="tablist" role="tablist" aria-orientation="horizontal"></div>
+</div>
+<div data-testid="tabs2-root" data-orientation="horizontal" id="mcr:tabs:d2">
+  <div data-testid="tabs2-tablist" role="tablist" aria-orientation="horizontal">
+    <button data-testid="tabs2-tab-1" type="button" role="tab" id="mct:tabs:d2:t1" aria-selected="true" aria-controls="mcc:tabs:d2:t1" tabindex="0">T1</button>
+    <button data-testid="tabs2-tab-2" type="button" role="tab" id="mct:tabs:d2:t2" aria-selected="false" aria-controls="mcc:tabs:d2:t2" tabindex="-1">T2</button>
+  </div>
+  <div data-testid="tabs2-panel-1" role="tabpanel" id="mcc:tabs:d2:t1" aria-labelledby="mct:tabs:d2:t1" aria-hidden="false" tabindex="0" data-orientation="horizontal"><p>Panel T1</p></div>
+  <div data-testid="tabs2-panel-2" role="tabpanel" id="mcc:tabs:d2:t2" aria-labelledby="mct:tabs:d2:t2" aria-hidden="true" hidden="until-found" tabindex="-1" data-orientation="horizontal"><p>Panel T2</p></div>
+</div>
+<script>
+(function() {
+  var output = document.getElementById('output');
+  var root = document.getElementById('mcr:tabs:d1');
+  var tablist = document.querySelector('[data-testid="tablist"]');
+  var tabCount = 0;
+  var orientation = 'horizontal';
+
+  function createTab(n, value, label, isSelected) {
+    var tab = document.createElement('button');
+    tab.type = 'button';
+    tab.setAttribute('data-testid', 'tab-' + n);
+    tab.setAttribute('role', 'tab');
+    tab.id = 'mct:tabs:d1:' + value;
+    tab.setAttribute('aria-selected', isSelected ? 'true' : 'false');
+    tab.setAttribute('aria-controls', 'mcc:tabs:d1:' + value);
+    tab.tabIndex = isSelected ? 0 : -1;
+    tab.textContent = label;
+    tab.addEventListener('click', function() { output.textContent = 'tab-' + n + '-clicked'; });
+    return tab;
+  }
+
+  function createPanel(n, value, content, isSelected) {
+    var panel = document.createElement('div');
+    panel.setAttribute('data-testid', 'panel-' + n);
+    panel.setAttribute('role', 'tabpanel');
+    panel.id = 'mcc:tabs:d1:' + value;
+    panel.setAttribute('aria-labelledby', 'mct:tabs:d1:' + value);
+    panel.setAttribute('aria-hidden', isSelected ? 'false' : 'true');
+    if (!isSelected) panel.setAttribute('hidden', 'until-found');
+    panel.tabIndex = isSelected ? 0 : -1;
+    panel.setAttribute('data-orientation', orientation);
+    panel.innerHTML = '<p>' + content + '</p>';
+    return panel;
+  }
+
+  var tabs = [
+    { value: 'tab1', label: 'Tab 1', content: 'Content 1' },
+    { value: 'tab2', label: 'Tab 2', content: 'Content 2' },
+    { value: 'tab3', label: 'Tab 3', content: 'Content 3' },
+  ];
+  for (var i = 0; i < tabs.length; i++) {
+    tablist.appendChild(createTab(i + 1, tabs[i].value, tabs[i].label, i === 0));
+    root.appendChild(createPanel(i + 1, tabs[i].value, tabs[i].content, i === 0));
+    tabCount = i + 1;
+  }
+
+  document.querySelector('[data-testid="add-tab"]').addEventListener('click', function() {
+    tabCount++;
+    var value = 'tab' + tabCount;
+    tablist.appendChild(createTab(tabCount, value, 'Tab ' + tabCount, false));
+    root.appendChild(createPanel(tabCount, value, 'Content ' + tabCount, false));
+  });
+
+  document.querySelector('[data-testid="remove-tab"]').addEventListener('click', function() {
+    if (tabCount > 0) {
+      var lastTab = tablist.lastElementChild;
+      if (lastTab) tablist.removeChild(lastTab);
+      var lastPanel = root.lastElementChild;
+      if (lastPanel && lastPanel.getAttribute('role') === 'tabpanel') root.removeChild(lastPanel);
+      tabCount--;
+    }
+  });
+
+  document.querySelector('[data-testid="toggle-orientation"]').addEventListener('click', function() {
+    orientation = orientation === 'horizontal' ? 'vertical' : 'horizontal';
+    root.setAttribute('data-orientation', orientation);
+    tablist.setAttribute('aria-orientation', orientation);
+    var panels = root.querySelectorAll('[role="tabpanel"]');
+    for (var i = 0; i < panels.length; i++) {
+      panels[i].setAttribute('data-orientation', orientation);
+    }
+  });
+
+  document.querySelector('[data-testid="toggle-disabled"]').addEventListener('click', function() {
+    var tab2 = document.querySelector('[data-testid="tab-2"]');
+    if (tab2) {
+      if (tab2.getAttribute('aria-disabled') === 'true') {
+        tab2.removeAttribute('aria-disabled');
+      } else {
+        tab2.setAttribute('aria-disabled', 'true');
+      }
+    }
+  });
+})();
+</script>

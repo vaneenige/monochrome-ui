@@ -1,0 +1,60 @@
+<div id="output" data-testid="output">
+</div>
+<script>document.addEventListener('click', (e) => {
+            const item = e.target.closest('[data-action]')
+            if (item) document.getElementById('output').textContent = item.dataset.action
+          })</script>
+<button type="button" data-testid="focus-before">Focus before</button>
+<div data-testid="tabs-container" data-orientation="horizontal" id="mcr:tabs:1">
+  <div data-testid="tablist" role="tablist" aria-orientation="horizontal">
+    <button data-testid="tab-1" data-action="tab-1-clicked" type="button" role="tab" id="mct:tabs:1:tab1" aria-selected="true" aria-controls="mcc:tabs:1:tab1" tabindex="0">Tab 1</button>
+    <button data-testid="tab-2" data-action="tab-2-clicked" type="button" role="tab" id="mct:tabs:1:tab2" aria-selected="false" aria-controls="mcc:tabs:1:tab2" tabindex="-1">Tab 2</button>
+    <button data-testid="tab-3" type="button" role="tab" id="mct:tabs:1:tab3" aria-selected="false" aria-controls="mcc:tabs:1:tab3" tabindex="-1">Tab 3</button>
+  </div>
+  <div data-testid="panel-1" role="tabpanel" id="mcc:tabs:1:tab1" aria-labelledby="mct:tabs:1:tab1" aria-hidden="false" tabindex="0" data-orientation="horizontal">
+    <p>Content for Tab 1</p>
+  </div>
+  <div data-testid="panel-2" role="tabpanel" id="mcc:tabs:1:tab2" aria-labelledby="mct:tabs:1:tab2" aria-hidden="true" hidden="until-found" tabindex="-1" data-orientation="horizontal">
+    <p>Content for Tab 2</p>
+  </div>
+  <div data-testid="panel-3" role="tabpanel" id="mcc:tabs:1:tab3" aria-labelledby="mct:tabs:1:tab3" aria-hidden="true" hidden="until-found" tabindex="-1" data-orientation="horizontal">
+    <p>Content for Tab 3</p>
+  </div>
+</div>
+<button type="button" data-testid="focus-after">Focus after</button>
+<div data-testid="svg-tabs-container" data-orientation="horizontal" id="mcr:tabs:5">
+  <div data-testid="svg-tablist" role="tablist" aria-orientation="horizontal">
+    <button data-testid="svg-tab-1" type="button" role="tab" id="mct:tabs:5:svgtab1" aria-selected="true" aria-controls="mcc:tabs:5:svgtab1" tabindex="0">
+      <svg data-testid="svg-icon-1" aria-hidden="true" width="16" height="16" viewBox="0 0 16 16">
+        <path d="M4 6l4 4 4-4">
+        </path>
+      </svg>
+      Tab 1
+    </button>
+    <button data-testid="svg-tab-2" type="button" role="tab" id="mct:tabs:5:svgtab2" aria-selected="false" aria-controls="mcc:tabs:5:svgtab2" tabindex="-1">
+      <svg data-testid="svg-icon-2" aria-hidden="true" width="16" height="16" viewBox="0 0 16 16">
+        <path d="M4 6l4 4 4-4">
+        </path>
+      </svg>
+      Tab 2
+    </button>
+  </div>
+  <div data-testid="svg-panel-1" role="tabpanel" id="mcc:tabs:5:svgtab1" aria-labelledby="mct:tabs:5:svgtab1" aria-hidden="false" tabindex="0" data-orientation="horizontal">
+    <p>SVG Tab 1 content</p>
+  </div>
+  <div data-testid="svg-panel-2" role="tabpanel" id="mcc:tabs:5:svgtab2" aria-labelledby="mct:tabs:5:svgtab2" aria-hidden="true" hidden="until-found" tabindex="-1" data-orientation="horizontal">
+    <p>SVG Tab 2 content</p>
+  </div>
+</div>
+<div data-testid="search-tabs-container" data-orientation="horizontal" id="mcr:tabs:8">
+  <div data-testid="search-tablist" role="tablist" aria-orientation="horizontal">
+    <button data-testid="search-tab-1" type="button" role="tab" id="mct:tabs:8:search1" aria-selected="true" aria-controls="mcc:tabs:8:search1" tabindex="0">Search Tab 1</button>
+    <button data-testid="search-tab-2" type="button" role="tab" id="mct:tabs:8:search2" aria-selected="false" aria-controls="mcc:tabs:8:search2" tabindex="-1">Search Tab 2</button>
+  </div>
+  <div data-testid="search-panel-1" role="tabpanel" id="mcc:tabs:8:search1" aria-labelledby="mct:tabs:8:search1" aria-hidden="false" tabindex="0" data-orientation="horizontal">
+    <p>First panel content</p>
+  </div>
+  <div data-testid="search-panel-2" role="tabpanel" id="mcc:tabs:8:search2" aria-labelledby="mct:tabs:8:search2" aria-hidden="true" hidden="until-found" tabindex="-1" data-orientation="horizontal">
+    <p>UNIQUE_SEARCH_STRING_TABS hidden in second panel</p>
+  </div>
+</div>

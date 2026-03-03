@@ -1,0 +1,68 @@
+<div id="output" data-testid="output"></div>
+<div style="margin-bottom:8px">
+  <button type="button" data-testid="toggle-mount">Unmount</button>
+  <button type="button" data-testid="toggle-open">Toggle Open Prop</button>
+</div>
+<div id="collapsible-host"></div>
+<div data-testid="collapsible2-root">
+  <button data-testid="collapsible2-trigger" type="button" id="mct:collapsible:d2" aria-expanded="false" aria-controls="mcc:collapsible:d2">Toggle Content 2</button>
+  <div data-testid="collapsible2-content" id="mcc:collapsible:d2" aria-labelledby="mct:collapsible:d2" aria-hidden="true" hidden="until-found">
+    <p>Second collapsible content</p>
+  </div>
+</div>
+<script>
+(function() {
+  var mounted = true;
+  var startOpen = false;
+  var host = document.getElementById('collapsible-host');
+  var output = document.getElementById('output');
+
+  function createCollapsible() {
+    var root = document.createElement('div');
+    root.className = 'collapsible-root';
+    root.setAttribute('data-testid', 'collapsible-root');
+
+    var trigger = document.createElement('button');
+    trigger.type = 'button';
+    trigger.setAttribute('data-testid', 'trigger');
+    trigger.id = 'mct:collapsible:d1';
+    trigger.setAttribute('aria-expanded', startOpen ? 'true' : 'false');
+    trigger.setAttribute('aria-controls', 'mcc:collapsible:d1');
+    trigger.textContent = 'Toggle Content';
+    trigger.addEventListener('click', function() { output.textContent = 'trigger-clicked'; });
+
+    var panel = document.createElement('div');
+    panel.setAttribute('data-testid', 'content');
+    panel.id = 'mcc:collapsible:d1';
+    panel.setAttribute('aria-labelledby', 'mct:collapsible:d1');
+    if (startOpen) {
+      panel.setAttribute('aria-hidden', 'false');
+    } else {
+      panel.setAttribute('aria-hidden', 'true');
+      panel.setAttribute('hidden', 'until-found');
+    }
+    panel.innerHTML = '<p>Collapsible content here</p>';
+
+    root.appendChild(trigger);
+    root.appendChild(panel);
+    return root;
+  }
+
+  host.appendChild(createCollapsible());
+
+  document.querySelector('[data-testid="toggle-mount"]').addEventListener('click', function() {
+    mounted = !mounted;
+    if (mounted) {
+      host.appendChild(createCollapsible());
+    } else {
+      host.innerHTML = '';
+    }
+  });
+
+  document.querySelector('[data-testid="toggle-open"]').addEventListener('click', function() {
+    host.innerHTML = '';
+    startOpen = !startOpen;
+    setTimeout(function() { host.appendChild(createCollapsible()); }, 0);
+  });
+})();
+</script>

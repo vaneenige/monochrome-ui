@@ -1,0 +1,87 @@
+<div id="output" data-testid="output"></div>
+<div style="margin-bottom:8px">
+  <button type="button" data-testid="add-item">Add Item</button>
+  <button type="button" data-testid="remove-item">Remove Item</button>
+  <button type="button" data-testid="toggle-disabled">Toggle Disabled Item 2</button>
+  <button type="button" data-testid="toggle-mode">Toggle Mode</button>
+</div>
+<div class="accordion-root" data-testid="accordion-root" data-mode="single" id="mcr:accordion:d1"></div>
+<div data-testid="accordion2-root" data-mode="single" id="mcr:accordion:d2">
+  <div data-testid="accordion2-item-1">
+    <h3><button data-testid="accordion2-trigger-1" type="button" id="mct:accordion:d2-1" aria-expanded="false" aria-controls="mcc:accordion:d2-1">A2 Section 1</button></h3>
+    <div data-testid="accordion2-content-1" id="mcc:accordion:d2-1" role="region" aria-labelledby="mct:accordion:d2-1" aria-hidden="true" hidden="until-found"><p>A2 Content 1</p></div>
+  </div>
+  <div data-testid="accordion2-item-2">
+    <h3><button data-testid="accordion2-trigger-2" type="button" id="mct:accordion:d2-2" aria-expanded="false" aria-controls="mcc:accordion:d2-2">A2 Section 2</button></h3>
+    <div data-testid="accordion2-content-2" id="mcc:accordion:d2-2" role="region" aria-labelledby="mct:accordion:d2-2" aria-hidden="true" hidden="until-found"><p>A2 Content 2</p></div>
+  </div>
+</div>
+<script>
+(function() {
+  var output = document.getElementById('output');
+  var root = document.getElementById('mcr:accordion:d1');
+  var itemCount = 0;
+
+  function createItem(n) {
+    var item = document.createElement('div');
+    item.setAttribute('data-testid', 'item-' + n);
+
+    var h3 = document.createElement('h3');
+    var trigger = document.createElement('button');
+    trigger.type = 'button';
+    trigger.setAttribute('data-testid', 'trigger-' + n);
+    trigger.id = 'mct:accordion:d1-' + n;
+    trigger.setAttribute('aria-expanded', 'false');
+    trigger.setAttribute('aria-controls', 'mcc:accordion:d1-' + n);
+    trigger.textContent = 'Section ' + n;
+    trigger.addEventListener('click', function() { output.textContent = 'trigger-' + n + '-clicked'; });
+    h3.appendChild(trigger);
+
+    var panel = document.createElement('div');
+    panel.setAttribute('data-testid', 'content-' + n);
+    panel.id = 'mcc:accordion:d1-' + n;
+    panel.setAttribute('role', 'region');
+    panel.setAttribute('aria-labelledby', 'mct:accordion:d1-' + n);
+    panel.setAttribute('aria-hidden', 'true');
+    panel.setAttribute('hidden', 'until-found');
+    panel.innerHTML = '<p>Content ' + n + '</p>';
+
+    item.appendChild(h3);
+    item.appendChild(panel);
+    return item;
+  }
+
+  for (var i = 1; i <= 3; i++) {
+    root.appendChild(createItem(i));
+    itemCount = i;
+  }
+
+  document.querySelector('[data-testid="add-item"]').addEventListener('click', function() {
+    itemCount++;
+    root.appendChild(createItem(itemCount));
+  });
+
+  document.querySelector('[data-testid="remove-item"]').addEventListener('click', function() {
+    if (root.lastElementChild) {
+      root.removeChild(root.lastElementChild);
+      itemCount--;
+    }
+  });
+
+  document.querySelector('[data-testid="toggle-disabled"]').addEventListener('click', function() {
+    var trigger2 = document.querySelector('[data-testid="trigger-2"]');
+    if (trigger2) {
+      if (trigger2.getAttribute('aria-disabled') === 'true') {
+        trigger2.removeAttribute('aria-disabled');
+      } else {
+        trigger2.setAttribute('aria-disabled', 'true');
+      }
+    }
+  });
+
+  document.querySelector('[data-testid="toggle-mode"]').addEventListener('click', function() {
+    var mode = root.getAttribute('data-mode');
+    root.setAttribute('data-mode', mode === 'single' ? 'multiple' : 'single');
+  });
+})();
+</script>

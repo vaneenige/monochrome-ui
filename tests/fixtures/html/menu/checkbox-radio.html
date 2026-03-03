@@ -1,0 +1,45 @@
+<style>[role="menu"] {
+        position: fixed;
+        inset: auto;
+        margin: 0;
+        top: var(--bottom);
+        left: var(--left);
+      }</style>
+<button type="button" data-testid="focus-before">Focus before</button>
+<div id="mcr:menu:1">
+  <button data-testid="trigger" type="button" id="mct:menu:1" aria-controls="mcc:menu:1" aria-expanded="false" aria-haspopup="menu" tabindex="0" role="button">Open Menu</button>
+  <ul data-testid="list" role="menu" id="mcc:menu:1" aria-labelledby="mct:menu:1" aria-hidden="true" popover="manual">
+    <li role="none">
+      <button data-testid="checkbox-1" type="button" role="menuitemcheckbox" aria-checked="false" tabindex="-1">Bold</button>
+    </li>
+    <li role="none">
+      <button data-testid="checkbox-2" type="button" role="menuitemcheckbox" aria-checked="true" tabindex="-1">Italic</button>
+    </li>
+    <li role="none">
+      <span data-testid="checkbox-disabled" role="menuitemcheckbox" aria-checked="false" aria-disabled="true" tabindex="-1">Strikethrough</span>
+    </li>
+    <li data-testid="separator-1" role="separator">
+    </li>
+    <li role="none">
+      <button data-testid="radio-a1" type="button" role="menuitemradio" aria-checked="true" tabindex="-1">Small</button>
+    </li>
+    <li role="none">
+      <button data-testid="radio-a2" type="button" role="menuitemradio" aria-checked="false" tabindex="-1">Medium</button>
+    </li>
+    <li role="none">
+      <button data-testid="radio-a3" type="button" role="menuitemradio" aria-checked="false" tabindex="-1">Large</button>
+    </li>
+    <li data-testid="separator-2" role="separator">
+    </li>
+    <li role="none">
+      <button data-testid="radio-b1" type="button" role="menuitemradio" aria-checked="true" tabindex="-1">Red</button>
+    </li>
+    <li role="none">
+      <button data-testid="radio-b2" type="button" role="menuitemradio" aria-checked="false" tabindex="-1">Blue</button>
+    </li>
+    <li role="none">
+      <button data-testid="regular-item" type="button" role="menuitem" tabindex="-1">Regular Action</button>
+    </li>
+  </ul>
+</div>
+<button type="button" data-testid="focus-after">Focus after</button>

@@ -1,0 +1,12 @@
+<div>
+  <div>
+    <p>Trigger is here:</p>
+    <button data-testid="separated-trigger" type="button" id="mct:collapsible:1" aria-expanded="false" aria-controls="mcc:collapsible:1">Toggle remote content</button>
+  </div>
+  <div>
+    <p>Content is in a different DOM subtree:</p>
+    <div data-testid="separated-content" id="mcc:collapsible:1" aria-labelledby="mct:collapsible:1" aria-hidden="true" hidden="until-found">
+      <p>This content is not a sibling of the trigger. It lives in a separate DOM subtree.</p>
+    </div>
+  </div>
+</div>

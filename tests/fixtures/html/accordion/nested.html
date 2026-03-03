@@ -1,0 +1,36 @@
+<div data-testid="outer-accordion" data-mode="single" id="mcr:accordion:1">
+  <div data-testid="outer-item-1">
+    <h3>
+      <button data-testid="outer-trigger-1" type="button" id="mct:accordion:2" aria-expanded="false" aria-controls="mcc:accordion:2">Outer Section 1</button>
+    </h3>
+    <div data-testid="outer-content-1" id="mcc:accordion:2" role="region" aria-labelledby="mct:accordion:2" aria-hidden="true" hidden="until-found">
+      <p>Outer content with nested accordion:</p>
+      <div data-testid="nested-accordion" data-mode="single" id="mcr:accordion:3">
+        <div data-testid="nested-item-1">
+          <h3>
+            <button data-testid="nested-trigger-1" type="button" id="mct:accordion:4" aria-expanded="false" aria-controls="mcc:accordion:4">Nested Section A</button>
+          </h3>
+          <div data-testid="nested-content-1" id="mcc:accordion:4" role="region" aria-labelledby="mct:accordion:4" aria-hidden="true" hidden="until-found">
+            <p>Nested content A</p>
+          </div>
+        </div>
+        <div data-testid="nested-item-2">
+          <h3>
+            <button data-testid="nested-trigger-2" type="button" id="mct:accordion:5" aria-expanded="false" aria-controls="mcc:accordion:5">Nested Section B</button>
+          </h3>
+          <div data-testid="nested-content-2" id="mcc:accordion:5" role="region" aria-labelledby="mct:accordion:5" aria-hidden="true" hidden="until-found">
+            <p>Nested content B</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div data-testid="outer-item-2">
+    <h3>
+      <button data-testid="outer-trigger-2" type="button" id="mct:accordion:6" aria-expanded="false" aria-controls="mcc:accordion:6">Outer Section 2</button>
+    </h3>
+    <div data-testid="outer-content-2" id="mcc:accordion:6" role="region" aria-labelledby="mct:accordion:6" aria-hidden="true" hidden="until-found">
+      <p>Regular outer content</p>
+    </div>
+  </div>
+</div>

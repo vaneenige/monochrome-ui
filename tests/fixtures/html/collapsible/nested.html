@@ -1,0 +1,12 @@
+<div>
+  <button data-testid="outer-trigger" type="button" id="mct:collapsible:1" aria-expanded="false" aria-controls="mcc:collapsible:1">Outer Collapsible</button>
+  <div data-testid="outer-content" id="mcc:collapsible:1" aria-labelledby="mct:collapsible:1" aria-hidden="true" hidden="until-found">
+    <p>Outer content with nested collapsible:</p>
+    <div>
+      <button data-testid="inner-trigger" type="button" id="mct:collapsible:2" aria-expanded="false" aria-controls="mcc:collapsible:2">Inner Collapsible</button>
+      <div data-testid="inner-content" id="mcc:collapsible:2" aria-labelledby="mct:collapsible:2" aria-hidden="true" hidden="until-found">
+        <p>Inner content revealed</p>
+      </div>
+    </div>
+  </div>
+</div>

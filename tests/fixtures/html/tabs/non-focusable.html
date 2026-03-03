@@ -1,0 +1,21 @@
+<button type="button" data-testid="focus-before">Focus before</button>
+<div data-testid="tabs-container" data-orientation="horizontal" id="mcr:tabs:1">
+  <div data-testid="tablist" role="tablist" aria-orientation="horizontal">
+    <button data-testid="nf-tab-1" type="button" role="tab" id="mct:tabs:1:tab1" aria-selected="true" aria-controls="mcc:tabs:1:tab1" tabindex="0">Tab 1</button>
+    <button data-testid="nf-tab-2" type="button" role="tab" id="mct:tabs:1:tab2" aria-selected="false" aria-controls="mcc:tabs:1:tab2" tabindex="-1">Tab 2</button>
+    <button data-testid="nf-tab-3" type="button" role="tab" id="mct:tabs:1:tab3" aria-selected="false" aria-controls="mcc:tabs:1:tab3" tabindex="-1">Tab 3</button>
+  </div>
+  <div data-testid="nf-panel-1" role="tabpanel" id="mcc:tabs:1:tab1" aria-labelledby="mct:tabs:1:tab1" aria-hidden="false" data-orientation="horizontal">
+    <p>Content for Tab 1</p>
+    <button type="button" data-testid="nf-button-1">Button in panel 1</button>
+  </div>
+  <div data-testid="nf-panel-2" role="tabpanel" id="mcc:tabs:1:tab2" aria-labelledby="mct:tabs:1:tab2" aria-hidden="true" hidden="until-found" data-orientation="horizontal">
+    <p>Content for Tab 2</p>
+    <button type="button" data-testid="nf-button-2">Button in panel 2</button>
+  </div>
+  <div data-testid="nf-panel-3" role="tabpanel" id="mcc:tabs:1:tab3" aria-labelledby="mct:tabs:1:tab3" aria-hidden="true" hidden="until-found" data-orientation="horizontal">
+    <p>Content for Tab 3</p>
+    <button type="button" data-testid="nf-button-3">Button in panel 3</button>
+  </div>
+</div>
+<button type="button" data-testid="focus-after">Focus after</button>

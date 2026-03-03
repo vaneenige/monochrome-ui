@@ -1,0 +1,58 @@
+<div id="output" data-testid="output">
+</div>
+<script>document.addEventListener('click', (e) => {
+            const item = e.target.closest('[data-action]')
+            if (item) document.getElementById('output').textContent = item.dataset.action
+          })</script>
+<button type="button" data-testid="focus-before">Focus before</button>
+<div data-testid="single-accordion" data-mode="single" id="mcr:accordion:1">
+  <div data-testid="single-item-1">
+    <h3>
+      <button data-testid="single-trigger-1" data-action="trigger-clicked" type="button" id="mct:accordion:2" aria-expanded="false" aria-controls="mcc:accordion:2">
+        <svg data-testid="svg-icon-1" aria-hidden="true" width="16" height="16" viewBox="0 0 16 16">
+          <path d="M4 6l4 4 4-4">
+          </path>
+        </svg>
+        Section 1
+      </button>
+    </h3>
+    <div data-testid="single-content-1" id="mcc:accordion:2" role="region" aria-labelledby="mct:accordion:2" aria-hidden="true" hidden="until-found">
+      <p>Content for section 1. When you open another section, this one closes.</p>
+    </div>
+  </div>
+  <div data-testid="single-item-2">
+    <h3>
+      <button data-testid="single-trigger-2" type="button" id="mct:accordion:3" aria-expanded="false" aria-controls="mcc:accordion:3">Section 2</button>
+    </h3>
+    <div data-testid="single-content-2" id="mcc:accordion:3" role="region" aria-labelledby="mct:accordion:3" aria-hidden="true" hidden="until-found">
+      <p>Content for section 2. Only one section can be open at a time.</p>
+    </div>
+  </div>
+  <div data-testid="single-item-3">
+    <h3>
+      <button data-testid="single-trigger-3" type="button" id="mct:accordion:4" aria-expanded="false" aria-controls="mcc:accordion:4">Section 3</button>
+    </h3>
+    <div data-testid="single-content-3" id="mcc:accordion:4" role="region" aria-labelledby="mct:accordion:4" aria-hidden="true" hidden="until-found">
+      <p>Content for section 3. This is the last section.</p>
+    </div>
+  </div>
+</div>
+<button type="button" data-testid="focus-after">Focus after</button>
+<div data-testid="search-accordion" data-mode="single" id="mcr:accordion:5">
+  <div data-testid="search-item-1">
+    <h3>
+      <button data-testid="search-trigger-1" type="button" id="mct:accordion:6" aria-expanded="false" aria-controls="mcc:accordion:6">First Section</button>
+    </h3>
+    <div data-testid="search-content-1" id="mcc:accordion:6" role="region" aria-labelledby="mct:accordion:6" aria-hidden="true" hidden="until-found">
+      <p>Regular content here</p>
+    </div>
+  </div>
+  <div data-testid="search-item-2">
+    <h3>
+      <button data-testid="search-trigger-2" type="button" id="mct:accordion:7" aria-expanded="false" aria-controls="mcc:accordion:7">Hidden Searchable Content</button>
+    </h3>
+    <div data-testid="search-content-2" id="mcc:accordion:7" role="region" aria-labelledby="mct:accordion:7" aria-hidden="true" hidden="until-found">
+      <p>UNIQUE_SEARCH_STRING_ACCORDION is hidden here</p>
+    </div>
+  </div>
+</div>

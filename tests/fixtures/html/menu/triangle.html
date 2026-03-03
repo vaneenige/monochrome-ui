@@ -1,0 +1,39 @@
+<style>.menu {
+        position: relative;
+        display: inline-block;
+      }
+      [role="menu"] {
+        position: fixed;
+        inset: auto;
+        margin: 0;
+        min-width: 160px;
+        top: var(--bottom);
+        left: var(--left);
+      }
+      [role="menu"] [role="menu"] {
+        top: var(--top);
+        left: var(--right);
+        margin-left: 16px;
+      }</style>
+<div class="menu" id="mcr:menu:1">
+  <button data-testid="trigger" type="button" id="mct:menu:1" aria-controls="mcc:menu:1" aria-expanded="false" aria-haspopup="menu" tabindex="0" role="button">Menu</button>
+  <ul data-testid="list" role="menu" id="mcc:menu:1" aria-labelledby="mct:menu:1" aria-hidden="true" popover="manual">
+    <li role="none">
+      <button data-testid="item-1" type="button" role="menuitem" tabindex="-1">Item 1</button>
+    </li>
+    <li role="none">
+      <button data-testid="item-2" type="button" role="menuitem" tabindex="-1">Item 2</button>
+    </li>
+    <li data-testid="group" role="none">
+      <button data-testid="submenu-trigger" type="button" id="mct:menu:2" aria-controls="mcc:menu:2" aria-expanded="false" aria-haspopup="menu" tabindex="-1" role="menuitem">Submenu</button>
+      <ul data-testid="submenu-list" role="menu" id="mcc:menu:2" aria-labelledby="mct:menu:2" aria-hidden="true" popover="manual">
+        <li role="none">
+          <button data-testid="submenu-item-1" type="button" role="menuitem" tabindex="-1">Sub Item 1</button>
+        </li>
+        <li role="none">
+          <button data-testid="submenu-item-2" type="button" role="menuitem" tabindex="-1">Sub Item 2</button>
+        </li>
+      </ul>
+    </li>
+  </ul>
+</div>

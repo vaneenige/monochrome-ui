@@ -1,0 +1,26 @@
+<div data-testid="multi-accordion" data-mode="multiple" id="mcr:accordion:1">
+  <div data-testid="multi-item-1">
+    <h3>
+      <button data-testid="multi-trigger-1" type="button" id="mct:accordion:2" aria-expanded="false" aria-controls="mcc:accordion:2">Section A</button>
+    </h3>
+    <div data-testid="multi-content-1" id="mcc:accordion:2" role="region" aria-labelledby="mct:accordion:2" aria-hidden="true" hidden="until-found">
+      <p>Content for section A. Multiple sections can be open simultaneously.</p>
+    </div>
+  </div>
+  <div data-testid="multi-item-2">
+    <h3>
+      <button data-testid="multi-trigger-2" type="button" id="mct:accordion:3" aria-expanded="false" aria-controls="mcc:accordion:3">Section B</button>
+    </h3>
+    <div data-testid="multi-content-2" id="mcc:accordion:3" role="region" aria-labelledby="mct:accordion:3" aria-hidden="true" hidden="until-found">
+      <p>Content for section B. Open this while A is open.</p>
+    </div>
+  </div>
+  <div data-testid="multi-item-3">
+    <h3>
+      <button data-testid="multi-trigger-3" type="button" id="mct:accordion:4" aria-expanded="false" aria-controls="mcc:accordion:4">Section C</button>
+    </h3>
+    <div data-testid="multi-content-3" id="mcc:accordion:4" role="region" aria-labelledby="mct:accordion:4" aria-hidden="true" hidden="until-found">
+      <p>Content for section C. All three can be open at once.</p>
+    </div>
+  </div>
+</div>
