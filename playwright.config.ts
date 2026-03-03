@@ -8,6 +8,11 @@ export default defineConfig({
     screenshot: "off",
     trace: "off",
   },
+  projects: [
+    { name: "html", use: { renderer: "html" } },
+    { name: "react", use: { renderer: "react" } },
+    { name: "vue", use: { renderer: "vue" } },
+  ],
   webServer: {
     command: "bun run build && bun tests/server.tsx",
     port: 4000,

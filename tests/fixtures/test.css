@@ -17,31 +17,21 @@ ul {
 
 /* Menu positioning */
 
-.mc-menu {
+.menu {
   position: relative;
   display: inline-block;
 }
 
-.mc-menu [role="menu"] {
+.menu [role="menu"] {
   position: fixed;
   inset: auto;
-  z-index: 100;
   margin: 0;
-  min-width: 160px;
-  list-style: none;
   top: var(--bottom);
   left: var(--left);
 }
 
-.mc-menu [role="menu"]:not(:popover-open) {
-  display: none;
-}
-
-.mc-menu [role="menu"]:popover-open {
-  display: flex;
-}
-
-.mc-menu [role="menu"] [role="menu"] {
+.menu [role="menu"] [role="menu"] {
   top: var(--top);
   left: var(--right);
+  margin-left: 16px;
 }
