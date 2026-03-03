@@ -1,9 +1,9 @@
-# monochrome
+# Monochrome
 
-Accessible UI component library. Best-in-class performance. HTML-first, React supported.
+Accessible UI component library. Best-in-class performance. HTML-first, React and Vue supported.
 
 <!-- badges -->
-![gzip](https://img.shields.io/badge/gzip-2.2kB-brightgreen) ![tests](https://img.shields.io/badge/tests-350_passing-brightgreen) ![WCAG](https://img.shields.io/badge/WCAG_2.2-AA-blue) ![license](https://img.shields.io/badge/license-MIT-blue)
+![gzip](https://img.shields.io/badge/gzip-2.2kB-brightgreen) ![tests](https://img.shields.io/badge/tests-354_passing-brightgreen) ![WCAG](https://img.shields.io/badge/WCAG_2.2-AA-blue) ![license](https://img.shields.io/badge/license-MIT-blue)
 <!-- /badges -->
 
 ## Install
@@ -12,15 +12,13 @@ Accessible UI component library. Best-in-class performance. HTML-first, React su
 npm install monochrome
 ```
 
-## How it works
-
-monochrome uses the DOM as its source of truth. Instead of managing state in JavaScript, it reads ARIA attributes, responds to user interactions, and updates them directly. Minimal global event listeners handle every component on the page through event delegation. No initialization, no configuration, no framework required.
-
-Write semantic HTML, load the script, and everything becomes interactive.
+```ts
+import "monochrome"                               // Core (auto-activates)
+import { Accordion } from "monochrome/react"       // React
+import { Accordion } from "monochrome/vue"         // Vue
+```
 
 ## Usage
-
-### React
 
 ```tsx
 import "monochrome"
@@ -42,79 +40,9 @@ export function FAQ() {
 }
 ```
 
-Import `"monochrome"` once at your app's entry point. The React wrappers generate the correct HTML structure and ARIA attributes. All interactivity comes from the monochrome runtime. No React needed on the client.
+Import `"monochrome"` once at your app's entry point. The wrappers generate the correct HTML structure and ARIA attributes. All interactivity comes from the Monochrome runtime - no framework JavaScript needed on the client.
 
-### HTML
-
-monochrome works with any framework or no framework at all. Write semantic HTML with the ID convention and everything just works:
-
-```html
-<script src="https://unpkg.com/monochrome"></script>
-
-<button
-  id="mct:collapsible:demo"
-  aria-expanded="false"
-  aria-controls="mcc:collapsible:demo"
->
-  Toggle
-</button>
-<div id="mcc:collapsible:demo" aria-hidden="true" hidden="until-found">
-  Content appears here.
-</div>
-```
-
-
-### React Components
-
-<details>
-<summary>Collapsible</summary>
-
-```tsx
-import { Collapsible } from "monochrome/react"
-
-<Collapsible.Root open>
-  <Collapsible.Trigger>Toggle</Collapsible.Trigger>
-  <Collapsible.Panel>Content here</Collapsible.Panel>
-</Collapsible.Root>
-```
-</details>
-
-<details>
-<summary>Tabs</summary>
-
-```tsx
-import { Tabs } from "monochrome/react"
-
-<Tabs.Root defaultValue="tab1" orientation="horizontal">
-  <Tabs.List>
-    <Tabs.Tab value="tab1">Tab 1</Tabs.Tab>
-    <Tabs.Tab value="tab2">Tab 2</Tabs.Tab>
-  </Tabs.List>
-  <Tabs.Panel value="tab1">Content 1</Tabs.Panel>
-  <Tabs.Panel value="tab2">Content 2</Tabs.Panel>
-</Tabs.Root>
-```
-</details>
-
-<details>
-<summary>Menu</summary>
-
-```tsx
-import { Menu } from "monochrome/react"
-
-<Menu.Root>
-  <Menu.Trigger>Open Menu</Menu.Trigger>
-  <Menu.Popover>
-    <Menu.Item>Action 1</Menu.Item>
-    <Menu.Item disabled>Disabled</Menu.Item>
-    <Menu.Separator />
-    <Menu.CheckboxItem checked={false}>Bold</Menu.CheckboxItem>
-    <Menu.RadioItem checked>Small</Menu.RadioItem>
-    <Menu.RadioItem checked={false}>Large</Menu.RadioItem>
-  </Menu.Popover>
-</Menu.Root>
-```
-</details>
+The Vue API is identical: `import { Accordion } from "monochrome/vue"`. Monochrome also works with plain HTML or any framework that outputs HTML. See [AGENTS.md](./AGENTS.md) for full documentation.
 
 ## Components
 
@@ -122,10 +50,14 @@ Four interactive UI patterns in <!-- size -->2.2kB<!-- /size -->:
 
 | Component | Description | Tests |
 | --- | --- | ---: |
-| **Accordion** | Grouped collapsible content sections | <!-- tests:accordion -->65<!-- /tests:accordion --> |
-| **Collapsible** | Show and hide content with a button | <!-- tests:collapsible -->41<!-- /tests:collapsible --> |
-| **Menu** | Dropdown menus, menubars, and submenus | <!-- tests:menu -->175<!-- /tests:menu --> |
-| **Tabs** | Switch between multiple content panels | <!-- tests:tabs -->69<!-- /tests:tabs --> |
+| **Accordion** | Grouped collapsible content sections | <!-- tests:accordion -->66<!-- /tests:accordion --> |
+| **Collapsible** | Show and hide content with a button | <!-- tests:collapsible -->42<!-- /tests:collapsible --> |
+| **Menu** | Dropdown menus, menubars, and submenus | <!-- tests:menu -->176<!-- /tests:menu --> |
+| **Tabs** | Switch between multiple content panels | <!-- tests:tabs -->70<!-- /tests:tabs --> |
+
+## How it works
+
+Monochrome uses the DOM as its source of truth. Instead of managing state in JavaScript, it reads ARIA attributes, responds to user interactions, and updates them directly. Minimal global event listeners handle every component on the page through event delegation. No initialization, no configuration, no framework required.
 
 ## Accessibility
 
@@ -137,33 +69,21 @@ Every component follows [WAI-ARIA Authoring Practices](https://www.w3.org/WAI/AR
 - Preserves browser find-in-page (cmd+f)
 - Screen reader support out of the box
 
-## Performance
-
-- Event delegation: minimal global listeners shared across all components
-- No per-component instances, state objects, or memory allocations
-- Zero DOM queries, navigates through direct element pointers
-- Adding more components to the page costs nothing at runtime
-
-> Performance isn't a feature, it's a consequence of the architecture. When you don't have per-component state, per-component listeners, or a rendering framework, there's nothing left to be slow.
-
 ## Styling
 
-monochrome is headless — no CSS is shipped. You provide all styles. Key requirements for menus:
+Monochrome is headless - no CSS is shipped. You provide all styles. Key requirements for menus:
 
 ```css
-/* Menu popover visibility */
 [popover]:popover-open {
   display: flex;
 }
 
-/* Menu positioning (core sets --top, --right, --bottom, --left from getBoundingClientRect) */
 [role="menu"] {
   position: fixed;
   top: var(--bottom);
   left: var(--left);
 }
 
-/* Submenu positioning */
 [role="menu"] [role="menu"] {
   top: var(--top);
   left: var(--right);

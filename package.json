@@ -1,7 +1,7 @@
 {
   "name": "monochrome",
   "version": "0.2.0",
-  "description": "Accessible UI component library. Best-in-class performance. HTML-first, React supported.",
+  "description": "Accessible UI component library. Best-in-class performance. HTML-first, React and Vue supported.",
   "author": "Colin van Eenige",
   "license": "MIT",
   "repository": {
@@ -26,6 +26,7 @@
     "keyboard-navigation",
     "html",
     "react",
+    "vue",
     "typescript",
     "accordion",
     "collapsible",
@@ -34,30 +35,24 @@
   ],
   "type": "module",
   "sideEffects": [
-    "./dist/index.js",
-    "./src/index.ts"
+    "./dist/index.js"
   ],
   "exports": {
     ".": {
-      "types": "./src/index.ts",
+      "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
     },
-    "./src": "./src/index.ts",
     "./react": {
-      "types": "./src/react/index.ts",
+      "types": "./dist/react/index.d.ts",
       "default": "./dist/react/index.js"
-    }
-  },
-  "typesVersions": {
-    "*": {
-      "react": [
-        "./src/react/index.ts"
-      ]
+    },
+    "./vue": {
+      "types": "./dist/vue/index.d.ts",
+      "default": "./dist/vue/index.js"
     }
   },
   "files": [
-    "dist",
-    "src"
+    "dist"
   ],
   "scripts": {
     "build": "NODE_ENV=production bun build.ts",
@@ -69,13 +64,17 @@
   },
   "peerDependencies": {
     "react": ">=18",
-    "react-dom": ">=18"
+    "react-dom": ">=18",
+    "vue": ">=3.5"
   },
   "peerDependenciesMeta": {
     "react": {
       "optional": true
     },
     "react-dom": {
+      "optional": true
+    },
+    "vue": {
       "optional": true
     }
   },
@@ -85,17 +84,20 @@
     "@types/bun": "1.3.9",
     "@types/react": "19.2.14",
     "@types/react-dom": "19.2.3",
+    "@vue/compiler-sfc": "3.5.29",
     "react": "19.2.4",
-    "react-dom": "19.2.4"
+    "react-dom": "19.2.4",
+    "typescript": "^5.9.3",
+    "vue": "3.5.29"
   },
   "versionMeta": {
     "gzipSize": 2219,
     "tests": {
-      "total": 350,
-      "collapsible": 41,
-      "accordion": 65,
-      "menu": 175,
-      "tabs": 69
+      "total": 354,
+      "collapsible": 42,
+      "accordion": 66,
+      "menu": 176,
+      "tabs": 70
     }
   }
 }
