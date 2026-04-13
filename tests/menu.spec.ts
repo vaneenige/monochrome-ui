@@ -1270,6 +1270,45 @@ test.describe("Separate Menus", () => {
   })
 })
 
+test.describe("Mixed Menus", () => {
+  test.beforeEach(async ({ page, renderer }) => {
+    await page.goto(`/${renderer}/menu/mixed`)
+  })
+
+  test("should not open a menubar menu when hovering its trigger while a standalone dropdown is open", async ({
+    page,
+    renderer,
+  }) => {
+    await page.getByTestId("dropdown-trigger").click()
+    await expect(page.getByTestId("dropdown-list")).toBeVisible()
+    await page.getByTestId("menubar-a-trigger-1").hover()
+    await expect(page.getByTestId("menubar-a-list-1")).not.toBeVisible()
+    await expect(page.getByTestId("dropdown-list")).toBeVisible()
+  })
+
+  test("should not open a menubar menu when hovering a trigger in a different menubar", async ({
+    page,
+    renderer,
+  }) => {
+    await page.getByTestId("menubar-a-trigger-1").click()
+    await expect(page.getByTestId("menubar-a-list-1")).toBeVisible()
+    await page.getByTestId("menubar-b-trigger-1").hover()
+    await expect(page.getByTestId("menubar-b-list-1")).not.toBeVisible()
+    await expect(page.getByTestId("menubar-a-list-1")).toBeVisible()
+  })
+
+  test("should still open next menubar menu when hovering a trigger in the same menubar", async ({
+    page,
+    renderer,
+  }) => {
+    await page.getByTestId("menubar-a-trigger-1").click()
+    await expect(page.getByTestId("menubar-a-list-1")).toBeVisible()
+    await page.getByTestId("menubar-a-trigger-2").hover()
+    await expect(page.getByTestId("menubar-a-list-1")).not.toBeVisible()
+    await expect(page.getByTestId("menubar-a-list-2")).toBeVisible()
+  })
+})
+
 test.describe("Menu Inside Collapsible Content", () => {
   test.beforeEach(async ({ page, renderer }) => {
     await page.goto(`/${renderer}/menu/nested-content`)

@@ -362,7 +362,13 @@ if (typeof document !== "undefined") {
         if (!bail && popoverTriggers[0]) {
           let i = 0
           while (menuPopovers[i] && menuPopovers[i] === popoverTriggers[i]) i++
-          if (i === 0 && popoverTriggers[0].role !== "menuitem") return
+          if (
+            i === 0 &&
+            (popoverTriggers[0].role !== "menuitem" ||
+              popoverTriggers[0].parentElement?.parentElement !==
+                menuPopovers[0].parentElement?.parentElement)
+          )
+            return
           menuHideAll(i)
           menu(popoverTriggers[i], Focus.None)
         }
