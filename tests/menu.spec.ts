@@ -1433,10 +1433,8 @@ test.describe("Safety Triangle", () => {
       y: cy,
     })
 
-    const center = await page
-      .getByTestId("group")
-      .evaluate((el) => el.style.getPropertyValue("--center"))
-    expect(center).toBe(`${cy}px`)
+    const y = await page.getByTestId("group").evaluate((el) => el.style.getPropertyValue("--y"))
+    expect(y).toBe(`${cy}px`)
   })
 
   test("should remove `data-safe` when cursor has sustained velocity away from submenu", async ({

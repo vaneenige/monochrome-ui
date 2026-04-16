@@ -26,7 +26,8 @@ if (typeof document !== "undefined") {
   let rovingBoundary: Element | null = null
   let safeGroup: HTMLElement | null = null
   let safeRect: DOMRect | null = null
-  let safeDir = 0
+  let safeContent: HTMLElement | null = null
+  let safePopoverRect: DOMRect | null = null
 
   type RovingNavigator = (origin: Element | null | undefined) => HTMLElement | null
   type RovingFocusCallback = (
@@ -200,6 +201,8 @@ if (typeof document !== "undefined") {
         if (trigger.ariaExpanded === "true") {
           if (safeGroup) safeGroup.removeAttribute("data-safe")
           safeGroup = null
+          safeContent = null
+          safePopoverRect = null
           if (mode !== Focus.None) trigger.focus()
           content.hidePopover()
           trigger.ariaExpanded = "false"
@@ -216,15 +219,10 @@ if (typeof document !== "undefined") {
           content.style.setProperty("--left", `${rect.left}px`)
           const group = trigger.parentElement
           if (group) {
-            const cr = content.getBoundingClientRect()
-            const right = cr.left > rect.right
-            const sx = right ? cr.left : cr.right
             safeGroup = group
             safeRect = rect
-            safeDir = right ? -4 : 4
-            group.style.setProperty("--right", `${sx}px`)
-            group.style.setProperty("--top", `${cr.top}px`)
-            group.style.setProperty("--bottom", `${cr.bottom}px`)
+            safeContent = content
+            safePopoverRect = null
           }
           if (mode === Focus.Trigger) {
             trigger.focus()
@@ -319,19 +317,26 @@ if (typeof document !== "undefined") {
   addEventListener("pointermove", (event: PointerEvent) => {
     if (event.pointerType === "touch") return
     if (menuPopovers[0]) {
-      if (menuPopovers[1] && safeGroup && safeRect) {
+      if (menuPopovers[1] && safeGroup && safeRect && safeContent) {
         if (
           event.clientX >= safeRect.left &&
           event.clientX <= safeRect.right &&
           event.clientY >= safeRect.top &&
           event.clientY <= safeRect.bottom
         ) {
-          safeGroup.style.setProperty("--left", `${event.clientX + safeDir}px`)
-          safeGroup.style.setProperty("--center", `${event.clientY}px`)
+          safePopoverRect = safeContent.getBoundingClientRect()
+          safeGroup.style.setProperty("--left", `${safePopoverRect.left}px`)
+          safeGroup.style.setProperty("--right", `${safePopoverRect.right}px`)
+          safeGroup.style.setProperty("--top", `${safePopoverRect.top}px`)
+          safeGroup.style.setProperty("--bottom", `${safePopoverRect.bottom}px`)
+          safeGroup.style.setProperty("--x", `${event.clientX}px`)
+          safeGroup.style.setProperty("--y", `${event.clientY}px`)
           if (!safeGroup.hasAttribute("data-safe")) safeGroup.setAttribute("data-safe", "")
         } else if (
           safeGroup.hasAttribute("data-safe") &&
-          (event.target !== safeGroup || safeDir * event.movementX > 0)
+          safePopoverRect &&
+          (event.target !== safeGroup ||
+            (safePopoverRect.left - safeRect.right) * event.movementX < 0)
         ) {
           safeGroup.removeAttribute("data-safe")
         }

@@ -351,7 +351,7 @@ import { Menu } from "monochrome/vue"
 Monochrome is **headless** — no CSS shipped. You provide all styles. Required CSS for menus:
 
 ```css
-/* Menu popover positioning (core sets --bottom, --left, --top, --right via getBoundingClientRect) */
+/* Menu popover positioning (core sets --top, --right, --bottom, --left on the popover from the trigger rect) */
 [role="menu"] {
   position: fixed;
   inset: auto;
@@ -373,7 +373,7 @@ Monochrome is **headless** — no CSS shipped. You provide all styles. Required 
 }
 ```
 
-For submenu hover safety triangles, style `[data-safe]` with a `clip-path` polygon using the CSS custom properties the core sets (`--left`, `--center`, `--right`, `--top`, `--bottom`).
+For submenu hover safety triangles, style `[data-safe]` with a `clip-path` polygon using the CSS custom properties the core sets on the Group element: `--left`, `--right`, `--top`, `--bottom` (raw submenu rect) and `--x`, `--y` (current cursor position). These shadow the popover-level vars of the same name via inline style, so each element resolves its own. Use `clamp(var(--left), var(--x), var(--right))` to pick the near edge — no direction check needed.
 
 ## Browser Requirements
 
@@ -498,10 +498,10 @@ Menu triggers: keyboard opens with `Focus.First` (first item focused), mouse wit
 
 When a submenu is open, the core creates a triangular safe zone so users can move diagonally to it without accidentally closing it.
 
-1. The core calculates the submenu's bounding rect and direction
-2. Sets `data-safe` attribute + CSS custom properties (`--left`, `--center`, `--right`, `--top`, `--bottom`) on the Group element
-3. Each `pointermove` updates the triangle point to follow the cursor
-4. Direction is detected via `movementX` matching `safeDir` (`-4` for right-opening, `4` for left-opening)
+1. Each `pointermove` inside the submenu-trigger rect measures the submenu element and publishes its rect on the Group as `--left`, `--right`, `--top`, `--bottom` (shadowing the popover-level vars of the same name on each element's own inline style), plus `--x` / `--y` for the cursor, then adds the `data-safe` attribute
+2. The clip-path is direction-agnostic: `clamp(var(--left), var(--x), var(--right))` resolves the submenu's near edge
+3. Measurement is deferred to pointermove (not submenu open) so the rect reflects the settled transform, not the `@starting-style` scale
+4. Leaving the trigger rect removes `data-safe`, unless the cursor is still targeting the Group and moving toward the submenu (keep-alive via the stored popover+trigger rects)
 5. Touch events (`pointerType === "touch"`) are ignored
 
 ## hidden="until-found"
