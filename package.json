@@ -35,12 +35,17 @@
   ],
   "type": "module",
   "sideEffects": [
-    "./dist/index.js"
+    "./dist/index.js",
+    "./dist/router.js"
   ],
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
+    },
+    "./router": {
+      "types": "./dist/router.d.ts",
+      "default": "./dist/router.js"
     },
     "./react": {
       "types": "./dist/react/index.d.ts",
@@ -92,9 +97,11 @@
   },
   "versionMeta": {
     "gzipSize": 2236,
+    "routerGzipSize": 1052,
     "tests": {
-      "total": 357,
+      "total": 385,
       "collapsible": 42,
+      "router": 28,
       "accordion": 66,
       "menu": 179,
       "tabs": 70

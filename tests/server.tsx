@@ -82,6 +82,17 @@ Bun.serve({
           headers: { "Content-Type": "application/javascript" },
         })
       }
+    } else if (pathname === "/router.js") {
+      const file = Bun.file(`${distDir}/router.js`)
+      if (await file.exists()) {
+        response = new Response(await file.arrayBuffer(), {
+          headers: { "Content-Type": "application/javascript" },
+        })
+      }
+    } else if (pathname === "/test-counter.js") {
+      response = new Response("window.__counter = (window.__counter || 0) + 1;", {
+        headers: { "Content-Type": "application/javascript" },
+      })
     } else if (pathname === "/test.css") {
       response = new Response(await Bun.file(`${fixturesDir}/test.css`).arrayBuffer(), {
         headers: { "Content-Type": "text/css" },
@@ -99,9 +110,26 @@ Bun.serve({
           headers: { "Content-Type": "application/javascript" },
         })
       }
+    } else if (pathname === "/html/router/redirect") {
+      response = new Response(null, {
+        status: 302,
+        headers: { Location: "/html/router/about" },
+      })
+    } else if (pathname === "/html/router/redirect-loop") {
+      response = new Response(null, {
+        status: 302,
+        headers: { Location: "https://example.com/external" },
+      })
     } else {
       const name = pathname.slice(1)
-      if (name.startsWith("html/")) {
+      if (name.startsWith("html/router/")) {
+        const file = Bun.file(`${fixturesDir}/${name}.html`)
+        if (await file.exists()) {
+          response = new Response(await file.text(), {
+            headers: { "Content-Type": "text/html" },
+          })
+        }
+      } else if (name.startsWith("html/")) {
         const file = Bun.file(`${fixturesDir}/${name}.html`)
         if (await file.exists()) response = page(name, await file.text())
       } else {

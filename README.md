@@ -3,7 +3,7 @@
 Accessible UI component library. Best-in-class performance. HTML-first, React and Vue supported.
 
 <!-- badges -->
-![gzip](https://img.shields.io/badge/gzip-2.2kB-brightgreen) ![tests](https://img.shields.io/badge/tests-357_passing-brightgreen) ![WCAG](https://img.shields.io/badge/WCAG_2.2-AA-blue) ![license](https://img.shields.io/badge/license-MIT-blue)
+![gzip](https://img.shields.io/badge/gzip-2.2kB-brightgreen) ![tests](https://img.shields.io/badge/tests-385_passing-brightgreen) ![WCAG](https://img.shields.io/badge/WCAG_2.2-AA-blue) ![license](https://img.shields.io/badge/license-MIT-blue)
 <!-- /badges -->
 
 ## Install
@@ -12,10 +12,14 @@ Accessible UI component library. Best-in-class performance. HTML-first, React an
 npm install monochrome
 ```
 
+Monochrome ships in three tiers — import only what you use:
+
 ```ts
-import "monochrome"                               // Core (auto-activates)
-import { Accordion } from "monochrome/react"       // React
-import { Accordion } from "monochrome/vue"         // Vue
+import "monochrome"
+import "monochrome/router"
+
+import { Accordion } from "monochrome/react"
+import { Accordion } from "monochrome/vue"
 ```
 
 ## Usage

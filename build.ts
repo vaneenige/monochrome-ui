@@ -16,6 +16,19 @@ if (!core.success) {
   process.exit(1)
 }
 
+const router = await Bun.build({
+  entrypoints: ["src/router.ts"],
+  outdir: "dist",
+  format: "esm",
+  target: "browser",
+  minify: true,
+})
+
+if (!router.success) {
+  for (const log of router.logs) console.error(log)
+  process.exit(1)
+}
+
 const react = await Bun.build({
   entrypoints: ["src/react/index.ts"],
   outdir: "dist/react",
@@ -46,7 +59,7 @@ if (!vue.success) {
   process.exit(1)
 }
 
-const dts = await $`tsc --declaration --emitDeclarationOnly --outDir dist --allowImportingTsExtensions false src/**/*.ts`.quiet()
+const dts = await $`tsc --declaration --emitDeclarationOnly --outDir dist --target esnext --lib esnext,dom --module esnext --moduleResolution bundler --strict --skipLibCheck --allowImportingTsExtensions false src/**/*.ts`.quiet()
 if (dts.exitCode !== 0) {
   console.error(dts.stderr.toString())
   process.exit(1)
@@ -54,6 +67,9 @@ if (dts.exitCode !== 0) {
 
 const gzipped = Bun.gzipSync(await Bun.file("dist/index.js").arrayBuffer())
 const sizeKB = `${(gzipped.length / 1024).toFixed(1)}kB`
+
+const routerGzipped = Bun.gzipSync(await Bun.file("dist/router.js").arrayBuffer())
+const routerSizeKB = `${(routerGzipped.length / 1024).toFixed(1)}kB`
 
 const glob = new Bun.Glob("tests/*.spec.ts")
 const testCounts: Record<string, number> = {}
@@ -81,8 +97,11 @@ await Bun.write("README.md", readme)
 const pkg = await Bun.file("package.json").json()
 pkg.versionMeta = {
   gzipSize: gzipped.length,
+  routerGzipSize: routerGzipped.length,
   tests: { total: totalTests, ...testCounts },
 }
 await Bun.write("package.json", JSON.stringify(pkg, null, 2) + "\n")
 
-console.log(`Build complete — core: ${sizeKB} gzipped, ${totalTests} tests`)
+console.log(
+  `Build complete — core: ${sizeKB} gzipped, router: ${routerSizeKB} gzipped, ${totalTests} tests`,
+)

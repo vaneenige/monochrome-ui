@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Ignored</title>
+  <link rel="stylesheet" href="/test.css">
+  <script type="module" src="/router.js"></script>
+</head>
+<body>
+  <div data-area="root">
+    <main>
+      <h1 data-testid="page-marker">ignored</h1>
+      <a href="/html/router/about" target="_blank" data-testid="blank-link">Blank</a>
+      <a href="/html/router/about" download data-testid="download-link">Download</a>
+      <a href="https://example.com/other" data-testid="external-link">External</a>
+      <a href="/html/router/no-root" rel="external" data-testid="rel-external-link">Rel external</a>
+      <a href="/html/router/ignored#anchor" data-testid="hash-link">Hash</a>
+    </main>
+  </div>
+</body>
+</html>

@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Docs Guide</title>
+  <link rel="stylesheet" href="/test.css">
+  <script type="module" src="/router.js"></script>
+</head>
+<body>
+  <nav>
+    <a href="/html/router/index" data-testid="nav-home">Home</a>
+    <a href="/html/router/docs" data-testid="nav-docs">Docs</a>
+    <a href="/html/router/docs-guide" data-testid="nav-docs-guide">Guide</a>
+  </nav>
+  <div data-area="root" data-key="app">
+    <aside data-area="sidebar" data-key="docs-sidebar">
+      <a href="/html/router/docs" data-testid="sidebar-docs">Intro</a>
+      <a href="/html/router/docs-guide" data-testid="sidebar-docs-guide">Guide</a>
+    </aside>
+    <main data-area="content" data-key="docs-guide">
+      <h1 data-testid="page-title">Docs Guide</h1>
+    </main>
+  </div>
+</body>
+</html>
