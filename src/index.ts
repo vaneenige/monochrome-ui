@@ -217,6 +217,13 @@ if (typeof document !== "undefined") {
           content.style.setProperty("--right", `${rect.right}px`)
           content.style.setProperty("--bottom", `${rect.bottom}px`)
           content.style.setProperty("--left", `${rect.left}px`)
+          if (menuPopovers.length > 1) {
+            content.dataset.placement =
+              rect.right + content.offsetWidth <= innerWidth ? "right" : "left"
+          } else {
+            content.dataset.placement =
+              rect.bottom + content.offsetHeight <= innerHeight ? "bottom" : "top"
+          }
           const group = trigger.parentElement
           if (group) {
             safeGroup = group

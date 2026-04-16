@@ -1,0 +1,65 @@
+<style>[role="menu"] {
+        position: fixed;
+        inset: auto;
+        margin: 0;
+        top: var(--bottom);
+        left: var(--left);
+        min-width: 160px;
+        background: #fff;
+        border: 1px solid #ccc;
+      }
+      [role="menu"] [role="menu"] {
+        top: var(--top);
+        left: var(--right);
+      }
+      [role="menu"][data-placement="top"] {
+        top: var(--top);
+        translate: 0 -100%;
+      }
+      [role="menu"] [role="menu"][data-placement="left"] {
+        left: var(--left);
+        translate: -100% 0;
+      }
+      [popover]:popover-open { display: block; }
+      button { font: inherit; }</style>
+
+<div style="position:fixed;top:10px;left:10px">
+  <button data-testid="fits-trigger" type="button" id="mct:menu:1" aria-controls="mcc:menu:1" aria-expanded="false" aria-haspopup="menu" tabindex="0" role="button">Fits</button>
+  <ul data-testid="fits-list" role="menu" id="mcc:menu:1" aria-labelledby="mct:menu:1" aria-hidden="true" popover="manual">
+    <li role="none">
+      <button data-testid="fits-item-1" type="button" role="menuitem" tabindex="-1">Item 1</button>
+    </li>
+    <li role="none">
+      <button data-testid="fits-submenu-trigger" type="button" id="mct:menu:2" aria-controls="mcc:menu:2" aria-expanded="false" aria-haspopup="menu" tabindex="-1" role="menuitem">Submenu</button>
+      <ul data-testid="fits-submenu-list" role="menu" id="mcc:menu:2" aria-labelledby="mct:menu:2" aria-hidden="true" popover="manual">
+        <li role="none">
+          <button data-testid="fits-sub-item-1" type="button" role="menuitem" tabindex="-1">Sub 1</button>
+        </li>
+      </ul>
+    </li>
+  </ul>
+</div>
+
+<div style="position:fixed;bottom:10px;left:10px">
+  <button data-testid="bottom-trigger" type="button" id="mct:menu:3" aria-controls="mcc:menu:3" aria-expanded="false" aria-haspopup="menu" tabindex="0" role="button">Bottom</button>
+  <ul data-testid="bottom-list" role="menu" id="mcc:menu:3" aria-labelledby="mct:menu:3" aria-hidden="true" popover="manual">
+    <li role="none"><button type="button" role="menuitem" tabindex="-1">Item 1</button></li>
+    <li role="none"><button type="button" role="menuitem" tabindex="-1">Item 2</button></li>
+    <li role="none"><button type="button" role="menuitem" tabindex="-1">Item 3</button></li>
+    <li role="none"><button type="button" role="menuitem" tabindex="-1">Item 4</button></li>
+  </ul>
+</div>
+
+<div style="position:fixed;top:10px;right:10px">
+  <button data-testid="right-trigger" type="button" id="mct:menu:4" aria-controls="mcc:menu:4" aria-expanded="false" aria-haspopup="menu" tabindex="0" role="button">Right</button>
+  <ul data-testid="right-list" role="menu" id="mcc:menu:4" aria-labelledby="mct:menu:4" aria-hidden="true" popover="manual">
+    <li role="none">
+      <button data-testid="right-submenu-trigger" type="button" id="mct:menu:5" aria-controls="mcc:menu:5" aria-expanded="false" aria-haspopup="menu" tabindex="-1" role="menuitem">Submenu</button>
+      <ul data-testid="right-submenu-list" role="menu" id="mcc:menu:5" aria-labelledby="mct:menu:5" aria-hidden="true" popover="manual">
+        <li role="none">
+          <button data-testid="right-sub-item-1" type="button" role="menuitem" tabindex="-1">Sub 1</button>
+        </li>
+      </ul>
+    </li>
+  </ul>
+</div>
