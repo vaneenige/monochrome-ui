@@ -124,7 +124,7 @@ test.describe("Router", () => {
   test.describe("Anchor filtering", () => {
     test("should not intercept modifier-clicked links", async ({ page }) => {
       await page.goto("/html/router/index")
-      await page.getByTestId("nav-about").click({ modifiers: ["Meta"] })
+      await page.getByTestId("nav-about").click({ modifiers: ["ControlOrMeta"] })
       await expect(page).toHaveURL("/html/router/index")
       await expect(page.getByTestId("page-title")).toHaveText("Home")
     })
