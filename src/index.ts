@@ -10,9 +10,11 @@ enum Prefix {
   TriggerAccordion = "mct:a",
   TriggerCollapsible = "mct:c",
   TriggerMenu = "mct:m",
+  TriggerPopover = "mct:p",
   TriggerTabs = "mct:t",
   Content = "mcc:",
   ContentMenu = "mcc:m",
+  ContentPopover = "mcc:p",
   RootAccordion = "mcr:a",
 }
 
@@ -28,6 +30,7 @@ if (typeof document !== "undefined") {
   let safeRect: DOMRect | null = null
   let safeContent: HTMLElement | null = null
   let safePopoverRect: DOMRect | null = null
+  let popoverOpen: HTMLElement | null = null
 
   type RovingNavigator = (origin: Element | null | undefined) => HTMLElement | null
   type RovingFocusCallback = (
@@ -257,6 +260,32 @@ if (typeof document !== "undefined") {
     }
   }
 
+  const popover = (trigger: HTMLElement, show: boolean) => {
+    if ((trigger.ariaExpanded === "true") === show) return
+    const content = getContent(trigger)
+    if (content) {
+      if (show) {
+        if (popoverOpen && popoverOpen !== trigger) popover(popoverOpen, false)
+        content.showPopover()
+        trigger.ariaExpanded = "true"
+        content.ariaHidden = "false"
+        const rect = trigger.getBoundingClientRect()
+        content.style.setProperty("--top", `${rect.top}px`)
+        content.style.setProperty("--right", `${rect.right}px`)
+        content.style.setProperty("--bottom", `${rect.bottom}px`)
+        content.style.setProperty("--left", `${rect.left}px`)
+        content.style.setProperty("--pw", `${content.offsetWidth}px`)
+        content.style.setProperty("--ph", `${content.offsetHeight}px`)
+        popoverOpen = trigger
+      } else {
+        content.hidePopover()
+        trigger.ariaExpanded = "false"
+        content.ariaHidden = "true"
+        if (popoverOpen === trigger) popoverOpen = null
+      }
+    }
+  }
+
   addEventListener("click", (event: MouseEvent) => {
     shouldPreventDefault = null
     const keyboard = event.detail === 0
@@ -275,6 +304,7 @@ if (typeof document !== "undefined") {
 
         if (id.startsWith(Prefix.Trigger)) {
           if (id.startsWith(Prefix.TriggerMenu)) {
+            if (popoverOpen) popover(popoverOpen, false)
             const focusMode = keyboard ? Focus.First : Focus.None
             const inPopover = findAncestor(target.parentElement, Prefix.ContentMenu)
             if (inPopover) {
@@ -293,6 +323,11 @@ if (typeof document !== "undefined") {
             if (id.startsWith(Prefix.TriggerAccordion)) accordion(target)
             else if (id.startsWith(Prefix.TriggerCollapsible)) collapsible(target)
             else if (id.startsWith(Prefix.TriggerTabs)) tabs(target)
+            else if (id.startsWith(Prefix.TriggerPopover) && target.ariaDisabled !== "true") {
+              const isOpen = target.ariaExpanded === "true"
+              popover(target, !isOpen)
+              isOpen ? target.focus() : getContent(target)?.focus()
+            }
           }
           break
         } else if (id.startsWith(Prefix.ContentMenu) && menuPopovers[0]) {
@@ -305,12 +340,17 @@ if (typeof document !== "undefined") {
             el = el.parentElement
           }
           break
+        } else if (id.startsWith(Prefix.ContentPopover)) {
+          break
         }
 
         target = target.parentElement
       }
 
-      if (!target && menuPopovers[0]) menuHideAll()
+      if (!target) {
+        if (menuPopovers[0]) menuHideAll()
+        if (popoverOpen) popover(popoverOpen, false)
+      }
     }
 
     if (shouldPreventDefault) event.preventDefault()
@@ -528,8 +568,13 @@ if (typeof document !== "undefined") {
       }
     }
 
-    if (event.key === "Escape" && menuPopovers[0]) {
-      menu(menuPopovers.pop(), Focus.Trigger)
+    if (event.key === "Escape") {
+      if (menuPopovers[0]) menu(menuPopovers.pop(), Focus.Trigger)
+      if (popoverOpen) {
+        const trigger = popoverOpen
+        popover(trigger, false)
+        trigger.focus()
+      }
     }
 
     if (shouldPreventDefault) event.preventDefault()
@@ -544,12 +589,30 @@ if (typeof document !== "undefined") {
       ) {
         menuHideAll()
       }
+      if (
+        popoverOpen &&
+        !(isElement(event.target) && findAncestor(event.target, Prefix.ContentPopover))
+      ) {
+        popover(popoverOpen, false)
+      }
     },
     true,
   )
 
   addEventListener("resize", () => {
     if (menuPopovers[0]) menuHideAll()
+    if (popoverOpen) popover(popoverOpen, false)
+  })
+
+  addEventListener("focusout", (event: FocusEvent) => {
+    if (
+      popoverOpen &&
+      isElement(event.relatedTarget) &&
+      popoverOpen !== event.relatedTarget &&
+      !getContent(popoverOpen)?.contains(event.relatedTarget)
+    ) {
+      popover(popoverOpen, false)
+    }
   })
 
   addEventListener("beforematch", (event) => {

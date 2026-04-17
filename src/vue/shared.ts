@@ -38,3 +38,6 @@ export const MenuKey: InjectionKey<MenuContext> = Symbol("MenuContext")
 
 export type MenuPopupContext = { claimFirst: () => boolean }
 export const MenuPopupKey: InjectionKey<MenuPopupContext> = Symbol("MenuPopupContext")
+
+export type PopoverContext = { id: string }
+export const PopoverKey: InjectionKey<PopoverContext> = Symbol("PopoverContext")

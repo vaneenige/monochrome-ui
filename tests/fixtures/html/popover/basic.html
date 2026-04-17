@@ -1,0 +1,115 @@
+<style>.popover {
+  position: relative;
+  display: inline-block;
+}
+.menu {
+  position: relative;
+  display: inline-block;
+}
+[popover] {
+  position: fixed;
+  inset: auto;
+  margin: 0;
+  top: var(--bottom);
+  left: var(--left);
+}
+.scrollable-content {
+  width: 200px;
+  height: 80px;
+  overflow: auto;
+}
+.scrollable-content > div {
+  height: 400px;
+}</style>
+<div id="output" data-testid="output"></div>
+<button type="button" data-testid="focus-before">Focus before</button>
+<div class="popover">
+  <button
+    data-testid="click-trigger"
+    data-action="trigger-clicked"
+    type="button"
+    id="mct:popover:1"
+    aria-controls="mcc:popover:1"
+    aria-expanded="false"
+  >Open</button>
+  <div
+    data-testid="click-content"
+    id="mcc:popover:1"
+    aria-labelledby="mct:popover:1"
+    aria-hidden="true"
+    popover="manual"
+    tabindex="-1"
+  >
+    <p data-testid="click-text">Click content</p>
+    <button type="button" data-testid="copy-button" data-action="copy-clicked">Copy</button>
+  </div>
+</div>
+<button type="button" data-testid="focus-after">Focus after</button>
+<div class="popover">
+  <button
+    data-testid="second-trigger"
+    type="button"
+    id="mct:popover:2"
+    aria-controls="mcc:popover:2"
+    aria-expanded="false"
+  >Second</button>
+  <div
+    data-testid="second-content"
+    id="mcc:popover:2"
+    aria-labelledby="mct:popover:2"
+    aria-hidden="true"
+    popover="manual"
+    tabindex="-1"
+  >
+    <p>Second content</p>
+  </div>
+</div>
+<div class="popover">
+  <button
+    data-testid="disabled-trigger"
+    type="button"
+    id="mct:popover:3"
+    aria-controls="mcc:popover:3"
+    aria-expanded="false"
+    aria-disabled="true"
+  >Disabled</button>
+  <div
+    data-testid="disabled-content"
+    id="mcc:popover:3"
+    aria-labelledby="mct:popover:3"
+    aria-hidden="true"
+    popover="manual"
+    tabindex="-1"
+  >
+    <p>Disabled content</p>
+  </div>
+</div>
+<div class="popover">
+  <button
+    data-testid="scroll-trigger"
+    type="button"
+    id="mct:popover:4"
+    aria-controls="mcc:popover:4"
+    aria-expanded="false"
+  >Scroll</button>
+  <div
+    data-testid="scroll-content"
+    id="mcc:popover:4"
+    aria-labelledby="mct:popover:4"
+    aria-hidden="true"
+    popover="manual"
+    tabindex="-1"
+  >
+    <div data-testid="scroll-inner" class="scrollable-content">
+      <div>Long content to scroll through</div>
+    </div>
+  </div>
+</div>
+<div class="menu" id="mcr:menu:1">
+  <button data-testid="menu-trigger" type="button" id="mct:menu:1" aria-controls="mcc:menu:1" aria-expanded="false" aria-haspopup="menu" tabindex="0" role="button">Menu</button>
+  <ul data-testid="menu-list" role="menu" id="mcc:menu:1" aria-labelledby="mct:menu:1" aria-hidden="true" popover="manual">
+    <li role="none">
+      <button data-testid="menu-item-1" type="button" role="menuitem" tabindex="-1">Menu Item 1</button>
+    </li>
+  </ul>
+</div>
