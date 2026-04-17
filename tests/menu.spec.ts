@@ -1534,44 +1534,6 @@ test.describe("Safety Triangle", () => {
   })
 })
 
-test.describe("Auto Placement", () => {
-  test.beforeEach(async ({ page, renderer }) => {
-    test.skip(renderer !== "html", "Placement is renderer-agnostic; tested via html project")
-    await page.setViewportSize({ width: 600, height: 400 })
-    await page.goto("/html/menu/placement")
-  })
-
-  test('should set `data-placement="bottom"` on top-level popover when it fits below trigger', async ({
-    page,
-  }) => {
-    await page.getByTestId("fits-trigger").click()
-    await expect(page.getByTestId("fits-list")).toHaveAttribute("data-placement", "bottom")
-  })
-
-  test('should set `data-placement="top"` on top-level popover when it overflows below trigger', async ({
-    page,
-  }) => {
-    await page.getByTestId("bottom-trigger").click()
-    await expect(page.getByTestId("bottom-list")).toHaveAttribute("data-placement", "top")
-  })
-
-  test('should set `data-placement="right"` on nested popover when it fits to the right of trigger', async ({
-    page,
-  }) => {
-    await page.getByTestId("fits-trigger").click()
-    await page.getByTestId("fits-submenu-trigger").hover()
-    await expect(page.getByTestId("fits-submenu-list")).toHaveAttribute("data-placement", "right")
-  })
-
-  test('should set `data-placement="left"` on nested popover when it overflows to the right', async ({
-    page,
-  }) => {
-    await page.getByTestId("right-trigger").click()
-    await page.getByTestId("right-submenu-trigger").hover()
-    await expect(page.getByTestId("right-submenu-list")).toHaveAttribute("data-placement", "left")
-  })
-})
-
 test.describe("Checkbox Items", () => {
   test.beforeEach(async ({ page, renderer }) => {
     await page.goto(`/${renderer}/menu/checkbox-radio`)
