@@ -96,14 +96,15 @@
     "vue": "3.5.29"
   },
   "versionMeta": {
-    "gzipSize": 2436,
+    "gzipSize": 2640,
     "routerGzipSize": 1052,
     "tests": {
-      "total": 414,
+      "total": 438,
       "collapsible": 42,
       "router": 28,
       "accordion": 66,
       "menu": 179,
+      "tooltip": 24,
       "tabs": 70,
       "popover": 29
     }

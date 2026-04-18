@@ -41,3 +41,6 @@ export const MenuPopupKey: InjectionKey<MenuPopupContext> = Symbol("MenuPopupCon
 
 export type PopoverContext = { id: string }
 export const PopoverKey: InjectionKey<PopoverContext> = Symbol("PopoverContext")
+
+export type TooltipContext = { id: string }
+export const TooltipKey: InjectionKey<TooltipContext> = Symbol("TooltipContext")

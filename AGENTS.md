@@ -346,6 +346,94 @@ import { Menu } from "monochrome/vue"
 
 **stopPropagation pattern:** Call `e.stopPropagation()` on an item's click handler to prevent the menu from closing.
 
+### Popover
+
+Click-triggered floating panel anchored to a trigger. Uses the Popover API. Supports interactive children; focus moves into the panel on open and returns to the trigger on close.
+
+<table>
+<tr><th>React</th><th>Vue</th></tr>
+<tr><td>
+
+```tsx
+import { Popover } from "monochrome/react"
+
+<Popover.Root>
+  <Popover.Trigger>Open</Popover.Trigger>
+  <Popover.Content>
+    <p>Hello</p>
+    <button type="button">Action</button>
+  </Popover.Content>
+</Popover.Root>
+```
+
+</td><td>
+
+```vue
+<script setup lang="ts">
+import { Popover } from "monochrome/vue"
+</script>
+
+<template>
+  <Popover.Root>
+    <Popover.Trigger>Open</Popover.Trigger>
+    <Popover.Content>
+      <p>Hello</p>
+      <button type="button">Action</button>
+    </Popover.Content>
+  </Popover.Root>
+</template>
+```
+
+</td></tr>
+</table>
+
+**Keyboard:** Enter/Space opens, Escape closes and returns focus to trigger. Tab cycles through focusable children and closes when focus leaves.
+
+**Dismissal:** click outside, Escape, tab past the last focusable child, scroll outside the popover, viewport resize, or opening another popover/menu.
+
+**Disabled:** set `aria-disabled="true"` on the trigger to prevent opening.
+
+### Tooltip
+
+Non-interactive description shown on hover or focus. Uses the Popover API with `role="tooltip"` and `aria-describedby`. Never steals focus; per WAI-ARIA, content should not contain interactive elements.
+
+<table>
+<tr><th>React</th><th>Vue</th></tr>
+<tr><td>
+
+```tsx
+import { Tooltip } from "monochrome/react"
+
+<Tooltip.Root>
+  <Tooltip.Trigger>Save</Tooltip.Trigger>
+  <Tooltip.Content>Saves to cloud (⌘S)</Tooltip.Content>
+</Tooltip.Root>
+```
+
+</td><td>
+
+```vue
+<script setup lang="ts">
+import { Tooltip } from "monochrome/vue"
+</script>
+
+<template>
+  <Tooltip.Root>
+    <Tooltip.Trigger>Save</Tooltip.Trigger>
+    <Tooltip.Content>Saves to cloud (⌘S)</Tooltip.Content>
+  </Tooltip.Root>
+</template>
+```
+
+</td></tr>
+</table>
+
+**Behavior:** shows on `pointerenter` or `focusin`, hides on `pointerleave` / `focusout`. Touch is ignored. Dismissed by scroll and resize. No built-in delay — use CSS `transition-delay` on `:popover-open` if you want one.
+
+**Disabled triggers:** `aria-disabled="true"` on the trigger still shows the tooltip — this is intentional and valuable UX ("why is this button disabled?"). Activation is blocked; the description isn't.
+
+**`aria-describedby`** is always set on the trigger regardless of tooltip visibility, so screen readers announce the description whenever the trigger is read.
+
 ## Styling
 
 Monochrome is **headless** — no CSS shipped. You provide all styles. Required CSS for menus:
@@ -374,6 +462,28 @@ Monochrome is **headless** — no CSS shipped. You provide all styles. Required 
 ```
 
 For submenu hover safety triangles, style `[data-safe]` with a `clip-path` polygon using the CSS custom properties the core sets on the Group element: `--left`, `--right`, `--top`, `--bottom` (raw submenu rect) and `--x`, `--y` (current cursor position). These shadow the popover-level vars of the same name via inline style, so each element resolves its own. Use `clamp(var(--left), var(--x), var(--right))` to pick the near edge — no direction check needed.
+
+**Popover and Tooltip positioning** — core sets the same six vars on the content element:
+
+- `--top`, `--right`, `--bottom`, `--left` — trigger rect
+- `--pw`, `--ph` — popover width and height
+
+```css
+/* Popover below the trigger */
+[popover] { position: fixed; inset: auto; margin: 0; top: var(--bottom); left: var(--left); }
+
+/* Tooltip above the trigger with 8px gap */
+[role="tooltip"] {
+  position: fixed;
+  inset: auto;
+  margin: 0;
+  top: calc(var(--top) - var(--ph) - 8px);
+  left: var(--left);
+  pointer-events: none;  /* see note below */
+}
+```
+
+**`pointer-events: none` on tooltip content is a defensive default.** Not required for the common case where the tooltip sits above the trigger with a gap — the core already skips hover recomputation when the target is inside tooltip content, so the trigger's hover state survives pointer crossings. The CSS rule matters when custom positioning makes the tooltip overlap the trigger or a neighbouring interactive element; add it in that case.
 
 ## Browser Requirements
 
@@ -439,7 +549,7 @@ Both wrappers are thin: they render the correct DOM structure + ARIA attributes 
 ```bash
 bun install            # Install dependencies
 bun build.ts           # Build core + React + Vue to dist/, update README badges
-bun test               # Run all 354 Playwright tests × 3 renderers (HTML + React + Vue)
+bun test               # Run all Playwright tests × 3 renderers (HTML + React + Vue)
 bun run lint           # Biome lint check
 bun run format         # Biome format
 ```
@@ -449,21 +559,28 @@ bun run format         # Biome format
 ## Design Principles
 
 1. **DOM is the source of truth** — The core reads ARIA attributes to determine state. No internal state objects.
-2. **Event delegation** — Six global listeners handle everything: `click`, `pointermove`, `keydown`, `scroll`, `resize`, `beforematch`. Zero per-component listeners.
+2. **Event delegation** — Global listeners only: `click`, `pointermove`, `keydown`, `scroll`, `resize`, `focusin`, `focusout`, `beforematch`. Zero per-component listeners.
 3. **Zero timers** — All behavior is synchronous. No `setTimeout`, no `requestAnimationFrame`, no debounce.
 4. **ID conventions drive behavior** — Elements are identified by ID prefix (`mct:`, `mcc:`, `mcr:`), not classes or data attributes.
 5. **`hidden="until-found"`** — Never `display: none`. Preserves browser find-in-page.
 
 ## ID Convention
 
-| Prefix | Role | Matched by core |
-|--------|------|-----------------|
-| `mct:a` | Accordion trigger | `mct:accordion:*` |
-| `mct:c` | Collapsible trigger | `mct:collapsible:*` |
-| `mct:m` | Menu trigger | `mct:menu:*` |
-| `mct:t` | Tabs trigger | `mct:tabs:*` |
-| `mcc:` | Content panel | Linked via `aria-controls` |
-| `mcr:` | Root container | Component boundary |
+| Prefix  | Role                | Matched by core        |
+|---------|---------------------|------------------------|
+| `mct:a` | Accordion trigger   | `mct:accordion:*`      |
+| `mct:c` | Collapsible trigger | `mct:collapsible:*`    |
+| `mct:m` | Menu trigger        | `mct:menu:*`           |
+| `mct:p` | Popover trigger     | `mct:popover:*`        |
+| `mct:ta`| Tabs trigger        | `mct:tabs:*`           |
+| `mct:to`| Tooltip trigger     | `mct:tooltip:*`        |
+| `mcc:m` | Menu content        | `mcc:menu:*`           |
+| `mcc:p` | Popover content     | `mcc:popover:*`        |
+| `mcc:to`| Tooltip content     | `mcc:tooltip:*`        |
+| `mcc:`  | Content panel       | Linked via `aria-controls` |
+| `mcr:`  | Root container      | Component boundary     |
+
+**Tabs and Tooltip share the `mct:t` namespace** — hence the two-char prefixes `mct:ta` and `mct:to`. Any new component whose name starts with `t` must pick a third letter.
 
 ## Required DOM Structure
 
@@ -512,10 +629,10 @@ The core's `beforematch` listener auto-opens the containing component when find-
 
 ## Testing
 
-354 tests across three renderers: **HTML**, **React**, **Vue**. Every test runs against all three.
+Tests run across three renderers: **HTML**, **React**, **Vue**. Every test runs against all three.
 
 ```bash
-bun test                            # All 354 tests × 3 renderers
+bun test                            # All tests × 3 renderers
 bun test -- --project=vue           # Vue only
 bun test -- --project=react         # React only
 bun test -- --project=html          # HTML only
@@ -529,6 +646,12 @@ bun test -- --grep "Safety"         # Specific tests, all renderers
 - Vue SFC compilation uses `@vue/compiler-sfc` registered as a Bun plugin
 - Global `data-action` click handler injected into the HTML template (no per-fixture `<script>` tags)
 
+**Local dev gotcha** — Playwright's `reuseExistingServer` keeps the server alive between runs, and the server caches responses (including `dist/index.js`). After editing core source, kill port 4000 before re-running tests or your changes won't be served:
+
+```bash
+lsof -ti:4000 | xargs kill
+```
+
 **Static vs dynamic fixtures:** Static fixtures `export default` a component → SSR-rendered. Dynamic fixtures (with `ref()`, `useState()`) don't export → client-side mounted via `<script type="module">`.
 
 ## Common Pitfalls
@@ -536,13 +659,17 @@ bun test -- --grep "Safety"         # Specific tests, all renderers
 Things that must not be broken:
 
 - **Never add timers** — no `setTimeout`, `requestAnimationFrame`, or debounce
-- **Never add per-component event listeners** — everything goes through 6 global listeners
+- **Never add per-component event listeners** — everything goes through the global listener set
 - **Accordion nesting is sacred** — Item > Header > Trigger, exactly 3 levels
 - **Tab buttons must be direct siblings** — core iterates via `parentElement.firstElementChild`
 - **Menu radio groups are by DOM adjacency** — separators or non-radio items break the group
 - **`aria-controls` must match content `id`** — wrong values break everything
+- **Tooltip uses `aria-describedby`, not `aria-controls`** — the core looks up tooltip content through a different attribute
+- **Tooltip content must be non-interactive** — per WAI-ARIA; don't place buttons or links inside
+- **`pointer-events: none` on tooltip content is defensive, not required** — only matters when custom positioning makes the tooltip overlap the trigger or other clickable elements
 - **Disabled = `aria-disabled="true"`** — never the HTML `disabled` attribute
 - **Disabled menu items render as `<span>`** — not `<button>`, to prevent click bubbling
+- **Tooltips DO show on `aria-disabled` triggers** — intentional; lets you explain why a button is disabled
 - **Never `display: none`** — always `hidden="until-found"` for find-in-page
 - **Vue typeahead text** — menu item text must be inline (`<Menu.Item>Apple</Menu.Item>`) to avoid leading whitespace breaking `textContent.startsWith()`
 
@@ -550,28 +677,34 @@ Things that must not be broken:
 
 ```
 src/
-  index.ts                # Core (~550 lines, single file)
+  index.ts                # Core (single file)
   react/
     index.ts              # Re-exports
     shared.ts             # BaseProps, buildId, HiddenUntilFound
     accordion.ts          # createElement() render functions
     collapsible.ts
     menu.ts
+    popover.ts
     tabs.ts
+    tooltip.ts
   vue/
     index.ts              # Re-exports as namespaced objects
     shared.ts             # buildId, HiddenUntilFound, InjectionKeys
     accordion.ts          # h() render functions via defineComponent()
     collapsible.ts
     menu.ts
+    popover.ts
     tabs.ts
+    tooltip.ts
 tests/
   server.tsx              # Test server (SSR + bundles)
   fixtures.ts             # Playwright fixture with `renderer` option
-  accordion.spec.ts       # 66 tests × 3 renderers
-  collapsible.spec.ts     # 42 tests × 3 renderers
-  menu.spec.ts            # 176 tests × 3 renderers
-  tabs.spec.ts            # 70 tests × 3 renderers
+  accordion.spec.ts
+  collapsible.spec.ts
+  menu.spec.ts
+  popover.spec.ts
+  tabs.spec.ts
+  tooltip.spec.ts
   fixtures/
     test.css              # Minimal test styles
     html/                 # Static HTML fixtures

@@ -1,0 +1,80 @@
+<style>
+  .tooltip { position: relative; display: inline-block; }
+  .popover { position: relative; display: inline-block; }
+  [popover] { position: fixed; inset: auto; margin: 0; top: var(--bottom); left: var(--left); }
+  [role="tooltip"] { pointer-events: none; }
+</style>
+<div id="output" data-testid="output"></div>
+<button type="button" data-testid="focus-before">Focus before</button>
+<div class="tooltip">
+  <button
+    data-testid="tooltip-trigger"
+    data-action="trigger-clicked"
+    type="button"
+    id="mct:tooltip:1"
+    aria-describedby="mcc:tooltip:1"
+  >Hover me</button>
+  <div
+    data-testid="tooltip-content"
+    id="mcc:tooltip:1"
+    role="tooltip"
+    popover="manual"
+  >Tooltip text</div>
+</div>
+<button type="button" data-testid="focus-between">Focus between</button>
+<div class="tooltip">
+  <button
+    data-testid="second-trigger"
+    type="button"
+    id="mct:tooltip:2"
+    aria-describedby="mcc:tooltip:2"
+  >Second</button>
+  <div
+    data-testid="second-content"
+    id="mcc:tooltip:2"
+    role="tooltip"
+    popover="manual"
+  >Second tooltip</div>
+</div>
+<div class="tooltip">
+  <button
+    data-testid="disabled-trigger"
+    type="button"
+    id="mct:tooltip:3"
+    aria-describedby="mcc:tooltip:3"
+    aria-disabled="true"
+  >Disabled</button>
+  <div
+    data-testid="disabled-content"
+    id="mcc:tooltip:3"
+    role="tooltip"
+    popover="manual"
+  >Disabled tooltip</div>
+</div>
+<div class="popover">
+  <button
+    data-testid="popover-trigger"
+    type="button"
+    id="mct:popover:1"
+    aria-controls="mcc:popover:1"
+    aria-expanded="false"
+  >Popover</button>
+  <div
+    data-testid="popover-content"
+    id="mcc:popover:1"
+    aria-labelledby="mct:popover:1"
+    aria-hidden="true"
+    popover="manual"
+    tabindex="-1"
+  >
+    <p>Popover content</p>
+  </div>
+</div>
+<div class="menu" id="mcr:menu:1">
+  <button data-testid="menu-trigger" type="button" id="mct:menu:1" aria-controls="mcc:menu:1" aria-expanded="false" aria-haspopup="menu" tabindex="0" role="button">Menu</button>
+  <ul data-testid="menu-list" role="menu" id="mcc:menu:1" aria-labelledby="mct:menu:1" aria-hidden="true" popover="manual">
+    <li role="none">
+      <button data-testid="menu-item-1" type="button" role="menuitem" tabindex="-1">Menu Item 1</button>
+    </li>
+  </ul>
+</div>

@@ -3,7 +3,7 @@
 Accessible UI component library. Best-in-class performance. HTML-first, React and Vue supported.
 
 <!-- badges -->
-![gzip](https://img.shields.io/badge/gzip-2.4kB-brightgreen) ![tests](https://img.shields.io/badge/tests-414_passing-brightgreen) ![WCAG](https://img.shields.io/badge/WCAG_2.2-AA-blue) ![license](https://img.shields.io/badge/license-MIT-blue)
+![gzip](https://img.shields.io/badge/gzip-2.6kB-brightgreen) ![tests](https://img.shields.io/badge/tests-438_passing-brightgreen) ![WCAG](https://img.shields.io/badge/WCAG_2.2-AA-blue) ![license](https://img.shields.io/badge/license-MIT-blue)
 <!-- /badges -->
 
 ## Install
@@ -50,14 +50,16 @@ The Vue API is identical: `import { Accordion } from "monochrome/vue"`. Monochro
 
 ## Components
 
-Four interactive UI patterns in <!-- size -->2.4kB<!-- /size -->:
+Six interactive UI patterns in <!-- size -->2.6kB<!-- /size -->:
 
 | Component | Description | Tests |
 | --- | --- | ---: |
 | **Accordion** | Grouped collapsible content sections | <!-- tests:accordion -->66<!-- /tests:accordion --> |
 | **Collapsible** | Show and hide content with a button | <!-- tests:collapsible -->42<!-- /tests:collapsible --> |
 | **Menu** | Dropdown menus, menubars, and submenus | <!-- tests:menu -->179<!-- /tests:menu --> |
+| **Popover** | Floating panels anchored to a trigger | <!-- tests:popover -->29<!-- /tests:popover --> |
 | **Tabs** | Switch between multiple content panels | <!-- tests:tabs -->70<!-- /tests:tabs --> |
+| **Tooltip** | Non-interactive description on hover or focus | <!-- tests:tooltip -->24<!-- /tests:tooltip --> |
 
 ## How it works
 

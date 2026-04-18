@@ -11,10 +11,12 @@ enum Prefix {
   TriggerCollapsible = "mct:c",
   TriggerMenu = "mct:m",
   TriggerPopover = "mct:p",
-  TriggerTabs = "mct:t",
+  TriggerTabs = "mct:ta",
+  TriggerTooltip = "mct:to",
   Content = "mcc:",
   ContentMenu = "mcc:m",
   ContentPopover = "mcc:p",
+  ContentTooltip = "mcc:to",
   RootAccordion = "mcr:a",
 }
 
@@ -31,6 +33,10 @@ if (typeof document !== "undefined") {
   let safeContent: HTMLElement | null = null
   let safePopoverRect: DOMRect | null = null
   let popoverOpen: HTMLElement | null = null
+  let tooltipHovered: HTMLElement | null = null
+  let tooltipFocused: HTMLElement | null = null
+  let tooltipShown: HTMLElement | null = null
+  let tooltipSuppressed: HTMLElement | null = null
 
   type RovingNavigator = (origin: Element | null | undefined) => HTMLElement | null
   type RovingFocusCallback = (
@@ -47,8 +53,10 @@ if (typeof document !== "undefined") {
   const isMenuItem = (el: unknown): el is HTMLElement =>
     isElement(el) && el.role?.startsWith("menuitem") === true && el.ariaDisabled !== "true"
 
-  const getContent = (el: HTMLElement): HTMLElement | null =>
-    document.getElementById(el.getAttribute("aria-controls") || "")
+  const getContent = (el: HTMLElement, attr: string) => {
+    const id = el.getAttribute(attr)
+    if (id) return document.getElementById(id)
+  }
 
   const findAncestor = (el: HTMLElement | null, prefix: string): HTMLElement | null => {
     while (el) {
@@ -56,6 +64,17 @@ if (typeof document !== "undefined") {
       el = el.parentElement
     }
     return null
+  }
+
+  const position = (trigger: HTMLElement, content: HTMLElement) => {
+    const rect = trigger.getBoundingClientRect()
+    content.style.setProperty("--top", `${rect.top}px`)
+    content.style.setProperty("--right", `${rect.right}px`)
+    content.style.setProperty("--bottom", `${rect.bottom}px`)
+    content.style.setProperty("--left", `${rect.left}px`)
+    content.style.setProperty("--pw", `${content.offsetWidth}px`)
+    content.style.setProperty("--ph", `${content.offsetHeight}px`)
+    return rect
   }
 
   const roving: Roving = (focus) => {
@@ -142,7 +161,7 @@ if (typeof document !== "undefined") {
   const [tabNext, tabPrevious] = roving(tabsRoving)
 
   const collapsible = (trigger: HTMLElement) => {
-    const content = getContent(trigger)
+    const content = getContent(trigger, "aria-controls")
     if (content) {
       const isOpen = trigger.ariaExpanded !== "true"
       trigger.ariaExpanded = isOpen ? "true" : "false"
@@ -180,7 +199,7 @@ if (typeof document !== "undefined") {
       let tab = trigger.parentElement?.firstElementChild
       while (isElement(tab)) {
         if (tab === trigger || tab.ariaSelected === "true") {
-          const content = getContent(tab)
+          const content = getContent(tab, "aria-controls")
           if (content) {
             const isSelected = tab.ariaSelected !== "true"
             tab.ariaSelected = isSelected ? "true" : "false"
@@ -199,7 +218,7 @@ if (typeof document !== "undefined") {
 
   const menu = (trigger: HTMLElement | undefined, mode = Focus.Trigger) => {
     if (trigger?.id.startsWith(Prefix.TriggerMenu)) {
-      const content = getContent(trigger)
+      const content = getContent(trigger, "aria-controls")
       if (content) {
         if (trigger.ariaExpanded === "true") {
           if (safeGroup) safeGroup.removeAttribute("data-safe")
@@ -215,13 +234,7 @@ if (typeof document !== "undefined") {
           content.showPopover()
           trigger.ariaExpanded = "true"
           content.ariaHidden = "false"
-          const rect = trigger.getBoundingClientRect()
-          content.style.setProperty("--top", `${rect.top}px`)
-          content.style.setProperty("--right", `${rect.right}px`)
-          content.style.setProperty("--bottom", `${rect.bottom}px`)
-          content.style.setProperty("--left", `${rect.left}px`)
-          content.style.setProperty("--pw", `${content.offsetWidth}px`)
-          content.style.setProperty("--ph", `${content.offsetHeight}px`)
+          const rect = position(trigger, content)
           const group = trigger.parentElement
           if (group) {
             safeGroup = group
@@ -262,20 +275,14 @@ if (typeof document !== "undefined") {
 
   const popover = (trigger: HTMLElement, show: boolean) => {
     if ((trigger.ariaExpanded === "true") === show) return
-    const content = getContent(trigger)
+    const content = getContent(trigger, "aria-controls")
     if (content) {
       if (show) {
         if (popoverOpen && popoverOpen !== trigger) popover(popoverOpen, false)
         content.showPopover()
         trigger.ariaExpanded = "true"
         content.ariaHidden = "false"
-        const rect = trigger.getBoundingClientRect()
-        content.style.setProperty("--top", `${rect.top}px`)
-        content.style.setProperty("--right", `${rect.right}px`)
-        content.style.setProperty("--bottom", `${rect.bottom}px`)
-        content.style.setProperty("--left", `${rect.left}px`)
-        content.style.setProperty("--pw", `${content.offsetWidth}px`)
-        content.style.setProperty("--ph", `${content.offsetHeight}px`)
+        position(trigger, content)
         popoverOpen = trigger
       } else {
         content.hidePopover()
@@ -283,6 +290,35 @@ if (typeof document !== "undefined") {
         content.ariaHidden = "true"
         if (popoverOpen === trigger) popoverOpen = null
       }
+    }
+  }
+
+  const tooltip = (trigger: HTMLElement, show: boolean) => {
+    const content = getContent(trigger, "aria-describedby")
+    if (content) {
+      if (show) {
+        content.showPopover()
+        position(trigger, content)
+      } else {
+        content.hidePopover()
+      }
+    }
+  }
+
+  const tooltipSync = () => {
+    if (
+      tooltipSuppressed &&
+      tooltipSuppressed !== tooltipHovered &&
+      tooltipSuppressed !== tooltipFocused
+    ) {
+      tooltipSuppressed = null
+    }
+    const active = tooltipHovered ?? tooltipFocused
+    const next = active && active !== tooltipSuppressed ? active : null
+    if (next !== tooltipShown) {
+      if (tooltipShown) tooltip(tooltipShown, false)
+      if (next) tooltip(next, true)
+      tooltipShown = next
     }
   }
 
@@ -326,7 +362,10 @@ if (typeof document !== "undefined") {
             else if (id.startsWith(Prefix.TriggerPopover) && target.ariaDisabled !== "true") {
               const isOpen = target.ariaExpanded === "true"
               popover(target, !isOpen)
-              isOpen ? target.focus() : getContent(target)?.focus()
+              isOpen ? target.focus() : getContent(target, "aria-controls")?.focus()
+            } else if (id.startsWith(Prefix.TriggerTooltip) && tooltipShown) {
+              tooltipSuppressed = tooltipShown
+              tooltipSync()
             }
           }
           break
@@ -341,6 +380,8 @@ if (typeof document !== "undefined") {
           }
           break
         } else if (id.startsWith(Prefix.ContentPopover)) {
+          break
+        } else if (id.startsWith(Prefix.ContentTooltip)) {
           break
         }
 
@@ -358,6 +399,13 @@ if (typeof document !== "undefined") {
 
   addEventListener("pointermove", (event: PointerEvent) => {
     if (event.pointerType === "touch") return
+    if (isElement(event.target) && !findAncestor(event.target, Prefix.ContentTooltip)) {
+      const nextHover = findAncestor(event.target, Prefix.TriggerTooltip)
+      if (nextHover !== tooltipHovered) {
+        tooltipHovered = nextHover
+        tooltipSync()
+      }
+    }
     if (menuPopovers[0]) {
       if (menuPopovers[1] && safeGroup && safeRect && safeContent) {
         if (
@@ -484,7 +532,7 @@ if (typeof document !== "undefined") {
               if (target.ariaExpanded !== "true") {
                 menu(target, Focus.First)
               } else {
-                const content = getContent(target)
+                const content = getContent(target, "aria-controls")
                 if (content) menuRoving(content.firstElementChild, menuNext)
               }
             }
@@ -494,7 +542,7 @@ if (typeof document !== "undefined") {
               if (target.ariaExpanded !== "true") {
                 menu(target, Focus.Last)
               } else {
-                const content = getContent(target)
+                const content = getContent(target, "aria-controls")
                 if (content) menuRoving(content.lastElementChild, menuPrevious)
               }
             }
@@ -575,6 +623,10 @@ if (typeof document !== "undefined") {
         popover(trigger, false)
         trigger.focus()
       }
+      if (tooltipShown) {
+        tooltipSuppressed = tooltipShown
+        tooltipSync()
+      }
     }
 
     if (shouldPreventDefault) event.preventDefault()
@@ -595,6 +647,11 @@ if (typeof document !== "undefined") {
       ) {
         popover(popoverOpen, false)
       }
+      if (tooltipShown) {
+        tooltipHovered = null
+        tooltipFocused = null
+        tooltipSync()
+      }
     },
     true,
   )
@@ -602,6 +659,24 @@ if (typeof document !== "undefined") {
   addEventListener("resize", () => {
     if (menuPopovers[0]) menuHideAll()
     if (popoverOpen) popover(popoverOpen, false)
+    if (tooltipShown) {
+      tooltipHovered = null
+      tooltipFocused = null
+      tooltipSync()
+    }
+  })
+
+  addEventListener("focusin", (event: FocusEvent) => {
+    const target = event.target
+    if (isTrigger(target, Prefix.TriggerTooltip)) {
+      if (tooltipFocused !== target) {
+        tooltipFocused = target
+        tooltipSync()
+      }
+    } else if (tooltipFocused) {
+      tooltipFocused = null
+      tooltipSync()
+    }
   })
 
   addEventListener("focusout", (event: FocusEvent) => {
@@ -609,9 +684,13 @@ if (typeof document !== "undefined") {
       popoverOpen &&
       isElement(event.relatedTarget) &&
       popoverOpen !== event.relatedTarget &&
-      !getContent(popoverOpen)?.contains(event.relatedTarget)
+      !getContent(popoverOpen, "aria-controls")?.contains(event.relatedTarget)
     ) {
       popover(popoverOpen, false)
+    }
+    if (tooltipFocused && event.target === tooltipFocused && !event.relatedTarget) {
+      tooltipFocused = null
+      tooltipSync()
     }
   })
 
