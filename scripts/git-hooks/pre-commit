@@ -1,0 +1,19 @@
+#!/bin/sh
+set -e
+
+# Abort if package.json has unstaged edits: the build below rewrites
+# versionMeta, and the subsequent `git add package.json` would sweep
+# any unrelated working-tree changes into the commit. Force the dev
+# to stash, commit, or revert them first.
+if ! git diff --quiet -- package.json; then
+  echo "pre-commit: package.json has unstaged changes. Stash, commit, or revert them before committing." >&2
+  exit 1
+fi
+
+bun run typecheck
+
+# Build runs lint, produces dist/, and rewrites package.json's
+# versionMeta to match the current source. Re-adding it ensures
+# the commit carries that update. See AGENTS.md › Build pipeline.
+bun run build
+git add package.json
