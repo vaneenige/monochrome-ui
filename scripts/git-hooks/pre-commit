@@ -10,10 +10,14 @@ if ! git diff --quiet -- package.json; then
   exit 1
 fi
 
+# Lint first so formatting / lint drift fails before the slower
+# typecheck + build steps. `biome check` covers both lint and format.
+bun run lint
+
 bun run typecheck
 
-# Build runs lint, produces dist/, and rewrites package.json's
-# versionMeta to match the current source. Re-adding it ensures
-# the commit carries that update. See AGENTS.md › Build pipeline.
+# Build produces dist/ and rewrites package.json's versionMeta to
+# match the current source. Re-adding it ensures the commit carries
+# that update. See AGENTS.md › Build pipeline.
 bun run build
 git add package.json
