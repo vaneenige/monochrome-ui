@@ -187,8 +187,10 @@ Rules only. Rationale lives in "Why the core looks weird" and
 
 ### Formatting
 
-- 2-space indent, no semicolons (Biome's `asNeeded`), double quotes.
-- Trailing commas on multiline literals.
+- Biome defaults: tab indent, semicolons, double quotes, 80-char
+  line width. No custom overrides in `biome.json`; `biome check`
+  enforces both lint and format and runs first in the pre-commit
+  hook.
 - `.js` extensions on value imports (NodeNext resolution).
 
 ### Functions
@@ -198,7 +200,8 @@ Rules only. Rationale lives in "Why the core looks weird" and
   stack traces). Vue wrappers use `defineComponent` with
   method-shorthand `setup`.
 - Default parameter values with enum types instead of option
-  objects when the set is small: `menu(trigger, mode = Focus.Trigger)`.
+  objects when the set is small:
+  `menu(trigger, mode = Focus.Trigger)`.
 
 ### Control flow
 

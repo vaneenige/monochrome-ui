@@ -1,4 +1,4 @@
-import type { Page } from "@playwright/test"
+import type { Page } from "@playwright/test";
 
 /**
  * Programmatically scroll the page and wait for the resulting scroll
@@ -14,12 +14,12 @@ import type { Page } from "@playwright/test"
  * No-ops (already at target) resolve immediately. Both axes supported.
  */
 export const scrollAndSettle = (page: Page, x: number, y: number) =>
-  page.evaluate(
-    ({ x, y }) =>
-      new Promise<void>((resolve) => {
-        if (window.scrollX === x && window.scrollY === y) return resolve()
-        window.addEventListener("scroll", () => resolve(), { once: true })
-        window.scrollTo(x, y)
-      }),
-    { x, y },
-  )
+	page.evaluate(
+		({ x, y }) =>
+			new Promise<void>((resolve) => {
+				if (window.scrollX === x && window.scrollY === y) return resolve();
+				window.addEventListener("scroll", () => resolve(), { once: true });
+				window.scrollTo(x, y);
+			}),
+		{ x, y },
+	);
