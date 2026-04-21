@@ -1,4 +1,5 @@
 import { expect, test } from "./fixtures"
+import { scrollAndSettle } from "./helpers"
 
 test.describe("Tabs", () => {
   test.describe("ARIA Attributes", () => {
@@ -453,8 +454,8 @@ test.describe("Tabs", () => {
       await page.goto(`/${renderer}/tabs/horizontal`)
       await page.evaluate(() => {
         document.body.style.height = "3000px"
-        window.scrollTo(0, 500)
       })
+      await scrollAndSettle(page, 0, 500)
       await page.getByTestId("tab-1").focus()
       const scrollBefore = await page.evaluate(() => window.scrollY)
       await page.keyboard.press("Space")
@@ -469,8 +470,8 @@ test.describe("Tabs", () => {
       await page.goto(`/${renderer}/tabs/horizontal`)
       await page.evaluate(() => {
         document.body.style.width = "3000px"
-        window.scrollTo(500, 0)
       })
+      await scrollAndSettle(page, 500, 0)
       await page.getByTestId("tab-1").focus()
       const scrollBefore = await page.evaluate(() => window.scrollX)
       await page.keyboard.press("ArrowRight")
@@ -485,8 +486,8 @@ test.describe("Tabs", () => {
       await page.goto(`/${renderer}/tabs/vertical`)
       await page.evaluate(() => {
         document.body.style.height = "3000px"
-        window.scrollTo(0, 500)
       })
+      await scrollAndSettle(page, 0, 500)
       await page.getByTestId("vtab-1").focus()
       const scrollBefore = await page.evaluate(() => window.scrollY)
       await page.keyboard.press("ArrowDown")

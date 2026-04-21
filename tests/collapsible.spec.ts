@@ -1,4 +1,5 @@
 import { expect, test } from "./fixtures"
+import { scrollAndSettle } from "./helpers"
 
 test.describe("Collapsible", () => {
   test.describe("ARIA Attributes", () => {
@@ -428,8 +429,8 @@ test.describe("Collapsible", () => {
       await page.goto(`/${renderer}/collapsible/basic`)
       await page.evaluate(() => {
         document.body.style.height = "3000px"
-        window.scrollTo(0, 500)
       })
+      await scrollAndSettle(page, 0, 500)
     })
 
     test("should not scroll the page when `Space` is pressed on trigger", async ({

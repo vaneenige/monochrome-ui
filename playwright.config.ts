@@ -1,6 +1,8 @@
 import { defineConfig } from "@playwright/test"
 
-export default defineConfig({
+type Options = { renderer: "html" | "react" | "vue" }
+
+export default defineConfig<Options>({
   fullyParallel: true,
   use: {
     baseURL: "http://localhost:4000",

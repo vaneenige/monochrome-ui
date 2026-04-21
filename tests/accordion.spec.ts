@@ -1,4 +1,5 @@
 import { expect, test } from "./fixtures"
+import { scrollAndSettle } from "./helpers"
 
 test.describe("Accordion", () => {
   test.describe("ARIA Attributes", () => {
@@ -534,8 +535,8 @@ test.describe("Accordion", () => {
       await page.goto(`/${renderer}/accordion/single`)
       await page.evaluate(() => {
         document.body.style.height = "3000px"
-        window.scrollTo(0, 500)
       })
+      await scrollAndSettle(page, 0, 500)
     })
 
     test("should not scroll the page when `Space` is pressed on trigger", async ({

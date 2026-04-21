@@ -106,9 +106,12 @@ Bun.serve({
           format: "esm",
           plugins: name.startsWith("vue/") ? [vueSfcPlugin] : [],
         })
-        response = new Response(await result.outputs[0].text(), {
-          headers: { "Content-Type": "application/javascript" },
-        })
+        const out = result.outputs[0]
+        if (out) {
+          response = new Response(await out.text(), {
+            headers: { "Content-Type": "application/javascript" },
+          })
+        }
       }
     } else if (pathname === "/html/router/redirect") {
       response = new Response(null, {
