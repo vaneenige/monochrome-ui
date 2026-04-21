@@ -1,107 +1,96 @@
-import { $ } from "bun"
+import { $, type BuildConfig, type BunPlugin } from "bun"
+import ts from "typescript"
+
+// Bun's minifier re-shuffles identifiers based on comment placement,
+// which produces different (worse-compressing) output, ~135 bytes
+// gzip total in our case. We pre-strip comments so the minifier
+// never sees them.
+//
+// We use TypeScript's own parser + printer because it handles every
+// edge case the language allows (nested templates, regex, JSX, …)
+// that a regex stripper would get wrong.
+const stripComments = (src: string) =>
+  ts
+    .createPrinter({ removeComments: true })
+    .printFile(ts.createSourceFile("_.ts", src, ts.ScriptTarget.ESNext, false))
+
+const stripCommentsPlugin: BunPlugin = {
+  name: "strip-comments",
+  setup(build) {
+    build.onLoad({ filter: /\.ts$/ }, async (args) => {
+      if (args.path.includes("/node_modules/")) return
+      const source = await Bun.file(args.path).text()
+      return { contents: stripComments(source), loader: "ts" }
+    })
+  },
+}
+
+// `Partial<BuildConfig>` because each entry only sets the fields that
+// differ from the shared defaults merged at build time. The resulting
+// spread always includes `entrypoints`, which the cast at the call
+// site re-asserts; TS can't narrow that through a spread.
+const builds: Partial<BuildConfig>[] = [
+  { entrypoints: ["src/index.ts"], outdir: "dist" },
+  { entrypoints: ["src/router.ts"], outdir: "dist" },
+  {
+    entrypoints: ["src/react/index.ts"],
+    outdir: "dist/react",
+    external: ["react", "react-dom"],
+    banner: '"use client";',
+  },
+  { entrypoints: ["src/vue/index.ts"], outdir: "dist/vue", external: ["vue"] },
+]
 
 await $`bun run lint`
 await $`rm -rf dist`
 
-const core = await Bun.build({
-  entrypoints: ["src/index.ts"],
-  outdir: "dist",
-  format: "esm",
-  target: "browser",
-  minify: true,
-})
-
-if (!core.success) {
-  for (const log of core.logs) console.error(log)
-  process.exit(1)
+// The four bundles are independent, so build them in parallel. Cuts
+// pre-commit time roughly in half on a warm cache.
+const results = await Promise.all(
+  builds.map((config) =>
+    Bun.build({
+      format: "esm",
+      minify: true,
+      plugins: [stripCommentsPlugin],
+      ...config,
+    } as BuildConfig),
+  ),
+)
+for (const result of results) {
+  if (!result.success) {
+    for (const log of result.logs) console.error(log)
+    process.exit(1)
+  }
 }
 
-const router = await Bun.build({
-  entrypoints: ["src/router.ts"],
-  outdir: "dist",
-  format: "esm",
-  target: "browser",
-  minify: true,
-})
-
-if (!router.success) {
-  for (const log of router.logs) console.error(log)
-  process.exit(1)
-}
-
-const react = await Bun.build({
-  entrypoints: ["src/react/index.ts"],
-  outdir: "dist/react",
-  format: "esm",
-  target: "browser",
-  external: ["react", "react-dom"],
-  minify: true,
-  banner: '"use client";',
-})
-
-if (!react.success) {
-  for (const log of react.logs) console.error(log)
-  process.exit(1)
-}
-
-const vue = await Bun.build({
-  entrypoints: ["src/vue/index.ts"],
-  outdir: "dist/vue",
-  format: "esm",
-  target: "browser",
-  external: ["vue"],
-  minify: true,
-
-})
-
-if (!vue.success) {
-  for (const log of vue.logs) console.error(log)
-  process.exit(1)
-}
-
-const dts = await $`tsc --declaration --emitDeclarationOnly --outDir dist --target esnext --lib esnext,dom --module esnext --moduleResolution bundler --strict --skipLibCheck --allowImportingTsExtensions false src/**/*.ts`.quiet()
+const dts = await $`tsc -p tsconfig.build.json`.quiet()
 if (dts.exitCode !== 0) {
   console.error(dts.stderr.toString())
   process.exit(1)
 }
 
-const gzipped = Bun.gzipSync(await Bun.file("dist/index.js").arrayBuffer())
-const sizeKB = `${(gzipped.length / 1024).toFixed(1)}kB`
+const gzip = async (path: string) =>
+  Bun.gzipSync(new Uint8Array(await Bun.file(path).arrayBuffer())).length
+const fmt = (bytes: number) => `${(bytes / 1024).toFixed(1)}kB`
 
-const routerGzipped = Bun.gzipSync(await Bun.file("dist/router.js").arrayBuffer())
-const routerSizeKB = `${(routerGzipped.length / 1024).toFixed(1)}kB`
+const coreGz = await gzip("dist/index.js")
+const routerGz = await gzip("dist/router.js")
 
-const glob = new Bun.Glob("tests/*.spec.ts")
 const testCounts: Record<string, number> = {}
-for await (const path of glob.scan()) {
+for await (const path of new Bun.Glob("tests/*.spec.ts").scan()) {
   const name = path.replace("tests/", "").replace(".spec.ts", "")
-  const content = await Bun.file(path).text()
-  testCounts[name] = (content.match(/test\(/g) ?? []).length
+  testCounts[name] = ((await Bun.file(path).text()).match(/test\(/g) ?? []).length
 }
-
-let readme = await Bun.file("README.md").text()
 const totalTests = Object.values(testCounts).reduce((a, b) => a + b, 0)
-readme = readme.replace(/<!-- size -->.*?<!-- \/size -->/g, `<!-- size -->${sizeKB}<!-- /size -->`)
-readme = readme.replace(
-  /<!-- badges -->\n.*\n<!-- \/badges -->/,
-  `<!-- badges -->\n![gzip](https://img.shields.io/badge/gzip-${sizeKB}-brightgreen) ![tests](https://img.shields.io/badge/tests-${totalTests}_passing-brightgreen) ![WCAG](https://img.shields.io/badge/WCAG_2.2-AA-blue) ![license](https://img.shields.io/badge/license-MIT-blue)\n<!-- /badges -->`,
-)
-for (const [name, count] of Object.entries(testCounts)) {
-  readme = readme.replace(
-    new RegExp(`<!-- tests:${name} -->.*?<!-- /tests:${name} -->`),
-    `<!-- tests:${name} -->${count}<!-- /tests:${name} -->`,
-  )
-}
-await Bun.write("README.md", readme)
 
 const pkg = await Bun.file("package.json").json()
 pkg.versionMeta = {
-  gzipSize: gzipped.length,
-  routerGzipSize: routerGzipped.length,
+  gzipSize: coreGz,
+  routerGzipSize: routerGz,
   tests: { total: totalTests, ...testCounts },
 }
 await Bun.write("package.json", JSON.stringify(pkg, null, 2) + "\n")
 
 console.log(
-  `Build complete — core: ${sizeKB} gzipped, router: ${routerSizeKB} gzipped, ${totalTests} tests`,
+  `Build complete. Core: ${fmt(coreGz)} gzipped, router: ${fmt(routerGz)} gzipped, ${totalTests} tests.`,
 )
