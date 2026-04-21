@@ -2,9 +2,18 @@
 
 Accessible UI component library. Best-in-class performance. HTML-first, React and Vue supported.
 
-<!-- badges -->
-![gzip](https://img.shields.io/badge/gzip-2.6kB-brightgreen) ![tests](https://img.shields.io/badge/tests-438_passing-brightgreen) ![WCAG](https://img.shields.io/badge/WCAG_2.2-AA-blue) ![license](https://img.shields.io/badge/license-MIT-blue)
-<!-- /badges -->
+[![npm](https://img.shields.io/npm/v/monochrome.svg)](https://www.npmjs.com/package/monochrome)
+[![gzip](https://img.badgesize.io/https://unpkg.com/monochrome/dist/index.js?compression=gzip&label=gzip)](https://unpkg.com/monochrome/dist/index.js)
+[![CI](https://img.shields.io/github/actions/workflow/status/vaneenige/monochrome-ui/ci.yml?branch=main&label=CI)](https://github.com/vaneenige/monochrome-ui/actions/workflows/ci.yml)
+[![license](https://img.shields.io/npm/l/monochrome.svg)](./LICENSE)
+
+If you write accessible HTML, monochrome makes it interactive. The DOM is the state; ARIA attributes (`aria-expanded`, `aria-selected`, `aria-checked`) drive every component. No initialization, no mount hooks.
+
+## Components
+
+Accordion · Collapsible · Menu · Popover · Tabs · Tooltip.
+
+Plus an optional client-side router and thin React and Vue wrappers.
 
 ## Install
 
@@ -12,93 +21,42 @@ Accessible UI component library. Best-in-class performance. HTML-first, React an
 npm install monochrome
 ```
 
-Monochrome ships in three tiers — import only what you use:
-
 ```ts
+// core runtime
 import "monochrome"
+
+// optional router
 import "monochrome/router"
 
+// React wrappers
 import { Accordion } from "monochrome/react"
+
+// Vue wrappers
 import { Accordion } from "monochrome/vue"
 ```
 
-## Usage
+## Example
 
-```tsx
-import "monochrome"
-import { Accordion } from "monochrome/react"
+```html
+<script type="module" src="https://esm.sh/monochrome"></script>
 
-export function FAQ() {
-  return (
-    <Accordion.Root type="single">
-      <Accordion.Item>
-        <Accordion.Header>
-          <Accordion.Trigger>What is monochrome?</Accordion.Trigger>
-        </Accordion.Header>
-        <Accordion.Panel>
-          <p>A tiny, accessible UI component library.</p>
-        </Accordion.Panel>
-      </Accordion.Item>
-    </Accordion.Root>
-  )
-}
+<button id="mct:collapsible:1" aria-expanded="false" aria-controls="mcc:collapsible:1">
+  Show details
+</button>
+<div id="mcc:collapsible:1" aria-labelledby="mct:collapsible:1" aria-hidden="true" hidden="until-found">
+  Hidden by default, revealed on click or find-in-page.
+</div>
 ```
 
-Import `"monochrome"` once at your app's entry point. The wrappers generate the correct HTML structure and ARIA attributes. All interactivity comes from the Monochrome runtime - no framework JavaScript needed on the client.
+The React and Vue wrappers generate the same HTML and ARIA; all interactivity comes from the core.
 
-The Vue API is identical: `import { Accordion } from "monochrome/vue"`. Monochrome also works with plain HTML or any framework that outputs HTML. See [AGENTS.md](./AGENTS.md) for full documentation.
+## Browser support
 
-## Components
+Baseline 2024. Uses the Popover API, `hidden="until-found"`, and `beforematch`. No polyfills shipped.
 
-Six interactive UI patterns in <!-- size -->2.6kB<!-- /size -->:
+## Contributing
 
-| Component | Description | Tests |
-| --- | --- | ---: |
-| **Accordion** | Grouped collapsible content sections | <!-- tests:accordion -->66<!-- /tests:accordion --> |
-| **Collapsible** | Show and hide content with a button | <!-- tests:collapsible -->42<!-- /tests:collapsible --> |
-| **Menu** | Dropdown menus, menubars, and submenus | <!-- tests:menu -->179<!-- /tests:menu --> |
-| **Popover** | Floating panels anchored to a trigger | <!-- tests:popover -->29<!-- /tests:popover --> |
-| **Tabs** | Switch between multiple content panels | <!-- tests:tabs -->70<!-- /tests:tabs --> |
-| **Tooltip** | Non-interactive description on hover or focus | <!-- tests:tooltip -->24<!-- /tests:tooltip --> |
-
-## How it works
-
-Monochrome uses the DOM as its source of truth. Instead of managing state in JavaScript, it reads ARIA attributes, responds to user interactions, and updates them directly. Minimal global event listeners handle every component on the page through event delegation. No initialization, no configuration, no framework required.
-
-## Accessibility
-
-Every component follows [WAI-ARIA Authoring Practices](https://www.w3.org/WAI/ARIA/apg/) and targets WCAG 2.2 AA:
-
-- Full keyboard navigation (Arrow keys, Home, End, Enter, Space, Escape)
-- Roving tabindex for focus management
-- Automatic ARIA attribute management
-- Preserves browser find-in-page (cmd+f)
-- Screen reader support out of the box
-
-## Styling
-
-Monochrome is headless - no CSS is shipped. You provide all styles. Key requirements for menus:
-
-```css
-[popover]:popover-open {
-  display: flex;
-}
-
-[role="menu"] {
-  position: fixed;
-  top: var(--bottom);
-  left: var(--left);
-}
-
-[role="menu"] [role="menu"] {
-  top: var(--top);
-  left: var(--right);
-}
-```
-
-## Browser Requirements
-
-The core depends on [Popover API](https://caniuse.com/mdn-api_htmlelement_showpopover) and [`hidden="until-found"`](https://caniuse.com/mdn-html_global_attributes_hidden_until-found_value) (Baseline 2024). All modern browsers are supported.
+See [AGENTS.md](./AGENTS.md) for architecture, invariants, and code style.
 
 ## License
 

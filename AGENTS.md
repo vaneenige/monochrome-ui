@@ -1,713 +1,301 @@
-# Monochrome
-
-Accessible, headless UI components. Four components — Accordion, Collapsible, Menu, Tabs — powered by a ~2KB core with zero dependencies.
-
-Framework-agnostic core with React and Vue wrappers included. The core uses event delegation and ARIA attributes as the source of truth. Import it once and every component on the page works automatically.
-
----
-
-# Part 1: Using Monochrome
-
-> For AI agents helping developers build with monochrome.
-
-## Installation
-
-```bash
-npm install monochrome    # Core + React + Vue wrappers included
-```
-
-```ts
-import "monochrome"                        // Core (auto-activates)
-import { Accordion, Tabs } from "monochrome/react"  // React
-import { Accordion, Tabs } from "monochrome/vue"    // Vue
-```
-
-## Components
-
-### Accordion
-
-Collapsible content panels. `type="single"` allows one open at a time. `type="multiple"` allows any combination.
-
-<table>
-<tr><th>React</th><th>Vue</th></tr>
-<tr><td>
-
-```tsx
-import { Accordion } from "monochrome/react"
-
-<Accordion.Root type="single">
-  <Accordion.Item open>
-    <Accordion.Header as="h3">
-      <Accordion.Trigger>
-        Section Title
-      </Accordion.Trigger>
-    </Accordion.Header>
-    <Accordion.Panel>
-      Content here
-    </Accordion.Panel>
-  </Accordion.Item>
-  <Accordion.Item disabled>
-    <Accordion.Header>
-      <Accordion.Trigger>
-        Disabled
-      </Accordion.Trigger>
-    </Accordion.Header>
-    <Accordion.Panel>
-      Content here
-    </Accordion.Panel>
-  </Accordion.Item>
-</Accordion.Root>
-```
-
-</td><td>
-
-```vue
-<script setup lang="ts">
-import { Accordion } from "monochrome/vue"
-</script>
-
-<template>
-  <Accordion.Root type="single">
-    <Accordion.Item :open="true">
-      <Accordion.Header as="h3">
-        <Accordion.Trigger>
-          Section Title
-        </Accordion.Trigger>
-      </Accordion.Header>
-      <Accordion.Panel>
-        Content here
-      </Accordion.Panel>
-    </Accordion.Item>
-    <Accordion.Item :disabled="true">
-      <Accordion.Header>
-        <Accordion.Trigger>
-          Disabled
-        </Accordion.Trigger>
-      </Accordion.Header>
-      <Accordion.Panel>
-        Content here
-      </Accordion.Panel>
-    </Accordion.Item>
-  </Accordion.Root>
-</template>
-```
-
-</td></tr>
-</table>
-
-**Props:**
-
-| Component | Prop | Type | Default | Description |
-|-----------|------|------|---------|-------------|
-| `Root` | `type` | `"single" \| "multiple"` | `"single"` | Whether one or many panels can be open |
-| `Item` | `open` | `boolean` | `false` | Start open |
-| `Item` | `disabled` | `boolean` | `false` | Cannot toggle, skipped by keyboard |
-| `Header` | `as` | `"h1"` – `"h6"` | `"h3"` | Heading level |
-
-**Keyboard:** ArrowDown/Up navigate items, Home/End jump to first/last, Enter/Space toggle.
-
-### Collapsible
-
-A single trigger that shows/hides content.
-
-<table>
-<tr><th>React</th><th>Vue</th></tr>
-<tr><td>
-
-```tsx
-import { Collapsible } from "monochrome/react"
-
-<Collapsible.Root open>
-  <Collapsible.Trigger>Toggle</Collapsible.Trigger>
-  <Collapsible.Panel>Content</Collapsible.Panel>
-</Collapsible.Root>
-```
-
-</td><td>
-
-```vue
-<script setup lang="ts">
-import { Collapsible } from "monochrome/vue"
-</script>
-
-<template>
-  <Collapsible.Root :open="true">
-    <Collapsible.Trigger>Toggle</Collapsible.Trigger>
-    <Collapsible.Panel>Content</Collapsible.Panel>
-  </Collapsible.Root>
-</template>
-```
-
-</td></tr>
-</table>
-
-**Props:**
-
-| Component | Prop | Type | Default | Description |
-|-----------|------|------|---------|-------------|
-| `Root` | `open` | `boolean` | `false` | Start open |
-
-**Keyboard:** Enter/Space toggle. No arrow key navigation (WAI-ARIA disclosure pattern).
-
-### Tabs
-
-Tabbed interface with manual activation and roving tabindex.
-
-<table>
-<tr><th>React</th><th>Vue</th></tr>
-<tr><td>
-
-```tsx
-import { Tabs } from "monochrome/react"
-
-<Tabs.Root
-  defaultValue="tab1"
-  orientation="horizontal"
->
-  <Tabs.List>
-    <Tabs.Tab value="tab1">Tab 1</Tabs.Tab>
-    <Tabs.Tab value="tab2" disabled>
-      Tab 2
-    </Tabs.Tab>
-    <Tabs.Tab value="tab3">Tab 3</Tabs.Tab>
-  </Tabs.List>
-  <Tabs.Panel value="tab1">Content 1</Tabs.Panel>
-  <Tabs.Panel value="tab2">Content 2</Tabs.Panel>
-  <Tabs.Panel value="tab3">Content 3</Tabs.Panel>
-</Tabs.Root>
-```
-
-</td><td>
-
-```vue
-<script setup lang="ts">
-import { Tabs } from "monochrome/vue"
-</script>
-
-<template>
-  <Tabs.Root
-    default-value="tab1"
-    orientation="horizontal"
-  >
-    <Tabs.List>
-      <Tabs.Tab value="tab1">Tab 1</Tabs.Tab>
-      <Tabs.Tab value="tab2" :disabled="true">
-        Tab 2
-      </Tabs.Tab>
-      <Tabs.Tab value="tab3">Tab 3</Tabs.Tab>
-    </Tabs.List>
-    <Tabs.Panel value="tab1">Content 1</Tabs.Panel>
-    <Tabs.Panel value="tab2">Content 2</Tabs.Panel>
-    <Tabs.Panel value="tab3">Content 3</Tabs.Panel>
-  </Tabs.Root>
-</template>
-```
-
-</td></tr>
-</table>
-
-**Props:**
-
-| Component | Prop | Type | Default | Description |
-|-----------|------|------|---------|-------------|
-| `Root` | `defaultValue` | `string` | — | Initially selected tab |
-| `Root` | `orientation` | `"horizontal" \| "vertical"` | `"horizontal"` | Arrow key direction |
-| `Tab` | `value` | `string` | — | Unique tab identifier |
-| `Tab` | `disabled` | `boolean` | `false` | Cannot activate, skipped by keyboard |
-| `Panel` | `value` | `string` | — | Must match a Tab's value |
-| `Panel` | `focusable` | `boolean` | `true` | Set `false` when panel has its own focusable elements |
-
-**Note:** In Vue templates, `defaultValue` is written as `default-value` (standard Vue kebab-case mapping).
-
-**Keyboard:** ArrowRight/Left (horizontal) or ArrowDown/Up (vertical), Home/End, Enter/Space to activate.
-
-### Menu
-
-Dropdown menus, submenus, and menubars. Uses the Popover API.
-
-<table>
-<tr><th>React</th><th>Vue</th></tr>
-<tr><td>
-
-```tsx
-import { Menu } from "monochrome/react"
-
-<Menu.Root>
-  <Menu.Trigger>Open Menu</Menu.Trigger>
-  <Menu.Popover>
-    <Menu.Item>Action</Menu.Item>
-    <Menu.Item disabled>Disabled</Menu.Item>
-    <Menu.Item href="/link">Link</Menu.Item>
-    <Menu.Separator />
-    <Menu.CheckboxItem checked={false}>
-      Bold
-    </Menu.CheckboxItem>
-    <Menu.RadioItem checked>Small</Menu.RadioItem>
-    <Menu.RadioItem checked={false}>
-      Large
-    </Menu.RadioItem>
-    <Menu.Separator />
-    <Menu.Label>Section</Menu.Label>
-    <Menu.Group>
-      <Menu.Trigger>Submenu</Menu.Trigger>
-      <Menu.Popover>
-        <Menu.Item>Sub Action</Menu.Item>
-      </Menu.Popover>
-    </Menu.Group>
-  </Menu.Popover>
-</Menu.Root>
-```
-
-</td><td>
-
-```vue
-<script setup lang="ts">
-import { Menu } from "monochrome/vue"
-</script>
-
-<template>
-  <Menu.Root>
-    <Menu.Trigger>Open Menu</Menu.Trigger>
-    <Menu.Popover>
-      <Menu.Item>Action</Menu.Item>
-      <Menu.Item :disabled="true">Disabled</Menu.Item>
-      <Menu.Item href="/link">Link</Menu.Item>
-      <Menu.Separator />
-      <Menu.CheckboxItem :checked="false">
-        Bold
-      </Menu.CheckboxItem>
-      <Menu.RadioItem :checked="true">Small</Menu.RadioItem>
-      <Menu.RadioItem :checked="false">
-        Large
-      </Menu.RadioItem>
-      <Menu.Separator />
-      <Menu.Label>Section</Menu.Label>
-      <Menu.Group>
-        <Menu.Trigger>Submenu</Menu.Trigger>
-        <Menu.Popover>
-          <Menu.Item>Sub Action</Menu.Item>
-        </Menu.Popover>
-      </Menu.Group>
-    </Menu.Popover>
-  </Menu.Root>
-</template>
-```
-
-</td></tr>
-</table>
-
-**Menubar** — set `menubar` (React) or `:menubar="true"` (Vue) on `Menu.Root`:
-
-```tsx
-<Menu.Root menubar>
-  <Menu.Popover> {/* renders as <ul role="menubar"> */}
-    <Menu.Group>
-      <Menu.Trigger>File</Menu.Trigger>
-      <Menu.Popover>
-        <Menu.Item>New</Menu.Item>
-        <Menu.Item>Open</Menu.Item>
-      </Menu.Popover>
-    </Menu.Group>
-    <Menu.Group>
-      <Menu.Trigger>Edit</Menu.Trigger>
-      <Menu.Popover>
-        <Menu.Item>Undo</Menu.Item>
-      </Menu.Popover>
-    </Menu.Group>
-  </Menu.Popover>
-</Menu.Root>
-```
-
-**Sub-components:**
-
-| Component | Description |
-|-----------|-------------|
-| `Item` | Renders `<button>`, `<a>` (with `href`), or `<span>` (with `disabled`). Click closes the menu. |
-| `CheckboxItem` | Toggle item (`role="menuitemcheckbox"`). Click toggles `aria-checked`, menu stays open. |
-| `RadioItem` | Radio item (`role="menuitemradio"`). Groups are implicit by DOM adjacency — separators break groups. |
-| `Label` | Non-interactive heading (`role="presentation"`). |
-| `Separator` | Visual divider (`role="separator"`). Skipped by keyboard. |
-| `Group` | Wraps a submenu trigger + popover pair. |
-| `Popover` | `<ul role="menu">` (or `role="menubar"` in menubar mode). |
-
-**Props:**
-
-| Component | Prop | Type | Default | Description |
-|-----------|------|------|---------|-------------|
-| `Root` | `menubar` | `boolean` | `false` | Menubar mode |
-| `Item` | `disabled` | `boolean` | `false` | Non-interactive, skipped by keyboard |
-| `Item` | `href` | `string` | — | Renders as `<a>` instead of `<button>` |
-| `CheckboxItem` | `checked` | `boolean` | `false` | Checked state |
-| `CheckboxItem` | `disabled` | `boolean` | `false` | Non-interactive, skipped by keyboard |
-| `RadioItem` | `checked` | `boolean` | `false` | Selected state |
-| `RadioItem` | `disabled` | `boolean` | `false` | Non-interactive, skipped by keyboard |
-
-**Keyboard:** ArrowDown/Up navigate, Home/End, Escape closes, Tab closes all, Enter/Space activates, ArrowRight opens submenu, ArrowLeft closes submenu, letter keys for typeahead.
-
-**stopPropagation pattern:** Call `e.stopPropagation()` on an item's click handler to prevent the menu from closing.
-
-### Popover
-
-Click-triggered floating panel anchored to a trigger. Uses the Popover API. Supports interactive children; focus moves into the panel on open and returns to the trigger on close.
-
-<table>
-<tr><th>React</th><th>Vue</th></tr>
-<tr><td>
-
-```tsx
-import { Popover } from "monochrome/react"
-
-<Popover.Root>
-  <Popover.Trigger>Open</Popover.Trigger>
-  <Popover.Content>
-    <p>Hello</p>
-    <button type="button">Action</button>
-  </Popover.Content>
-</Popover.Root>
-```
-
-</td><td>
-
-```vue
-<script setup lang="ts">
-import { Popover } from "monochrome/vue"
-</script>
-
-<template>
-  <Popover.Root>
-    <Popover.Trigger>Open</Popover.Trigger>
-    <Popover.Content>
-      <p>Hello</p>
-      <button type="button">Action</button>
-    </Popover.Content>
-  </Popover.Root>
-</template>
-```
-
-</td></tr>
-</table>
-
-**Keyboard:** Enter/Space opens, Escape closes and returns focus to trigger. Tab cycles through focusable children and closes when focus leaves.
-
-**Dismissal:** click outside, Escape, tab past the last focusable child, scroll outside the popover, viewport resize, or opening another popover/menu.
-
-**Disabled:** set `aria-disabled="true"` on the trigger to prevent opening.
-
-### Tooltip
-
-Non-interactive description shown on hover or focus. Uses the Popover API with `role="tooltip"` and `aria-describedby`. Never steals focus; per WAI-ARIA, content should not contain interactive elements.
-
-<table>
-<tr><th>React</th><th>Vue</th></tr>
-<tr><td>
-
-```tsx
-import { Tooltip } from "monochrome/react"
-
-<Tooltip.Root>
-  <Tooltip.Trigger>Save</Tooltip.Trigger>
-  <Tooltip.Content>Saves to cloud (⌘S)</Tooltip.Content>
-</Tooltip.Root>
-```
-
-</td><td>
-
-```vue
-<script setup lang="ts">
-import { Tooltip } from "monochrome/vue"
-</script>
-
-<template>
-  <Tooltip.Root>
-    <Tooltip.Trigger>Save</Tooltip.Trigger>
-    <Tooltip.Content>Saves to cloud (⌘S)</Tooltip.Content>
-  </Tooltip.Root>
-</template>
-```
-
-</td></tr>
-</table>
-
-**Behavior:** shows on `pointerenter` or `focusin`, hides on `pointerleave` / `focusout`. Touch is ignored. Dismissed by scroll and resize. No built-in delay — use CSS `transition-delay` on `:popover-open` if you want one.
-
-**Disabled triggers:** `aria-disabled="true"` on the trigger still shows the tooltip — this is intentional and valuable UX ("why is this button disabled?"). Activation is blocked; the description isn't.
-
-**`aria-describedby`** is always set on the trigger regardless of tooltip visibility, so screen readers announce the description whenever the trigger is read.
-
-## Styling
-
-Monochrome is **headless** — no CSS shipped. You provide all styles. Required CSS for menus:
-
-```css
-/* Menu popover positioning (core sets --top, --right, --bottom, --left on the popover from the trigger rect) */
-[role="menu"] {
-  position: fixed;
-  inset: auto;
-  margin: 0;
-  top: var(--bottom);
-  left: var(--left);
-}
-
-/* Submenu positioning */
-[role="menu"] [role="menu"] {
-  top: var(--top);
-  left: var(--right);
-  margin-left: 8px;  /* gap so core detects opening direction */
-}
-
-/* Popover visibility */
-[popover]:popover-open {
-  display: flex;
-}
-```
-
-For submenu hover safety triangles, style `[data-safe]` with a `clip-path` polygon using the CSS custom properties the core sets on the Group element: `--left`, `--right`, `--top`, `--bottom` (raw submenu rect) and `--x`, `--y` (current cursor position). These shadow the popover-level vars of the same name via inline style, so each element resolves its own. Use `clamp(var(--left), var(--x), var(--right))` to pick the near edge — no direction check needed.
-
-**Popover and Tooltip positioning** — core sets the same six vars on the content element:
-
-- `--top`, `--right`, `--bottom`, `--left` — trigger rect
-- `--pw`, `--ph` — popover width and height
-
-```css
-/* Popover below the trigger */
-[popover] { position: fixed; inset: auto; margin: 0; top: var(--bottom); left: var(--left); }
-
-/* Tooltip above the trigger with 8px gap */
-[role="tooltip"] {
-  position: fixed;
-  inset: auto;
-  margin: 0;
-  top: calc(var(--top) - var(--ph) - 8px);
-  left: var(--left);
-  pointer-events: none;  /* see note below */
-}
-```
-
-**`pointer-events: none` on tooltip content is a defensive default.** Not required for the common case where the tooltip sits above the trigger with a gap — the core already skips hover recomputation when the target is inside tooltip content, so the trigger's hover state survives pointer crossings. The CSS rule matters when custom positioning makes the tooltip overlap the trigger or a neighbouring interactive element; add it in that case.
-
-## Browser Requirements
-
-Requires Baseline 2024 features:
-- **Popover API** — menu positioning
-- **`hidden="until-found"`** — preserves Ctrl+F / Cmd+F for hidden content
-- **`beforematch` event** — auto-opens components when find-in-page reveals hidden content
-
-## Plain HTML (No Framework)
-
-The core is framework-agnostic. Include the script and render the correct HTML structure:
-
-```html
-<script src="https://unpkg.com/monochrome"></script>
-
-<!-- Accordion -->
-<div data-mode="single" id="mcr:accordion:faq">
-  <div>
-    <h3>
-      <button type="button" id="mct:accordion:faq-1"
-        aria-expanded="false" aria-controls="mcc:accordion:faq-1">
-        Question?
-      </button>
-    </h3>
-    <div id="mcc:accordion:faq-1" role="region"
-      aria-labelledby="mct:accordion:faq-1" aria-hidden="true"
-      hidden="until-found">
-      Answer.
-    </div>
-  </div>
-</div>
-```
-
-## Vue-Specific Notes
-
-- Boolean props require `:` binding — `:open="true"`, `:disabled="true"`, `:checked="false"`
-- `defaultValue` → `default-value` in templates (Vue auto-maps camelCase to kebab-case)
-- Dot notation works natively — `<Accordion.Root>`, `<Menu.Item>`, etc.
-- Vue wrappers use `provide`/`inject` for component context
-
-## React-Specific Notes
-
-- Boolean props use JSX shorthand — `open`, `disabled`, `checked`
-- `className` for CSS classes (standard React)
-
-## Wrapper Implementation
-
-Both React and Vue wrappers use plain `createElement`/`h()` render functions — no JSX, no `.vue` SFCs. This keeps the source framework-agnostic in style and produces minimal bundle output.
-
-- **React** uses `createElement()` directly instead of JSX. This eliminates the `react/jsx-runtime` import, produces smaller bundles, and improves Preact compatibility (one fewer module alias needed).
-- **Vue** uses `defineComponent()` with `h()` render functions instead of SFC templates. The Vue SFC compiler adds significant overhead (patch flags, block tracking, `openBlock`/`createElementBlock`). Hand-written `h()` cuts the Vue bundle in half.
-
-Both wrappers are thin: they render the correct DOM structure + ARIA attributes and wire up context (`createContext`/`useContext` in React, `provide`/`inject` in Vue). All behavior comes from the core.
-
----
-
-# Part 2: Contributing
-
-> For AI agents working on the monochrome repository itself.
-
-## Development
-
-```bash
-bun install            # Install dependencies
-bun build.ts           # Build core + React + Vue to dist/, update README badges
-bun test               # Run all Playwright tests × 3 renderers (HTML + React + Vue)
-bun run lint           # Biome lint check
-bun run format         # Biome format
-```
-
-**Biome config:** 2-space indent, 100-char line width, double quotes, semicolons as needed.
-
-## Design Principles
-
-1. **DOM is the source of truth** — The core reads ARIA attributes to determine state. No internal state objects.
-2. **Event delegation** — Global listeners only: `click`, `pointermove`, `keydown`, `scroll`, `resize`, `focusin`, `focusout`, `beforematch`. Zero per-component listeners.
-3. **Zero timers** — All behavior is synchronous. No `setTimeout`, no `requestAnimationFrame`, no debounce.
-4. **ID conventions drive behavior** — Elements are identified by ID prefix (`mct:`, `mcc:`, `mcr:`), not classes or data attributes.
-5. **`hidden="until-found"`** — Never `display: none`. Preserves browser find-in-page.
-
-## ID Convention
-
-| Prefix  | Role                | Matched by core        |
-|---------|---------------------|------------------------|
-| `mct:a` | Accordion trigger   | `mct:accordion:*`      |
-| `mct:c` | Collapsible trigger | `mct:collapsible:*`    |
-| `mct:m` | Menu trigger        | `mct:menu:*`           |
-| `mct:p` | Popover trigger     | `mct:popover:*`        |
-| `mct:ta`| Tabs trigger        | `mct:tabs:*`           |
-| `mct:to`| Tooltip trigger     | `mct:tooltip:*`        |
-| `mcc:m` | Menu content        | `mcc:menu:*`           |
-| `mcc:p` | Popover content     | `mcc:popover:*`        |
-| `mcc:to`| Tooltip content     | `mcc:tooltip:*`        |
-| `mcc:`  | Content panel       | Linked via `aria-controls` |
-| `mcr:`  | Root container      | Component boundary     |
-
-**Tabs and Tooltip share the `mct:t` namespace** — hence the two-char prefixes `mct:ta` and `mct:to`. Any new component whose name starts with `t` must pick a third letter.
-
-## Required DOM Structure
-
-**Accordion** — the core traverses `item.firstElementChild.firstElementChild` to find triggers. This exact nesting is required:
-```
-Root [data-mode] → Item → Header (h1-h6) → Trigger (button)
-                        → Panel [role=region]
-```
-
-**Tabs** — all Tab buttons must be direct children of the List (core iterates via `parentElement.firstElementChild`):
-```
-Root [data-orientation] → List [role=tablist] → Tab (button) [role=tab]
-                        → Panel [role=tabpanel]
-```
-
-**Menu** — every item is wrapped in `<li role="none">`:
-```
-Root → Trigger (button) [aria-haspopup=menu]
-     → Popover (ul) [role=menu, popover=manual]
-          → li [role=none] → menuitem (button|a|span)
-          → li [role=separator]
-          → li [role=none] (Group) → Trigger + Popover (submenu)
-```
-
-## Activation Model
-
-The core never handles Enter/Space in `keydown`. All activation flows through the global `click` listener. When a user presses Enter/Space on a `<button>`, the browser fires a native click. The core distinguishes keyboard from mouse via `event.detail` (`0` = keyboard, `≥1` = mouse).
-
-Menu triggers: keyboard opens with `Focus.First` (first item focused), mouse with `Focus.None` (focus stays on trigger).
-
-## Safety Triangle (Submenu Hover Intent)
-
-When a submenu is open, the core creates a triangular safe zone so users can move diagonally to it without accidentally closing it.
-
-1. Each `pointermove` inside the submenu-trigger rect measures the submenu element and publishes its rect on the Group as `--left`, `--right`, `--top`, `--bottom` (shadowing the popover-level vars of the same name on each element's own inline style), plus `--x` / `--y` for the cursor, then adds the `data-safe` attribute
-2. The clip-path is direction-agnostic: `clamp(var(--left), var(--x), var(--right))` resolves the submenu's near edge
-3. Measurement is deferred to pointermove (not submenu open) so the rect reflects the settled transform, not the `@starting-style` scale
-4. Leaving the trigger rect removes `data-safe`, unless the cursor is still targeting the Group and moving toward the submenu (keep-alive via the stored popover+trigger rects)
-5. Touch events (`pointerType === "touch"`) are ignored
-
-## hidden="until-found"
-
-React and Vue don't support `hidden="until-found"` as a prop value. Both wrappers inject an inline `<script>` (`HiddenUntilFound` component) that upgrades `hidden=""` to `hidden="until-found"` during HTML parsing.
-
-The core's `beforematch` listener auto-opens the containing component when find-in-page reveals hidden content.
-
-## Testing
-
-Tests run across three renderers: **HTML**, **React**, **Vue**. Every test runs against all three.
-
-```bash
-bun test                            # All tests × 3 renderers
-bun test -- --project=vue           # Vue only
-bun test -- --project=react         # React only
-bun test -- --project=html          # HTML only
-bun test -- --grep "Safety"         # Specific tests, all renderers
-```
-
-**Test server** (`tests/server.tsx`):
-- HTML fixtures → served as static `.html`
-- React fixtures → SSR via `renderToString` (static) or client-side bundle (dynamic)
-- Vue fixtures → SSR via `createSSRApp` + `vueRenderToString` for `.vue` files, client-side bundle for `.ts` entries
-- Vue SFC compilation uses `@vue/compiler-sfc` registered as a Bun plugin
-- Global `data-action` click handler injected into the HTML template (no per-fixture `<script>` tags)
-
-**Local dev gotcha** — Playwright's `reuseExistingServer` keeps the server alive between runs, and the server caches responses (including `dist/index.js`). After editing core source, kill port 4000 before re-running tests or your changes won't be served:
-
-```bash
-lsof -ti:4000 | xargs kill
-```
-
-**Static vs dynamic fixtures:** Static fixtures `export default` a component → SSR-rendered. Dynamic fixtures (with `ref()`, `useState()`) don't export → client-side mounted via `<script type="module">`.
-
-## Common Pitfalls
-
-Things that must not be broken:
-
-- **Never add timers** — no `setTimeout`, `requestAnimationFrame`, or debounce
-- **Never add per-component event listeners** — everything goes through the global listener set
-- **Accordion nesting is sacred** — Item > Header > Trigger, exactly 3 levels
-- **Tab buttons must be direct siblings** — core iterates via `parentElement.firstElementChild`
-- **Menu radio groups are by DOM adjacency** — separators or non-radio items break the group
-- **`aria-controls` must match content `id`** — wrong values break everything
-- **Tooltip uses `aria-describedby`, not `aria-controls`** — the core looks up tooltip content through a different attribute
-- **Tooltip content must be non-interactive** — per WAI-ARIA; don't place buttons or links inside
-- **`pointer-events: none` on tooltip content is defensive, not required** — only matters when custom positioning makes the tooltip overlap the trigger or other clickable elements
-- **Disabled = `aria-disabled="true"`** — never the HTML `disabled` attribute
-- **Disabled menu items render as `<span>`** — not `<button>`, to prevent click bubbling
-- **Tooltips DO show on `aria-disabled` triggers** — intentional; lets you explain why a button is disabled
-- **Never `display: none`** — always `hidden="until-found"` for find-in-page
-- **Vue typeahead text** — menu item text must be inline (`<Menu.Item>Apple</Menu.Item>`) to avoid leading whitespace breaking `textContent.startsWith()`
-
-## File Structure
-
-```
-src/
-  index.ts                # Core (single file)
-  react/
-    index.ts              # Re-exports
-    shared.ts             # BaseProps, buildId, HiddenUntilFound
-    accordion.ts          # createElement() render functions
-    collapsible.ts
-    menu.ts
-    popover.ts
-    tabs.ts
-    tooltip.ts
-  vue/
-    index.ts              # Re-exports as namespaced objects
-    shared.ts             # buildId, HiddenUntilFound, InjectionKeys
-    accordion.ts          # h() render functions via defineComponent()
-    collapsible.ts
-    menu.ts
-    popover.ts
-    tabs.ts
-    tooltip.ts
-tests/
-  server.tsx              # Test server (SSR + bundles)
-  fixtures.ts             # Playwright fixture with `renderer` option
-  accordion.spec.ts
-  collapsible.spec.ts
-  menu.spec.ts
-  popover.spec.ts
-  tabs.spec.ts
-  tooltip.spec.ts
-  fixtures/
-    test.css              # Minimal test styles
-    html/                 # Static HTML fixtures
-    react/                # React .tsx fixtures
-    vue/                  # Vue .vue SFCs + dynamic .ts entries + App.vue
-```
+# AGENTS.md
+
+Instructions for working on monochrome: an accessible, headless
+UI component library with no runtime dependencies. Six components
+(Accordion, Collapsible, Menu, Popover, Tabs, Tooltip), plus an
+optional router and thin React and Vue wrappers. The core is
+framework-agnostic and works on plain HTML; import it once and
+every correctly-structured component on the page becomes
+interactive.
+
+## North stars (non-negotiables)
+
+These aren't preferences. Break any of them and it isn't monochrome
+any more:
+
+1. **DOM is the source of truth.** Every decision reads
+   `aria-expanded`, `aria-selected`, `aria-checked`, `aria-hidden`,
+   `aria-disabled`. There is no internal state object mirroring the
+   DOM anywhere in the library.
+2. **Event delegation only.** Eight global listeners in the core:
+   `click`, `pointermove`, `keydown`, `scroll`, `resize`, `focusin`,
+   `focusout`, `beforematch`. Zero per-element listeners.
+3. **Zero timers.** No `setTimeout`, `requestAnimationFrame`,
+   `queueMicrotask`, debounce, or throttle. Every action is
+   synchronous within its event.
+4. **Zero runtime dependencies.** The core imports nothing. The
+   wrappers import only their framework (as peer deps).
+5. **Baseline 2024 browsers.** We rely on the Popover API,
+   `hidden="until-found"`, and `beforematch`. No polyfills shipped.
+6. **The core is one file.** `src/index.ts`. Don't split it. The
+   whole-file view is what makes the event-delegation logic
+   reviewable.
+
+## Why the core looks weird (and should stay weird)
+
+Six architectural choices that explain the *shape* of the library.
+Each looks odd at a glance and each has a specific reason. Don't
+"fix" them.
+
+**DOM-as-state.** Reading ARIA attrs on every event looks wasteful
+compared to caching in a JS object. It isn't: the cache would drift
+the moment a user, a framework, or devtools mutates the DOM, and
+tracking who owns what becomes a maintenance tax. With DOM-as-state
+there is exactly one truth and we never have to reconcile.
+
+**Global delegated listeners.** Per-component listeners scale with
+component count and require teardown on unmount. Eight global
+listeners are constant cost, require zero teardown, and automatically
+cover dynamically-inserted DOM without re-wiring.
+
+**ID prefix dispatch.** We route events to handlers by checking the
+prefix of `target.id` (`mct:`, `mcc:`, `mcr:`). No classes, no data
+attributes, no registration table. Prefix is the shortest string that
+uniquely identifies a component among the current set; grow only to
+disambiguate (`mct:ta` vs `mct:to` because both start with `t`),
+never preemptively.
+
+**Module-level `let` for state.** No classes, no `this`, no closures
+passed down. Handlers share state through module-scope variables
+(`menuPopovers`, `popoverOpen`, `tooltipShown`, …). This is why the
+core is one file: the state is part of the file's mental model.
+
+**`should*` driver flags for cross-handler communication.** The
+conventional move is to thread a mutable parameter (or return a
+result object) through every function the event visits, so each
+layer can report "I want preventDefault", "I matched a letter",
+"I'm doing a radio sweep" back up. The core skips all of that:
+flags like `shouldPreventDefault`, `shouldMatchLetter`, and
+`shouldResetRadio` live at module scope. A deep callback sets one
+during event processing; the top-level listener reads and clears
+it at the tail. No parameter plumbing, no return-value threading,
+no wrapper objects. It looks unconventional because shared mutable
+state usually is, but every flag's lifetime is bounded by a single
+synchronous event cycle (cleared at the top of each listener), so
+there's no reentrancy to reason about. Saves real bytes on every
+function signature it removes, and it makes the "where does this
+side effect come from?" question one grep away.
+
+**Wrappers use `createElement` / `h`, not JSX / SFC.** Eliminates
+`react/jsx-runtime` from the React bundle and halves the Vue bundle
+(no SFC patch-flag machinery). Source stays framework-agnostic in
+style.
+
+## Clever tricks
+
+Specific mechanisms inside the core and router. Read this section
+when you're debugging a particular behaviour; skip it when you just
+want the architecture.
+
+**`while` with sibling pointers, not `querySelectorAll`.** Every
+DOM walk in the core is a hand-rolled loop: `let item =
+root.firstElementChild; while (item) { ...; item =
+item.nextElementSibling }`. `querySelectorAll` would allocate a
+NodeList and run a selector parser for structure we already know
+(Accordion items are direct children of the root; Tab buttons are
+direct children of the List). A sibling-pointer walk costs
+nothing, makes iteration order explicit (single-mode Accordion
+needs close-before-open, Tabs toggles off-and-on in one pass), and
+lets a single traversal do work that a list plus follow-up would
+split in two.
+
+**Walk-up then walk-down for click dispatch.** The click listener
+walks UP from the event target (`target = target.parentElement`)
+until it finds a recognised ID prefix. When it lands inside a menu
+popover, a *second* walk runs from the original event target back
+UP to the popover, looking for a menuitem. Two loops, no `closest`,
+no selectors. The fall-through case (walk reached the document root
+without matching) is the outside-click detector: component routing
+and outside-click collapse into the same traversal.
+
+**`findAncestor` over `closest()`.** `findAncestor(el, prefix)`
+walks `parentElement` up checking `id.startsWith(prefix)`.
+`closest(".foo")` would require classes or data attributes, which
+is the exact shadow registry the ID-prefix scheme exists to avoid.
+The manual walk is fewer bytes, inlines into a single loop, and
+doesn't pull in the CSS selector engine.
+
+**Array-as-nullable-stack.** `menuPopovers[0]` is "is any menu
+open?", `menuPopovers[1]` is "is a submenu open?",
+`menuPopovers.pop()` closes the topmost. No `.length` check, no
+parallel `openMenu: HTMLElement | null` variable, no wrapper type.
+One array doubles as flag, stack, and cursor.
+
+**Roving-boundary sentinel.** A generic sibling walker can't
+distinguish "walked past the end and wrapped" from "kept going
+past the start". On an all-disabled list the naive walker loops
+forever. `rovingBoundary` remembers the first candidate the walker
+rejected; if we ever see it again we give up. One pointer, zero
+counters, zero extra passes. Cleared at the top of every `keydown`
+so each keypress starts with a fresh boundary.
+
+**Radio sweep reuses the navigation walker.** Activating a
+`menuitemradio` must clear `aria-checked` on every adjacent radio
+up to the group boundary. Instead of writing a dedicated sweep,
+`menuItemAction` sets three module flags (`shouldResetRadio`,
+`radioHeadDone`, `radioTailChain`) and calls the same `menuNext`
+used for ArrowDown. `menuRoving` notices the non-null driver state
+and switches into sweep mode: clear radios in the "head" half,
+buffer them past the wrap, flush the tail once the activated item
+is reached. One engine, three behaviours (plain roving, typeahead,
+radio sweep), selected by which module-scope flag is non-null.
+
+**Never handle Enter/Space in `keydown`.** The browser synthesises a
+`click` on Enter/Space for `<button>`. We only listen for `click`
+and distinguish keyboard (`event.detail === 0`) from mouse
+(`event.detail >= 1`). This halves the activation code path.
+
+**`hidden="until-found"` instead of `display: none`.** Collapsed
+content stays findable by Ctrl+F / Cmd+F, and the browser fires
+`beforematch` when it auto-reveals a hidden section so we can open
+the owning component.
+
+**Popover API with CSS-variable positioning.** The core publishes
+the trigger rect as CSS custom properties (`--top`, `--bottom`,
+`--left`, `--right`, `--pw`, `--ph`) on the content element. All
+positioning happens in CSS. No JS layout math, no `z-index`
+management (top layer handles that).
+
+**Safety triangle via `clip-path`.** When a submenu opens, the core
+publishes the submenu rect and cursor position as more CSS vars, and
+a `clip-path` polygon in CSS paints a direction-agnostic triangle
+using `clamp(var(--left), var(--x), var(--right))`. Zero JS during
+mouse-move beyond setting vars.
+
+**Signed movement for triangle direction; lazy rect measurement.**
+Two tricks inside the safety triangle. First, the "is the cursor
+moving toward the submenu?" check is
+`(safePopoverRect.left - safeRect.right) * event.movementX < 0`.
+Submenu to the right: `left - right` is negative, so the product
+is only negative when `movementX > 0` (moving right). Submenu to
+the left: inverted, same expression. One signed multiplication
+covers both sides without a branch. Second, `safePopoverRect` is
+measured on the first pointermove *into* the trigger cell, not at
+open time, because `@starting-style` transforms leave the rect
+wrong until the animation settles. Measuring lazily is also free
+when the user never enters the triangle.
+
+**Monotonic token for async cancellation.** The router uses a
+counter that increments on every `navigateTo`; callbacks check if
+their token is still the latest before touching the DOM. Handles
+rapid-fire clicks without locks or cancelation tokens.
+
+## Code style
+
+Rules only. Rationale lives in "Why the core looks weird" and
+"Clever tricks" above.
+
+### Formatting
+
+- 2-space indent, no semicolons (Biome's `asNeeded`), double quotes.
+- Trailing commas on multiline literals.
+- `.js` extensions on value imports (NodeNext resolution).
+
+### Functions
+
+- Arrow functions in the core and router. React wrappers use
+  `function` declarations for components (React convention, better
+  stack traces). Vue wrappers use `defineComponent` with
+  method-shorthand `setup`.
+- Default parameter values with enum types instead of option
+  objects when the set is small: `menu(trigger, mode = Focus.Trigger)`.
+
+### Control flow
+
+- Nest over early-return. One top-level guard is fine; chained
+  returns fragment the function's shape.
+- `while` over `for` for DOM walks. Sibling-pointer advancement
+  (`el = el.nextElementSibling`), never counters or indices.
+- `for...of` over `.forEach` for arrays. `.forEach` is fine on a
+  `NodeListOf`.
+- `switch` for keyboard dispatch.
+- Ternary as a statement when both branches are a single
+  side-effect call.
+- `array[0]` over `array.length > 0`.
+
+### DOM access
+
+- No `querySelector` / `querySelectorAll` in the core. Walk
+  `firstElementChild` / `nextElementSibling` / `parentElement` by
+  hand. (The router uses `querySelectorAll` once, for a named-region
+  lookup where no sibling relationship exists.)
+- No `closest()`. Use `findAncestor(el, prefix)`.
+- ARIA IDL accessors (`ariaExpanded`, `ariaChecked`, `ariaHidden`,
+  `ariaDisabled`, `ariaSelected`, `role`) over
+  `getAttribute`/`setAttribute`. String API only where there's no
+  IDL counterpart (`data-*`, `aria-labelledby`, `aria-controls`,
+  `hidden`).
+- Compare ARIA strings with `!== "true"` when the "not truthy"
+  case is the one you care about.
+
+### State
+
+- Module-level `let` for mutable state shared between handlers;
+  module-level `const` for structures (stacks, maps, parsers).
+- No classes, no `this`, no closures-over-state threaded through
+  call chains.
+- `should*` flags drive cross-handler signalling within a single
+  event cycle; cleared at the top of each listener.
+
+### Types
+
+- Enums for related string constants (`Prefix.TriggerMenu`,
+  `Focus.First`). Numeric enums for mode-select flags, string
+  enums for stable identifiers that appear in the DOM.
+- Named-tuple types for 2-3 field shapes that stay module-private:
+  `type Fetched = [html: string, url: string]`.
+- Type guards as `is`-predicates (`isElement`, `isTrigger`,
+  `isMenuItem`, `canHandle`). Narrow once at the listener entry;
+  pass the narrowed value down.
+- No `as`, `any`, or non-null `!` assertions in the core or
+  router. Narrow with runtime checks. (Vue wrappers may use `as
+  PropType<...>` where Vue's prop typing requires it.)
+
+### Events
+
+- `addEventListener` on `window` / `document` only.
+- Custom events (`mc:navigate`) for cross-boundary signals the
+  wrappers need. No callback props or event-emitter exports from
+  the core.
+- `event.detail === 0` distinguishes keyboard-synthesised clicks
+  from real mouse clicks.
+- `void` on fire-and-forget promise expressions.
+
+### Naming
+
+- Core primitives are named after the component they drive:
+  `collapsible`, `accordion`, `tabs`, `menu`, `popover`, `tooltip`.
+- `should*` for driver flags, `safe*` for safety-triangle state,
+  `tooltip*` for tooltip state, `menu*` for menu state.
+- Short locals where the type carries the meaning: `el`, `target`,
+  `item`, `trigger`, `content`, `rect`.
+
+## Prose style
+
+Applies to all prose in the repo: code comments, TSDoc, README,
+AGENTS.md, commit messages, PR descriptions.
+
+- **No em dashes (`—`).** Use a period, colon, semicolon, or
+  parentheses instead. Biome doesn't lint prose, so this is on the
+  author. The rule applies everywhere, including stripped-at-build
+  comments (the source is still what humans read).
+- **Hard-wrap around 66-70 characters.** Purely an authoring
+  convention; Markdown renderers ignore the line breaks. It keeps
+  diffs one-line-per-change instead of full-paragraph reflows, and
+  lets prose sit next to TSDoc blocks (wrapped at the same width)
+  without a visual seam. Applies to every file listed above.
+
+## Comment policy
+
+- `src/index.ts` and `src/router.ts`: **fully commented.** TSDoc
+  (`/** */`) for every declared symbol. Inline `//` for non-obvious
+  decisions. File-top `@file` header explaining architecture,
+  invariants, and file layout. This is the convention; keep it.
+- `src/react/*`, `src/vue/*`: **no comments** except `// biome-ignore`
+  pragmas where required. Each file is small and self-evident.
+- Tests: no comments except when the *why* of a setup step would
+  surprise the next reader (race conditions, sentinel globals, etc.).
+
+The build step strips every comment before `Bun.build` sees it
+(`build.ts › stripComments`). Comments are free in source; they
+never reach `dist/`.
