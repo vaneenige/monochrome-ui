@@ -8,7 +8,7 @@ import {
 	toRef,
 	useId,
 } from "vue";
-import { buildId, HiddenUntilFound, requireInject, TabsKey } from "./shared.js";
+import { buildId, requireInject, TabsKey } from "./shared.js";
 
 const Root = defineComponent({
 	props: {
@@ -109,7 +109,7 @@ const Panel = defineComponent({
 					tabindex: props.focusable ? (isSelected.value ? 0 : -1) : undefined,
 					"data-orientation": ctx.orientation,
 				},
-				[!isSelected.value && h(HiddenUntilFound), slots.default?.()],
+				slots.default?.(),
 			);
 	},
 });

@@ -10,8 +10,8 @@
  * plain DOM with the right ARIA setup and get full behaviour for free.
  *
  * The non-negotiables (DOM-as-state, event delegation only, zero
- * timers, ID-prefix dispatch, `hidden="until-found"`) live in
- * `AGENTS.md` § North stars and § Why the core looks weird.
+ * timers, ID-prefix dispatch) live in `AGENTS.md` § North stars
+ * and § Why the core looks weird.
  *
  * ## File layout
  *
@@ -24,7 +24,7 @@
  * 6. Component primitives: `collapsible`, `accordion`, `tabs`, `menu`,
  *    `popover`, `tooltip` and their helpers
  * 7. Event listeners: `click`, `pointermove`, `keydown`, `scroll`,
- *    `resize`, `focusin`, `focusout`, `beforematch`
+ *    `resize`, `focusin`, `focusout`
  *
  * ## Comment convention
  *
@@ -410,10 +410,7 @@ if (typeof document !== "undefined") {
 
 	/**
 	 * Toggle a disclosure-style trigger/panel pair. Used directly by
-	 * Collapsible and as a building block for Accordion. Panels use
-	 * `hidden="until-found"` (not `display: none`) so that the browser
-	 * find-in-page can still discover their text and fire
-	 * `beforematch` to auto-open them.
+	 * Collapsible and as a building block for Accordion.
 	 */
 	const collapsible = (trigger: HTMLElement) => {
 		const content = getContent(trigger, "aria-controls");
@@ -423,7 +420,7 @@ if (typeof document !== "undefined") {
 			content.ariaHidden = isOpen ? "false" : "true";
 			isOpen
 				? content.removeAttribute("hidden")
-				: content.setAttribute("hidden", "until-found");
+				: content.setAttribute("hidden", "");
 		}
 	};
 
@@ -484,7 +481,7 @@ if (typeof document !== "undefined") {
 							content.tabIndex = isSelected ? 0 : -1;
 						isSelected
 							? content.removeAttribute("hidden")
-							: content.setAttribute("hidden", "until-found");
+							: content.setAttribute("hidden", "");
 					}
 				}
 				tab = tab.nextElementSibling;
@@ -1182,33 +1179,6 @@ if (typeof document !== "undefined") {
 		) {
 			tooltipFocused = null;
 			tooltipSync();
-		}
-	});
-
-	/**
-	 * `beforematch` fires when the browser's find-in-page wants to
-	 * reveal content hidden via `hidden="until-found"`. Walk up from
-	 * the match to find the owning trigger (via `aria-labelledby`) and
-	 * open the containing component. Supports Accordion, Collapsible,
-	 * and Tabs.
-	 */
-	addEventListener("beforematch", (event) => {
-		if (isElement(event.target)) {
-			let target: HTMLElement | null = event.target;
-			while (target) {
-				const triggerId = target.getAttribute("aria-labelledby");
-				if (triggerId) {
-					const trigger = document.getElementById(triggerId);
-					if (isTrigger(trigger, Prefix.TriggerAccordion)) {
-						if (trigger.ariaExpanded !== "true") accordion(trigger);
-					} else if (isTrigger(trigger, Prefix.TriggerCollapsible)) {
-						if (trigger.ariaExpanded !== "true") collapsible(trigger);
-					} else if (isTrigger(trigger, Prefix.TriggerTabs)) {
-						tabs(trigger);
-					}
-				}
-				target = target.parentElement;
-			}
 		}
 	});
 }

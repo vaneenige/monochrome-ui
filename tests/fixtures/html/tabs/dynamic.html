@@ -14,7 +14,7 @@
     <button data-testid="tabs2-tab-2" type="button" role="tab" id="mct:tabs:d2:t2" aria-selected="false" aria-controls="mcc:tabs:d2:t2" tabindex="-1">T2</button>
   </div>
   <div data-testid="tabs2-panel-1" role="tabpanel" id="mcc:tabs:d2:t1" aria-labelledby="mct:tabs:d2:t1" aria-hidden="false" tabindex="0" data-orientation="horizontal"><p>Panel T1</p></div>
-  <div data-testid="tabs2-panel-2" role="tabpanel" id="mcc:tabs:d2:t2" aria-labelledby="mct:tabs:d2:t2" aria-hidden="true" hidden="until-found" tabindex="-1" data-orientation="horizontal"><p>Panel T2</p></div>
+  <div data-testid="tabs2-panel-2" role="tabpanel" id="mcc:tabs:d2:t2" aria-labelledby="mct:tabs:d2:t2" aria-hidden="true" hidden tabindex="-1" data-orientation="horizontal"><p>Panel T2</p></div>
 </div>
 <script>
 (function() {
@@ -45,7 +45,7 @@
     panel.id = 'mcc:tabs:d1:' + value;
     panel.setAttribute('aria-labelledby', 'mct:tabs:d1:' + value);
     panel.setAttribute('aria-hidden', isSelected ? 'false' : 'true');
-    if (!isSelected) panel.setAttribute('hidden', 'until-found');
+    if (!isSelected) panel.setAttribute("hidden", "");
     panel.tabIndex = isSelected ? 0 : -1;
     panel.setAttribute('data-orientation', orientation);
     panel.innerHTML = '<p>' + content + '</p>';

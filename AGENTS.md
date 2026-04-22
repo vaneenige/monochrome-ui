@@ -17,16 +17,16 @@ any more:
    `aria-expanded`, `aria-selected`, `aria-checked`, `aria-hidden`,
    `aria-disabled`. There is no internal state object mirroring the
    DOM anywhere in the library.
-2. **Event delegation only.** Eight global listeners in the core:
+2. **Event delegation only.** Seven global listeners in the core:
    `click`, `pointermove`, `keydown`, `scroll`, `resize`, `focusin`,
-   `focusout`, `beforematch`. Zero per-element listeners.
+   `focusout`. Zero per-element listeners.
 3. **Zero timers.** No `setTimeout`, `requestAnimationFrame`,
    `queueMicrotask`, debounce, or throttle. Every action is
    synchronous within its event.
 4. **Zero runtime dependencies.** The core imports nothing. The
    wrappers import only their framework (as peer deps).
-5. **Baseline 2024 browsers.** We rely on the Popover API,
-   `hidden="until-found"`, and `beforematch`. No polyfills shipped.
+5. **Baseline 2024 browsers.** We rely on the Popover API. No
+   polyfills shipped.
 6. **The core is one file.** `src/index.ts`. Don't split it. The
    whole-file view is what makes the event-delegation logic
    reviewable.
@@ -144,11 +144,6 @@ radio sweep), selected by which module-scope flag is non-null.
 `click` on Enter/Space for `<button>`. We only listen for `click`
 and distinguish keyboard (`event.detail === 0`) from mouse
 (`event.detail >= 1`). This halves the activation code path.
-
-**`hidden="until-found"` instead of `display: none`.** Collapsed
-content stays findable by Ctrl+F / Cmd+F, and the browser fires
-`beforematch` when it auto-reveals a hidden section so we can open
-the owning component.
 
 **Popover API with CSS-variable positioning.** The core publishes
 the trigger rect as CSS custom properties (`--top`, `--bottom`,

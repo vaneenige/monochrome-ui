@@ -5,7 +5,7 @@ import {
 	useContext,
 	useId,
 } from "react";
-import { type BaseProps, HiddenUntilFound } from "./shared.js";
+import type { BaseProps } from "./shared.js";
 
 type AccordionContextValue = {
 	baseId: string;
@@ -88,7 +88,6 @@ function Panel({ children, ...props }: BaseProps): ReactElement {
 			"aria-hidden": !isOpen,
 			hidden: isOpen ? undefined : true,
 		},
-		!isOpen && createElement(HiddenUntilFound, null),
 		children,
 	);
 }

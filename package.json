@@ -98,16 +98,16 @@
     "vue": "3.5.32"
   },
   "versionMeta": {
-    "gzipSize": 2639,
+    "gzipSize": 2561,
     "routerGzipSize": 1057,
     "tests": {
-      "total": 438,
-      "collapsible": 42,
+      "total": 423,
+      "collapsible": 37,
       "router": 28,
-      "accordion": 66,
+      "accordion": 60,
       "menu": 179,
       "tooltip": 24,
-      "tabs": 70,
+      "tabs": 66,
       "popover": 29
     }
   }

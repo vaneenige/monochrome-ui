@@ -1,5 +1,5 @@
 import type { InjectionKey } from "vue";
-import { h, inject } from "vue";
+import { inject } from "vue";
 
 export function requireInject<T>(key: InjectionKey<T>, component: string): T {
 	const ctx = inject(key);
@@ -10,12 +10,6 @@ export function requireInject<T>(key: InjectionKey<T>, component: string): T {
 
 export const buildId = (base: string, id?: string) =>
 	id ? `${base}:${id}` : base;
-
-export const HiddenUntilFound = () =>
-	h("script", {
-		innerHTML:
-			"document.currentScript.parentNode.setAttribute('hidden','until-found')",
-	});
 
 export type CollapsibleContext = { baseId: string; open: boolean };
 export const CollapsibleKey: InjectionKey<CollapsibleContext> =

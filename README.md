@@ -43,8 +43,8 @@ import { Accordion } from "monochrome/vue"
 <button id="mct:collapsible:1" aria-expanded="false" aria-controls="mcc:collapsible:1">
   Show details
 </button>
-<div id="mcc:collapsible:1" aria-labelledby="mct:collapsible:1" aria-hidden="true" hidden="until-found">
-  Hidden by default, revealed on click or find-in-page.
+<div id="mcc:collapsible:1" aria-labelledby="mct:collapsible:1" aria-hidden="true" hidden>
+  Hidden by default, revealed on click.
 </div>
 ```
 
@@ -52,7 +52,7 @@ The React and Vue wrappers generate the same HTML and ARIA; all interactivity co
 
 ## Browser support
 
-Baseline 2024. Uses the Popover API, `hidden="until-found"`, and `beforematch`. No polyfills shipped.
+Baseline 2024. Uses the Popover API. No polyfills shipped.
 
 ## Contributing
 

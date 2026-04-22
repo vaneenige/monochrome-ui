@@ -5,7 +5,7 @@ import {
 	useContext,
 	useId,
 } from "react";
-import { type BaseProps, buildId, HiddenUntilFound } from "./shared.js";
+import { type BaseProps, buildId } from "./shared.js";
 
 type TabsContextValue = {
 	baseId: string;
@@ -108,7 +108,6 @@ function Panel({
 			tabIndex: focusable ? (isSelected ? 0 : -1) : undefined,
 			"data-orientation": context.orientation,
 		},
-		!isSelected && createElement(HiddenUntilFound, null),
 		children,
 	);
 }

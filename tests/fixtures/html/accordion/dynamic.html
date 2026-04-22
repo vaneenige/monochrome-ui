@@ -9,11 +9,11 @@
 <div data-testid="accordion2-root" data-mode="single" id="mcr:accordion:d2">
   <div data-testid="accordion2-item-1">
     <h3><button data-testid="accordion2-trigger-1" type="button" id="mct:accordion:d2-1" aria-expanded="false" aria-controls="mcc:accordion:d2-1">A2 Section 1</button></h3>
-    <div data-testid="accordion2-content-1" id="mcc:accordion:d2-1" role="region" aria-labelledby="mct:accordion:d2-1" aria-hidden="true" hidden="until-found"><p>A2 Content 1</p></div>
+    <div data-testid="accordion2-content-1" id="mcc:accordion:d2-1" role="region" aria-labelledby="mct:accordion:d2-1" aria-hidden="true" hidden><p>A2 Content 1</p></div>
   </div>
   <div data-testid="accordion2-item-2">
     <h3><button data-testid="accordion2-trigger-2" type="button" id="mct:accordion:d2-2" aria-expanded="false" aria-controls="mcc:accordion:d2-2">A2 Section 2</button></h3>
-    <div data-testid="accordion2-content-2" id="mcc:accordion:d2-2" role="region" aria-labelledby="mct:accordion:d2-2" aria-hidden="true" hidden="until-found"><p>A2 Content 2</p></div>
+    <div data-testid="accordion2-content-2" id="mcc:accordion:d2-2" role="region" aria-labelledby="mct:accordion:d2-2" aria-hidden="true" hidden><p>A2 Content 2</p></div>
   </div>
 </div>
 <script>
@@ -43,7 +43,7 @@
     panel.setAttribute('role', 'region');
     panel.setAttribute('aria-labelledby', 'mct:accordion:d1-' + n);
     panel.setAttribute('aria-hidden', 'true');
-    panel.setAttribute('hidden', 'until-found');
+    panel.setAttribute("hidden", "");
     panel.innerHTML = '<p>Content ' + n + '</p>';
 
     item.appendChild(h3);

@@ -1,5 +1,5 @@
 import { defineComponent, h, provide, reactive, toRef, useId } from "vue";
-import { AccordionKey, HiddenUntilFound, requireInject } from "./shared.js";
+import { AccordionKey, requireInject } from "./shared.js";
 
 const Root = defineComponent({
 	props: {
@@ -77,7 +77,7 @@ const Panel = defineComponent({
 					"aria-hidden": !ctx.open,
 					hidden: ctx.open ? undefined : true,
 				},
-				[!ctx.open && h(HiddenUntilFound), slots.default?.()],
+				slots.default?.(),
 			);
 	},
 });
