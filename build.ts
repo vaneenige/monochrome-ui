@@ -75,6 +75,8 @@ const fmt = (bytes: number) => `${(bytes / 1024).toFixed(1)}kB`;
 
 const coreGz = await gzip("dist/index.js");
 const routerGz = await gzip("dist/router.js");
+const reactGz = await gzip("dist/react/index.js");
+const vueGz = await gzip("dist/vue/index.js");
 
 const testCounts: Record<string, number> = {};
 for await (const path of new Bun.Glob("tests/*.spec.ts").scan()) {
@@ -89,6 +91,7 @@ const pkg = await Bun.file("package.json").json();
 pkg.versionMeta = {
 	gzipSize: coreGz,
 	routerGzipSize: routerGz,
+	wrappersGzipSize: { react: reactGz, vue: vueGz },
 	tests: { total: totalTests, ...testCounts },
 };
 await Bun.write("package.json", `${JSON.stringify(pkg, null, 2)}\n`);
