@@ -29,12 +29,7 @@ const Root = defineComponent({
 				orientation: toRef(props, "orientation"),
 			}),
 		);
-		return () =>
-			h(
-				"div",
-				{ "data-orientation": props.orientation, id: `mcr:tabs:${baseId}` },
-				slots.default?.(),
-			);
+		return () => h("div", { id: `mcr:tabs:${baseId}` }, slots.default?.());
 	},
 });
 
@@ -107,7 +102,6 @@ const Panel = defineComponent({
 					"aria-hidden": !isSelected.value,
 					hidden: isSelected.value ? undefined : true,
 					tabindex: props.focusable ? (isSelected.value ? 0 : -1) : undefined,
-					"data-orientation": ctx.orientation,
 				},
 				slots.default?.(),
 			);

@@ -35,11 +35,7 @@ function Root({
 	return createElement(
 		TabsContext.Provider,
 		{ value: { baseId, selected: defaultValue, orientation: dir } },
-		createElement(
-			"div",
-			{ ...props, "data-orientation": dir, id: `mcr:tabs:${baseId}` },
-			children,
-		),
+		createElement("div", { ...props, id: `mcr:tabs:${baseId}` }, children),
 	);
 }
 
@@ -106,7 +102,6 @@ function Panel({
 			"aria-hidden": !isSelected,
 			hidden: isSelected ? undefined : true,
 			tabIndex: focusable ? (isSelected ? 0 : -1) : undefined,
-			"data-orientation": context.orientation,
 		},
 		children,
 	);
