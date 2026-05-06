@@ -11,7 +11,7 @@ If you write accessible HTML, monochrome makes it interactive. The DOM is the st
 
 ## Components
 
-Accordion · Collapsible · Menu · Popover · Tabs · Tooltip.
+Accordion · Collapsible · Dialog · Menu · Popover · Tabs · Tooltip.
 
 Plus an optional client-side router and thin React and Vue wrappers.
 
@@ -52,7 +52,8 @@ The React and Vue wrappers generate the same HTML and ARIA; all interactivity co
 
 ## Browser support
 
-Baseline 2024. Uses the Popover API. No polyfills shipped.
+Baseline 2024. Uses the Popover API and the native `<dialog>`
+element. No polyfills shipped.
 
 ## Contributing
 

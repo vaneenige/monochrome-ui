@@ -1,12 +1,12 @@
 # AGENTS.md
 
 Instructions for working on monochrome: an accessible, headless
-UI component library with no runtime dependencies. Six components
-(Accordion, Collapsible, Menu, Popover, Tabs, Tooltip), plus an
-optional router and thin React and Vue wrappers. The core is
-framework-agnostic and works on plain HTML; import it once and
-every correctly-structured component on the page becomes
-interactive.
+UI component library with no runtime dependencies. Seven
+components (Accordion, Collapsible, Dialog, Menu, Popover, Tabs,
+Tooltip), plus an optional router and thin React and Vue
+wrappers. The core is framework-agnostic and works on plain HTML;
+import it once and every correctly-structured component on the
+page becomes interactive.
 
 ## North stars (non-negotiables)
 
@@ -262,7 +262,8 @@ Rules only. Rationale lives in "Why the core looks weird" and
 ### Naming
 
 - Core primitives are named after the component they drive:
-  `collapsible`, `accordion`, `tabs`, `menu`, `popover`, `tooltip`.
+  `collapsible`, `accordion`, `tabs`, `menu`, `popover`, `tooltip`,
+  `dialog`.
 - `should*` for driver flags, `safe*` for safety-triangle state,
   `tooltip*` for tooltip state, `menu*` for menu state.
 - Short locals where the type carries the meaning: `el`, `target`,

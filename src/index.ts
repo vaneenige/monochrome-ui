@@ -71,11 +71,14 @@ enum Prefix {
 	Trigger = "mct:",
 	TriggerAccordion = "mct:a",
 	TriggerCollapsible = "mct:c",
+	TriggerDialog = "mct:dialog-o",
+	TriggerDialogClose = "mct:dialog-c",
 	TriggerMenu = "mct:m",
 	TriggerPopover = "mct:p",
 	TriggerTabs = "mct:ta",
 	TriggerTooltip = "mct:to",
 	Content = "mcc:",
+	ContentDialog = "mcc:d",
 	ContentMenu = "mcc:m",
 	ContentPopover = "mcc:p",
 	ContentTooltip = "mcc:to",
@@ -162,6 +165,11 @@ if (typeof document !== "undefined") {
 	/** Currently open standalone popover trigger, if any. */
 	let popoverOpen: HTMLElement | null = null;
 
+	/** The native `<dialog>` currently open via `showModal()`, if any. */
+	let dialogContent: HTMLDialogElement | null = null;
+	/** Trigger that opened the current dialog; focus returns here on close. */
+	let dialogTrigger: HTMLElement | null = null;
+
 	/** Tooltip trigger currently under the pointer. */
 	let tooltipHovered: HTMLElement | null = null;
 	/** Tooltip trigger currently holding DOM focus. */
@@ -213,6 +221,10 @@ if (typeof document !== "undefined") {
 	 */
 	const isTrigger = (el: unknown, prefix?: string): el is HTMLButtonElement =>
 		el instanceof HTMLButtonElement && (!prefix || el.id.startsWith(prefix));
+
+	/** Narrow: element is a native `<dialog>` (the Dialog content). */
+	const isDialog = (el: unknown): el is HTMLDialogElement =>
+		el instanceof HTMLDialogElement;
 
 	/**
 	 * Narrow: element is an **enabled** `menuitem*` (role `menuitem`,
@@ -651,6 +663,50 @@ if (typeof document !== "undefined") {
 	};
 
 	/**
+	 * Open the `<dialog>` referenced by `trigger`'s `aria-controls`,
+	 * as a true modal via `showModal()`. No-op if another dialog is
+	 * already open or the controlled element isn't a `<dialog>`.
+	 *
+	 * Initial focus is the user agent's responsibility: the HTML
+	 * spec's "dialog focusing steps" pick autofocus, then first
+	 * focusable, then the dialog itself. We do not second-guess.
+	 *
+	 * Labeling and description are entirely the wrapper's concern:
+	 * the React/Vue `Content` components inspect their incoming
+	 * props and only emit `aria-labelledby`/`aria-describedby` when
+	 * the user hasn't supplied an alternative. Bare-HTML consumers
+	 * are responsible for writing correct ARIA themselves.
+	 *
+	 * The triggering button is remembered so `dialogClose` returns
+	 * focus to it.
+	 */
+	const dialogOpenFor = (trigger: HTMLElement) => {
+		if (dialogContent) return;
+		const content = getContent(trigger, "aria-controls");
+		if (!isDialog(content)) return;
+		dialogContent = content;
+		dialogTrigger = trigger;
+		content.showModal();
+	};
+
+	/**
+	 * Close the open dialog and return focus to its trigger. State is
+	 * cleared *before* `close()` so anything observing module state
+	 * sees consistent values regardless of when the (queued) `close`
+	 * event fires. `close()` on an already-closed `<dialog>` is a
+	 * spec no-op.
+	 */
+	const dialogClose = () => {
+		if (!dialogContent || !dialogTrigger) return;
+		const content = dialogContent;
+		const trigger = dialogTrigger;
+		dialogContent = null;
+		dialogTrigger = null;
+		content.close();
+		trigger.focus();
+	};
+
+	/**
 	 * Click dispatcher. Walks from the event target up the DOM looking
 	 * for a recognised prefix, then dispatches to the right primitive.
 	 *
@@ -715,7 +771,20 @@ if (typeof document !== "undefined") {
 						else if (id.startsWith(Prefix.TriggerCollapsible))
 							collapsible(target);
 						else if (id.startsWith(Prefix.TriggerTabs)) tabs(target);
+						else if (id.startsWith(Prefix.TriggerDialogClose)) dialogClose();
 						else if (
+							id.startsWith(Prefix.TriggerDialog) &&
+							target.ariaDisabled !== "true"
+						) {
+							// Modal opens on top: dismiss any transient overlays
+							// so they don't hide behind the backdrop.
+							if (popoverOpen) popover(popoverOpen, false);
+							if (tooltipShown) {
+								tooltipSuppressed = tooltipShown;
+								tooltipSync();
+							}
+							dialogOpenFor(target);
+						} else if (
 							id.startsWith(Prefix.TriggerPopover) &&
 							target.ariaDisabled !== "true"
 						) {
@@ -754,6 +823,9 @@ if (typeof document !== "undefined") {
 					// Click inside tooltip content (e.g. during a
 					// screen-reader interaction): ignore.
 					break;
+				} else if (id.startsWith(Prefix.ContentDialog)) {
+					// Click inside dialog content: leave it open.
+					break;
 				}
 
 				target = target.parentElement;
@@ -761,6 +833,12 @@ if (typeof document !== "undefined") {
 
 			// The walk fell off the top of the tree; click was "outside"
 			// every known component. Dismiss anything open.
+			//
+			// Dialog is intentionally absent: it's a true modal opened
+			// via `showModal()`, so the rest of the page is `inert` and
+			// background clicks can't fire here in the first place.
+			// Backdrop clicks land on the `<dialog>` itself (matching
+			// `Prefix.ContentDialog`) and break above without dismissing.
 			if (!target) {
 				if (menuPopovers[0]) menuHideAll();
 				if (popoverOpen) popover(popoverOpen, false);
@@ -1071,7 +1149,8 @@ if (typeof document !== "undefined") {
 
 		// Global Escape. Closes the topmost menu (returning focus to its
 		// trigger), closes any open popover (returning focus to its
-		// trigger), and suppresses the visible tooltip.
+		// trigger), closes any open dialog, and suppresses the visible
+		// tooltip.
 		if (event.key === "Escape") {
 			if (menuPopovers[0]) menu(menuPopovers.pop(), Focus.Trigger);
 			if (popoverOpen) {
@@ -1079,6 +1158,7 @@ if (typeof document !== "undefined") {
 				popover(trigger, false);
 				trigger.focus();
 			}
+			if (dialogContent) dialogClose();
 			if (tooltipShown) {
 				tooltipSuppressed = tooltipShown;
 				tooltipSync();

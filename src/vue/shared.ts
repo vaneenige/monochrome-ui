@@ -50,3 +50,6 @@ export const PopoverKey: InjectionKey<PopoverContext> =
 export type TooltipContext = { id: string };
 export const TooltipKey: InjectionKey<TooltipContext> =
 	Symbol("TooltipContext");
+
+export type DialogContext = { id: string };
+export const DialogKey: InjectionKey<DialogContext> = Symbol("DialogContext");
