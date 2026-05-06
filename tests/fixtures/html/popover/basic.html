@@ -105,6 +105,69 @@
     </div>
   </div>
 </div>
+<div class="popover">
+  <button
+    data-testid="described-trigger"
+    type="button"
+    id="mct:popover:5"
+    aria-controls="mcc:popover:5"
+    aria-expanded="false"
+  >Described</button>
+  <div
+    data-testid="described-content"
+    id="mcc:popover:5"
+    aria-labelledby="mct:popover:5"
+    aria-describedby="mcc:popover-description:5"
+    aria-hidden="true"
+    popover="manual"
+    tabindex="-1"
+  >
+    <p id="mcc:popover-description:5" data-testid="described-desc">A short description for AT.</p>
+    <button type="button" data-testid="described-action">Action</button>
+  </div>
+</div>
+<div class="popover">
+  <button
+    data-testid="dialog-popover-trigger"
+    type="button"
+    id="mct:popover:6"
+    aria-controls="mcc:popover:6"
+    aria-expanded="false"
+  >Open dialog popover</button>
+  <div
+    data-testid="dialog-popover-content"
+    role="dialog"
+    id="mcc:popover:6"
+    aria-label="Filter results"
+    aria-describedby="mcc:popover-description:6"
+    aria-hidden="true"
+    popover="manual"
+    tabindex="-1"
+  >
+    <h2 data-testid="dialog-popover-title">Filter results</h2>
+    <p id="mcc:popover-description:6" data-testid="dialog-popover-desc">Pick a date range.</p>
+    <button type="button" data-testid="dialog-popover-apply">Apply</button>
+  </div>
+</div>
+<div class="popover">
+  <button
+    data-testid="aria-label-trigger"
+    type="button"
+    id="mct:popover:7"
+    aria-controls="mcc:popover:7"
+    aria-expanded="false"
+  >Plain</button>
+  <div
+    data-testid="aria-label-content"
+    id="mcc:popover:7"
+    aria-label="Quick info"
+    aria-hidden="true"
+    popover="manual"
+    tabindex="-1"
+  >
+    <p>Just a label.</p>
+  </div>
+</div>
 <div class="menu" id="mcr:menu:1">
   <button data-testid="menu-trigger" type="button" id="mct:menu:1" aria-controls="mcc:menu:1" aria-expanded="false" aria-haspopup="menu" tabindex="0" role="button">Menu</button>
   <ul data-testid="menu-list" role="menu" id="mcc:menu:1" aria-labelledby="mct:menu:1" aria-hidden="true" popover="manual">

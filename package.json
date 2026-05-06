@@ -102,11 +102,11 @@
     "gzipSize": 2681,
     "routerGzipSize": 1057,
     "wrappersGzipSize": {
-      "react": 1992,
-      "vue": 2183
+      "react": 2038,
+      "vue": 2236
     },
     "tests": {
-      "total": 459,
+      "total": 463,
       "collapsible": 37,
       "router": 28,
       "accordion": 60,
@@ -114,7 +114,7 @@
       "tooltip": 24,
       "tabs": 66,
       "dialog": 36,
-      "popover": 29
+      "popover": 33
     }
   }
 }

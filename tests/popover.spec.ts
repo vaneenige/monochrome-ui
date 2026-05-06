@@ -83,6 +83,49 @@ test.describe("Popover", () => {
 		});
 	});
 
+	test.describe("Labelling and Description", () => {
+		test("aria-describedby on Content auto-wires to Popover.Description's id", async ({
+			page,
+		}) => {
+			const describedby = await page
+				.getByTestId("described-content")
+				.getAttribute("aria-describedby");
+			const descId = await page
+				.getByTestId("described-desc")
+				.getAttribute("id");
+			expect(describedby).toBe(descId);
+		});
+
+		test("default aria-labelledby still points at the trigger when Description is used", async ({
+			page,
+		}) => {
+			const triggerId = await page
+				.getByTestId("described-trigger")
+				.getAttribute("id");
+			await expect(page.getByTestId("described-content")).toHaveAttribute(
+				"aria-labelledby",
+				triggerId as string,
+			);
+		});
+
+		test("non-modal dialog popover passes through role='dialog' and uses aria-label as the name", async ({
+			page,
+		}) => {
+			const content = page.getByTestId("dialog-popover-content");
+			await expect(content).toHaveAttribute("role", "dialog");
+			await expect(content).toHaveAttribute("aria-label", "Filter results");
+			await expect(content).not.toHaveAttribute("aria-labelledby", /.*/);
+		});
+
+		test("aria-label on Content suppresses the default aria-labelledby", async ({
+			page,
+		}) => {
+			const content = page.getByTestId("aria-label-content");
+			await expect(content).toHaveAttribute("aria-label", "Quick info");
+			await expect(content).not.toHaveAttribute("aria-labelledby", /.*/);
+		});
+	});
+
 	test.describe("Click Behavior", () => {
 		test("should open on click", async ({ page }) => {
 			await page.getByTestId("click-trigger").click();

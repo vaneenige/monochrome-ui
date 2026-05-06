@@ -28,21 +28,48 @@ const Trigger = defineComponent({
 });
 
 const Content = defineComponent({
-	setup(_, { slots }) {
+	inheritAttrs: false,
+	setup(_, { slots, attrs }) {
 		const ctx = requireInject(PopoverKey, "Popover.Content");
-		return () =>
-			h(
+		return () => {
+			const hasLabel = "aria-label" in attrs;
+			const hasDescription = "aria-description" in attrs;
+			return h(
 				"div",
 				{
+					...(hasLabel ? {} : { "aria-labelledby": `mct:popover:${ctx.id}` }),
+					...(hasDescription
+						? {}
+						: { "aria-describedby": `mcc:popover-description:${ctx.id}` }),
+					...attrs,
 					id: `mcc:popover:${ctx.id}`,
-					"aria-labelledby": `mct:popover:${ctx.id}`,
 					"aria-hidden": "true",
 					popover: "manual",
 					tabindex: -1,
 				},
 				slots.default?.(),
 			);
+		};
 	},
 });
 
-export const Popover = { Root, Trigger, Content };
+const Title = defineComponent({
+	props: {
+		as: { type: String, default: "h2" },
+	},
+	setup(props, { slots }) {
+		const ctx = requireInject(PopoverKey, "Popover.Title");
+		return () =>
+			h(props.as, { id: `mcc:popover-title:${ctx.id}` }, slots.default?.());
+	},
+});
+
+const Description = defineComponent({
+	setup(_, { slots }) {
+		const ctx = requireInject(PopoverKey, "Popover.Description");
+		return () =>
+			h("p", { id: `mcc:popover-description:${ctx.id}` }, slots.default?.());
+	},
+});
+
+export const Popover = { Root, Trigger, Content, Title, Description };

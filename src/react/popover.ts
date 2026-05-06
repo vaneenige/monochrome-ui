@@ -43,12 +43,17 @@ function Trigger({ children, ...props }: BaseProps): ReactElement {
 
 function Content({ children, ...props }: BaseProps): ReactElement {
 	const context = usePopoverContext();
+	const hasLabel = "aria-label" in props;
+	const hasDescription = "aria-description" in props;
 	return createElement(
 		"div",
 		{
+			...(hasLabel ? {} : { "aria-labelledby": `mct:popover:${context.id}` }),
+			...(hasDescription
+				? {}
+				: { "aria-describedby": `mcc:popover-description:${context.id}` }),
 			...props,
 			id: `mcc:popover:${context.id}`,
-			"aria-labelledby": `mct:popover:${context.id}`,
 			"aria-hidden": "true",
 			popover: "manual",
 			tabIndex: -1,
@@ -57,4 +62,28 @@ function Content({ children, ...props }: BaseProps): ReactElement {
 	);
 }
 
-export const Popover = { Root, Trigger, Content };
+function Title({
+	children,
+	as,
+	...props
+}: BaseProps & {
+	as?: "h1" | "h2" | "h3" | "h4" | "h5" | "h6";
+}): ReactElement {
+	const context = usePopoverContext();
+	return createElement(
+		as ?? "h2",
+		{ ...props, id: `mcc:popover-title:${context.id}` },
+		children,
+	);
+}
+
+function Description({ children, ...props }: BaseProps): ReactElement {
+	const context = usePopoverContext();
+	return createElement(
+		"p",
+		{ ...props, id: `mcc:popover-description:${context.id}` },
+		children,
+	);
+}
+
+export const Popover = { Root, Trigger, Content, Title, Description };
