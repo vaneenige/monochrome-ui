@@ -5,7 +5,6 @@ export default () => (
 		<style>{`
       .tooltip { position: relative; display: inline-block; }
       .popover { position: relative; display: inline-block; }
-      .menu { position: relative; display: inline-block; }
       [popover] { position: fixed; inset: auto; margin: 0; top: var(--bottom); left: var(--left); }
       [role="tooltip"] { pointer-events: none; }
     `}</style>
@@ -47,7 +46,7 @@ export default () => (
 				<p>Popover content</p>
 			</Popover.Content>
 		</Popover.Root>
-		<Menu.Root className="menu">
+		<Menu.Root>
 			<Menu.Trigger data-testid="menu-trigger">Menu</Menu.Trigger>
 			<Menu.Popover data-testid="menu-list">
 				<Menu.Item data-testid="menu-item-1">Menu Item 1</Menu.Item>

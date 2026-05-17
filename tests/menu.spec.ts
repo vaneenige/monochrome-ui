@@ -1,7 +1,7 @@
 import { expect, test } from "./fixtures";
 import { scrollAndSettle } from "./helpers";
 
-test.describe("Dropdown", () => {
+test.describe("Menu", () => {
 	test.beforeEach(async ({ page, renderer }) => {
 		await page.goto(`/${renderer}/menu/dropdown`);
 	});

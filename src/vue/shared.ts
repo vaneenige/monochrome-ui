@@ -33,15 +33,21 @@ export const TabsKey: InjectionKey<TabsContext> = Symbol("TabsContext");
 export type MenuContext = {
 	id: string;
 	root?: boolean;
-	menubar?: boolean;
 	submenu?: boolean;
-	first?: boolean;
 };
 export const MenuKey: InjectionKey<MenuContext> = Symbol("MenuContext");
 
-export type MenuPopupContext = { claimFirst: () => boolean };
-export const MenuPopupKey: InjectionKey<MenuPopupContext> =
-	Symbol("MenuPopupContext");
+export type MenubarSlotContext = {
+	id: string;
+	first: boolean;
+};
+export const MenubarSlotKey: InjectionKey<MenubarSlotContext> =
+	Symbol("MenubarSlotContext");
+
+export type MenubarClaimContext = { claimFirst: () => boolean };
+export const MenubarClaimKey: InjectionKey<MenubarClaimContext> = Symbol(
+	"MenubarClaimContext",
+);
 
 export type PopoverContext = { id: string };
 export const PopoverKey: InjectionKey<PopoverContext> =

@@ -120,7 +120,7 @@ import { Menu, Popover } from "monochrome/vue"
         <p>Just a label.</p>
       </Popover.Content>
     </Popover.Root>
-    <Menu.Root class="menu">
+    <Menu.Root>
       <Menu.Trigger data-testid="menu-trigger">
         Menu
       </Menu.Trigger>

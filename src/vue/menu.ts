@@ -1,27 +1,12 @@
-import {
-	defineComponent,
-	h,
-	onBeforeUpdate,
-	provide,
-	reactive,
-	ref,
-	toRef,
-	useId,
-} from "vue";
-import { MenuKey, MenuPopupKey, requireInject } from "./shared.js";
+import { defineComponent, h, provide, useId } from "vue";
+import { MenuKey, requireInject } from "./shared.js";
 
 const Root = defineComponent({
-	props: {
-		menubar: Boolean,
-	},
-	setup(props, { slots }) {
+	setup(_, { slots }) {
 		// biome-ignore lint/correctness/useHookAtTopLevel: Vue useId, not React
 		const id = useId();
-		provide(
-			MenuKey,
-			reactive({ id, root: true, menubar: toRef(props, "menubar") }),
-		);
-		return () => h("div", { id: `mcr:menu:${id}` }, slots.default?.());
+		provide(MenuKey, { id, root: true });
+		return () => h("div", slots.default?.());
 	},
 });
 
@@ -37,7 +22,7 @@ const Trigger = defineComponent({
 					"aria-controls": `mcc:menu:${ctx.id}`,
 					"aria-expanded": "false",
 					"aria-haspopup": "menu",
-					tabindex: ctx.root || ctx.first ? 0 : -1,
+					tabindex: ctx.root ? 0 : -1,
 					role: ctx.submenu ? "menuitem" : "button",
 				},
 				slots.default?.(),
@@ -48,33 +33,18 @@ const Trigger = defineComponent({
 const Popover = defineComponent({
 	setup(_, { slots }) {
 		const ctx = requireInject(MenuKey, "Menu.Popover");
-		const claimed = ref(false);
-		onBeforeUpdate(() => {
-			claimed.value = false;
-		});
-		provide(MenuPopupKey, {
-			claimFirst: () => {
-				if (!claimed.value) {
-					claimed.value = true;
-					return true;
-				}
-				return false;
-			},
-		});
 		return () =>
-			ctx.menubar
-				? h("ul", { role: "menubar" }, slots.default?.())
-				: h(
-						"ul",
-						{
-							role: "menu",
-							id: `mcc:menu:${ctx.id}`,
-							"aria-labelledby": `mct:menu:${ctx.id}`,
-							"aria-hidden": "true",
-							popover: "manual",
-						},
-						slots.default?.(),
-					);
+			h(
+				"ul",
+				{
+					role: "menu",
+					id: `mcc:menu:${ctx.id}`,
+					"aria-labelledby": `mct:menu:${ctx.id}`,
+					"aria-hidden": "true",
+					popover: "manual",
+				},
+				slots.default?.(),
+			);
 	},
 });
 
@@ -199,13 +169,9 @@ const Separator = defineComponent({
 
 const Group = defineComponent({
 	setup(_, { slots }) {
-		const parentCtx = requireInject(MenuKey, "Menu.Group");
-		const popupCtx = requireInject(MenuPopupKey, "Menu.Group");
-		const isFirst = popupCtx.claimFirst();
 		// biome-ignore lint/correctness/useHookAtTopLevel: Vue useId, not React
 		const id = useId();
-		const isFirstInMenubar = isFirst && parentCtx.menubar && !parentCtx.submenu;
-		provide(MenuKey, { id, submenu: true, first: isFirstInMenubar });
+		provide(MenuKey, { id, submenu: true });
 		return () => h("li", { role: "none" }, slots.default?.());
 	},
 });

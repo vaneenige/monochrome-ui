@@ -2,26 +2,7 @@ import { Menu } from "monochrome/react";
 
 export default () => (
 	<>
-		<style>{`
-      .menu {
-        position: relative;
-        display: inline-block;
-      }
-      [role="menu"] {
-        position: fixed;
-        inset: auto;
-        margin: 0;
-        min-width: 160px;
-        top: var(--bottom);
-        left: var(--left);
-      }
-      [role="menu"] [role="menu"] {
-        top: var(--top);
-        left: var(--right);
-        margin-left: 16px;
-      }
-    `}</style>
-		<Menu.Root className="menu">
+		<Menu.Root>
 			<Menu.Trigger data-testid="trigger">Menu</Menu.Trigger>
 			<Menu.Popover data-testid="list">
 				<Menu.Item data-testid="item-1">Item 1</Menu.Item>

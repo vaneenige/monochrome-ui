@@ -48,10 +48,7 @@ export default () => (
 			<legend>No items</legend>
 			<Menu.Root>
 				<Menu.Trigger data-testid="no-items-trigger">MenuTrigger</Menu.Trigger>
-				{/* @ts-ignore - Testing edge case with no children */}
-				<Menu.Popover data-testid="no-items-list">
-					{/* No items */}
-				</Menu.Popover>
+				<Menu.Popover data-testid="no-items-list">{null}</Menu.Popover>
 			</Menu.Root>
 		</fieldset>
 	</>

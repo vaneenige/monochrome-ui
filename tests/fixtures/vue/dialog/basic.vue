@@ -183,7 +183,7 @@ import { Dialog, Menu, Popover, Tabs, Tooltip } from "monochrome/vue"
       </Popover.Content>
     </Popover.Root>
 
-    <Menu.Root class="menu">
+    <Menu.Root>
       <Menu.Trigger data-testid="menu-trigger">
         Menu
       </Menu.Trigger>
@@ -205,7 +205,7 @@ import { Dialog, Menu, Popover, Tabs, Tooltip } from "monochrome/vue"
   </div>
 </template>
 <style>
-.popover, .menu, .tooltip { position: relative; display: inline-block; }
+.popover, .tooltip { position: relative; display: inline-block; }
 [popover] { position: fixed; inset: auto; margin: 0; top: var(--bottom); left: var(--left); }
 [role="tooltip"] { pointer-events: none; }
 dialog { width: 300px; padding: 0; margin: auto; border: 1px solid #ccc; background: white; }

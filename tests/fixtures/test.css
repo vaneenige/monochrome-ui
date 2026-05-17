@@ -17,12 +17,13 @@ ul {
 
 /* Menu positioning */
 
-.menu {
-  position: relative;
-  display: inline-block;
+[role="menubar"] {
+  display: flex;
+  flex-direction: row;
+  gap: 8px;
 }
 
-.menu [role="menu"] {
+[role="menu"] {
   position: fixed;
   inset: auto;
   margin: 0;
@@ -30,7 +31,7 @@ ul {
   left: var(--left);
 }
 
-.menu [role="menu"] [role="menu"] {
+[role="menu"] [role="menu"] {
   top: var(--top);
   left: var(--right);
   margin-left: 16px;

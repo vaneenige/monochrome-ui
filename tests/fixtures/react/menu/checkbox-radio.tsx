@@ -2,15 +2,6 @@ import { Menu } from "monochrome/react";
 
 export default () => (
 	<>
-		<style>{`
-      [role="menu"] {
-        position: fixed;
-        inset: auto;
-        margin: 0;
-        top: var(--bottom);
-        left: var(--left);
-      }
-    `}</style>
 		<button type="button" data-testid="focus-before">
 			Focus before
 		</button>

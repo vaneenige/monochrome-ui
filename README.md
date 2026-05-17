@@ -11,7 +11,7 @@ If you write accessible HTML, monochrome makes it interactive. The DOM is the st
 
 ## Components
 
-Accordion · Collapsible · Dialog · Menu · Popover · Tabs · Tooltip.
+Accordion · Collapsible · Dialog · Menu · Menubar · Popover · Tabs · Tooltip.
 
 Plus an optional client-side router and thin React and Vue wrappers.
 

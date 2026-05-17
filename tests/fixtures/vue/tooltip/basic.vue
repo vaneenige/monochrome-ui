@@ -58,7 +58,7 @@ import { Menu, Popover, Tooltip } from "monochrome/vue"
         <p>Popover content</p>
       </Popover.Content>
     </Popover.Root>
-    <Menu.Root class="menu">
+    <Menu.Root>
       <Menu.Trigger data-testid="menu-trigger">
         Menu
       </Menu.Trigger>

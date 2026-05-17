@@ -4,21 +4,16 @@ import {
 	type ReactElement,
 	useContext,
 	useId,
-	useRef,
 } from "react";
 import type { BaseProps } from "./shared.js";
 
 type MenuContextValue = {
 	id: string;
 	root?: boolean;
-	menubar?: boolean;
 	submenu?: boolean;
-	first?: boolean;
 };
-type MenuPopupContextValue = { claimFirst: () => boolean };
 
 const MenuContext = createContext<MenuContextValue | null>(null);
-const MenuPopupContext = createContext<MenuPopupContextValue | null>(null);
 
 function useMenuContext() {
 	const context = useContext(MenuContext);
@@ -27,23 +22,12 @@ function useMenuContext() {
 	return context;
 }
 
-function useMenuPopupContext() {
-	const context = useContext(MenuPopupContext);
-	if (!context)
-		throw new Error("Menu components must be used within Menu.Popover");
-	return context;
-}
-
-function Root({
-	children,
-	menubar,
-	...props
-}: BaseProps & { menubar?: boolean }): ReactElement {
+function Root({ children, ...props }: BaseProps): ReactElement {
 	const id = useId();
 	return createElement(
 		MenuContext.Provider,
-		{ value: { id, root: true, menubar } },
-		createElement("div", { ...props, id: `mcr:menu:${id}` }, children),
+		{ value: { id, root: true } },
+		createElement("div", props, children),
 	);
 }
 
@@ -58,7 +42,7 @@ function Trigger({ children, ...props }: BaseProps): ReactElement {
 			"aria-controls": `mcc:menu:${context.id}`,
 			"aria-expanded": "false",
 			"aria-haspopup": "menu",
-			tabIndex: context.root || context.first ? 0 : -1,
+			tabIndex: context.root ? 0 : -1,
 			role: context.submenu ? "menuitem" : "button",
 		},
 		children,
@@ -67,37 +51,18 @@ function Trigger({ children, ...props }: BaseProps): ReactElement {
 
 function Popover({ children, ...props }: BaseProps): ReactElement {
 	const context = useMenuContext();
-	const claimed = useRef(false);
-	claimed.current = false;
-	const inner = createElement(
-		MenuPopupContext.Provider,
+	return createElement(
+		"ul",
 		{
-			value: {
-				claimFirst: () => {
-					if (!claimed.current) {
-						claimed.current = true;
-						return true;
-					}
-					return false;
-				},
-			},
+			...props,
+			role: "menu",
+			id: `mcc:menu:${context.id}`,
+			"aria-labelledby": `mct:menu:${context.id}`,
+			"aria-hidden": "true",
+			popover: "manual",
 		},
 		children,
 	);
-	return context.menubar
-		? createElement("ul", { ...props, role: "menubar" }, inner)
-		: createElement(
-				"ul",
-				{
-					...props,
-					role: "menu",
-					id: `mcc:menu:${context.id}`,
-					"aria-labelledby": `mct:menu:${context.id}`,
-					"aria-hidden": "true",
-					popover: "manual",
-				},
-				inner,
-			);
 }
 
 function Item({
@@ -199,15 +164,10 @@ function Separator(props: Omit<BaseProps, "children">): ReactElement {
 }
 
 function Group({ children, ...props }: BaseProps): ReactElement {
-	const parentContext = useMenuContext();
-	const popupContext = useMenuPopupContext();
-	const isFirst = popupContext.claimFirst();
 	const id = useId();
-	const isFirstInMenubar =
-		isFirst && parentContext.menubar && !parentContext.submenu;
 	return createElement(
 		MenuContext.Provider,
-		{ value: { id, submenu: true, first: isFirstInMenubar } },
+		{ value: { id, submenu: true } },
 		createElement("li", { ...props, role: "none" }, children),
 	);
 }

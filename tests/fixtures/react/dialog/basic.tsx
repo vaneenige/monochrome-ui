@@ -3,7 +3,7 @@ import { Dialog, Menu, Popover, Tabs, Tooltip } from "monochrome/react";
 export default () => (
 	<>
 		<style>{`
-      .popover, .menu, .tooltip { position: relative; display: inline-block; }
+      .popover, .tooltip { position: relative; display: inline-block; }
       [popover] { position: fixed; inset: auto; margin: 0; top: var(--bottom); left: var(--left); }
       [role="tooltip"] { pointer-events: none; }
       dialog { width: 300px; padding: 0; margin: auto; border: 1px solid #ccc; background: white; }
@@ -114,7 +114,7 @@ export default () => (
 			</Popover.Content>
 		</Popover.Root>
 
-		<Menu.Root className="menu">
+		<Menu.Root>
 			<Menu.Trigger data-testid="menu-trigger">Menu</Menu.Trigger>
 			<Menu.Popover data-testid="menu-list">
 				<Menu.Item data-testid="menu-item-1">Item</Menu.Item>

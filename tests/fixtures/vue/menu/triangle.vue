@@ -4,7 +4,7 @@ import { Menu } from "monochrome/vue"
 
 <template>
   <div>
-    <Menu.Root class="menu">
+    <Menu.Root>
       <Menu.Trigger data-testid="trigger">
         Menu
       </Menu.Trigger>

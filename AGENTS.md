@@ -1,12 +1,12 @@
 # AGENTS.md
 
 Instructions for working on monochrome: an accessible, headless
-UI component library with no runtime dependencies. Seven
-components (Accordion, Collapsible, Dialog, Menu, Popover, Tabs,
-Tooltip), plus an optional router and thin React and Vue
-wrappers. The core is framework-agnostic and works on plain HTML;
-import it once and every correctly-structured component on the
-page becomes interactive.
+UI component library with no runtime dependencies. Eight
+components (Accordion, Collapsible, Dialog, Menu, Menubar,
+Popover, Tabs, Tooltip), plus an optional router and thin
+React and Vue wrappers. The core is framework-agnostic and
+works on plain HTML; import it once and every correctly-
+structured component on the page becomes interactive.
 
 ## North stars (non-negotiables)
 

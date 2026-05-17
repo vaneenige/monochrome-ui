@@ -2,19 +2,6 @@ import { Collapsible, Menu } from "monochrome/react";
 
 export default () => (
 	<>
-		<style>{`
-      .menu {
-        position: relative;
-        display: inline-block;
-      }
-      [role="menu"] {
-        position: fixed;
-        inset: auto;
-        margin: 0;
-        top: var(--bottom);
-        left: var(--left);
-      }
-    `}</style>
 		<div
 			data-testid="sidebar"
 			style={{ width: "250px", height: "400px", overflow: "auto" }}
@@ -24,7 +11,7 @@ export default () => (
 					Section
 				</Collapsible.Trigger>
 				<Collapsible.Panel data-testid="collapsible-panel">
-					<Menu.Root className="menu">
+					<Menu.Root>
 						<Menu.Trigger data-testid="nested-menu-trigger">
 							Nested Menu
 						</Menu.Trigger>

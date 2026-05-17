@@ -5,7 +5,7 @@ import { Menu } from "monochrome/vue"
 <template>
   <div>
     <div style="display: flex; gap: 200px">
-      <Menu.Root class="menu">
+      <Menu.Root>
         <Menu.Trigger data-testid="menu-a-trigger">
           Menu A
         </Menu.Trigger>
@@ -18,7 +18,7 @@ import { Menu } from "monochrome/vue"
           </Menu.Item>
         </Menu.Popover>
       </Menu.Root>
-      <Menu.Root class="menu">
+      <Menu.Root>
         <Menu.Trigger data-testid="menu-b-trigger">
           Menu B
         </Menu.Trigger>
