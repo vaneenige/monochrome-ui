@@ -916,9 +916,11 @@ if (typeof document !== "undefined") {
 
 			if (isElement(el)) {
 				// Walk up the ancestors of the pointer target, collecting
-				// every menu trigger along the way. We'll compare this
-				// chain against `menuPopovers` to decide whether to switch
-				// submenus.
+				// every menu trigger along the way. Triggers are found
+				// either directly (hovering the button) or via the
+				// `aria-labelledby` back-pointer on any popover we cross.
+				// We'll compare this chain against `menuPopovers` to
+				// decide whether to switch submenus.
 				const popoverTriggers: HTMLButtonElement[] = [];
 				let target: HTMLElement | null = el;
 				let bail = false;
@@ -935,9 +937,13 @@ if (typeof document !== "undefined") {
 						bail = true;
 						break;
 					}
-					const firstChild = target.firstElementChild;
-					if (isTrigger(firstChild, Prefix.TriggerMenu)) {
-						popoverTriggers.unshift(firstChild);
+					if (isTrigger(target, Prefix.TriggerMenu)) {
+						popoverTriggers.unshift(target);
+					} else if (target.id.startsWith(Prefix.ContentMenu)) {
+						const trigger = getContent(target, "aria-labelledby");
+						if (isTrigger(trigger, Prefix.TriggerMenu)) {
+							popoverTriggers.unshift(trigger);
+						}
 					}
 					target = target.parentElement;
 				}
