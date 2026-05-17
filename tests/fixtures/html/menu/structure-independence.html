@@ -1,0 +1,41 @@
+<section data-testid="section-a">
+  <h2>Bare siblings</h2>
+  <button data-testid="a-trigger" type="button" id="mct:menu:a" aria-controls="mcc:menu:a" aria-expanded="false" aria-haspopup="menu" tabindex="0" role="button">Menu A</button>
+  <ul data-testid="a-list" role="menu" id="mcc:menu:a" aria-labelledby="mct:menu:a" aria-hidden="true" popover="manual">
+    <li role="none"><button data-testid="a-item-1" type="button" role="menuitem" tabindex="-1">A Item 1</button></li>
+    <li role="none"><button data-testid="a-item-2" type="button" role="menuitem" tabindex="-1">A Item 2</button></li>
+  </ul>
+</section>
+
+<section data-testid="section-b">
+  <h2>Separated by unrelated content</h2>
+  <button data-testid="b-trigger" type="button" id="mct:menu:b" aria-controls="mcc:menu:b" aria-expanded="false" aria-haspopup="menu" tabindex="0" role="button">Menu B</button>
+  <p>An unrelated paragraph between trigger and popover.</p>
+  <div><span>More chrome that has nothing to do with the menu.</span></div>
+  <ul data-testid="b-list" role="menu" id="mcc:menu:b" aria-labelledby="mct:menu:b" aria-hidden="true" popover="manual">
+    <li role="none"><button data-testid="b-item-1" type="button" role="menuitem" tabindex="-1">B Item 1</button></li>
+    <li role="none"><button data-testid="b-item-2" type="button" role="menuitem" tabindex="-1">B Item 2</button></li>
+  </ul>
+</section>
+
+<header data-testid="header-c">
+  <h2>Trigger in a different container from popover</h2>
+  <button data-testid="c-trigger" type="button" id="mct:menu:c" aria-controls="mcc:menu:c" aria-expanded="false" aria-haspopup="menu" tabindex="0" role="button">Menu C</button>
+</header>
+<main data-testid="main-c">
+  <p>Main content lives between Menu C's trigger and its popover.</p>
+</main>
+<aside data-testid="aside-c">
+  <ul data-testid="c-list" role="menu" id="mcc:menu:c" aria-labelledby="mct:menu:c" aria-hidden="true" popover="manual">
+    <li role="none"><button data-testid="c-item-1" type="button" role="menuitem" tabindex="-1">C Item 1</button></li>
+    <li role="none">
+      <button data-testid="c-submenu-trigger" type="button" id="mct:menu:cs" aria-controls="mcc:menu:cs" aria-expanded="false" aria-haspopup="menu" tabindex="-1" role="menuitem">C Submenu</button>
+    </li>
+  </ul>
+</aside>
+<footer data-testid="footer-c">
+  <ul data-testid="c-submenu-list" role="menu" id="mcc:menu:cs" aria-labelledby="mct:menu:cs" aria-hidden="true" popover="manual">
+    <li role="none"><button data-testid="c-sub-item-1" type="button" role="menuitem" tabindex="-1">C Sub Item 1</button></li>
+    <li role="none"><button data-testid="c-sub-item-2" type="button" role="menuitem" tabindex="-1">C Sub Item 2</button></li>
+  </ul>
+</footer>

@@ -2365,3 +2365,79 @@ test.describe("Dynamic", () => {
 		await page.keyboard.press("Escape");
 	});
 });
+
+test.describe("Structure Independence", () => {
+	test.beforeEach(async ({ page, renderer }) => {
+		await page.goto(`/${renderer}/menu/structure-independence`);
+	});
+
+	test("opens menu where trigger and popover are bare siblings (no wrapper)", async ({
+		page,
+	}) => {
+		await page.getByTestId("a-trigger").click();
+		await expect(page.getByTestId("a-list")).toBeVisible();
+		await expect(page.getByTestId("a-trigger")).toHaveAttribute(
+			"aria-expanded",
+			"true",
+		);
+		await page.keyboard.press("ArrowDown");
+		await expect(page.getByTestId("a-item-1")).toBeFocused();
+		await page.keyboard.press("Escape");
+		await expect(page.getByTestId("a-list")).not.toBeVisible();
+	});
+
+	test("opens menu where trigger and popover are separated by unrelated DOM", async ({
+		page,
+	}) => {
+		await page.getByTestId("b-trigger").click();
+		await expect(page.getByTestId("b-list")).toBeVisible();
+		await page.keyboard.press("ArrowDown");
+		await expect(page.getByTestId("b-item-1")).toBeFocused();
+		await page.keyboard.press("ArrowDown");
+		await expect(page.getByTestId("b-item-2")).toBeFocused();
+		await page.keyboard.press("Escape");
+	});
+
+	test("opens menu where trigger and popover live in different containers", async ({
+		page,
+	}) => {
+		await page.getByTestId("c-trigger").click();
+		await expect(page.getByTestId("c-list")).toBeVisible();
+		// Hover an item inside the remotely-placed popover: stays open. The
+		// runtime resolves the trigger via aria-labelledby, not DOM walking,
+		// so a popover with no shared ancestor (besides body) still works.
+		await page.getByTestId("c-item-1").hover();
+		await expect(page.getByTestId("c-list")).toBeVisible();
+		await page.keyboard.press("Escape");
+	});
+
+	test("opens a submenu whose trigger and popover are in different containers", async ({
+		page,
+	}) => {
+		await page.getByTestId("c-trigger").click();
+		await expect(page.getByTestId("c-list")).toBeVisible();
+		// Navigate to the submenu trigger and open it with ArrowRight. The
+		// submenu's popover lives in a sibling <footer>, not next to its
+		// trigger; the runtime resolves it via aria-controls regardless.
+		await page.keyboard.press("ArrowDown");
+		await page.keyboard.press("ArrowDown");
+		await expect(page.getByTestId("c-submenu-trigger")).toBeFocused();
+		await page.keyboard.press("ArrowRight");
+		await expect(page.getByTestId("c-submenu-list")).toBeVisible();
+		await expect(page.getByTestId("c-sub-item-1")).toBeFocused();
+		await page.keyboard.press("Escape");
+	});
+
+	test("clicking outside dismisses a menu with a remotely-placed popover", async ({
+		page,
+	}) => {
+		await page.getByTestId("c-trigger").click();
+		await expect(page.getByTestId("c-list")).toBeVisible();
+		// Click on unrelated chrome sitting between the trigger and popover
+		// in DOM order. With the firstElementChild-based hover detection we
+		// used to have, this kind of layout could mis-resolve; with the
+		// aria-labelledby lookup it's just an outside click.
+		await page.getByTestId("main-c").click();
+		await expect(page.getByTestId("c-list")).not.toBeVisible();
+	});
+});

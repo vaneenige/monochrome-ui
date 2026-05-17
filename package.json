@@ -106,11 +106,11 @@
       "vue": 2326
     },
     "tests": {
-      "total": 463,
+      "total": 468,
       "collapsible": 37,
       "router": 28,
       "accordion": 60,
-      "menu": 179,
+      "menu": 184,
       "tooltip": 24,
       "tabs": 66,
       "dialog": 36,
