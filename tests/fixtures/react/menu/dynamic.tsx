@@ -11,20 +11,6 @@ function App() {
 
 	return (
 		<>
-			<style>{`
-        [role="menu"] {
-          position: fixed;
-          inset: auto;
-          margin: 0;
-          top: var(--bottom);
-          left: var(--left);
-        }
-        [role="menu"] [role="menu"] {
-          top: var(--top);
-          left: var(--right);
-          margin-left: 16px;
-        }
-      `}</style>
 			<div id="output" data-testid="output" />
 			<div style={{ marginBottom: "8px" }}>
 				<button
@@ -72,7 +58,7 @@ function App() {
 					Toggle Disabled
 				</button>
 			</div>
-			<Menu.Root className="menu-root" data-testid="menu-root">
+			<Menu.Root>
 				<Menu.Trigger data-testid="trigger" data-action="trigger-clicked">
 					Open Menu
 				</Menu.Trigger>
@@ -129,7 +115,7 @@ function App() {
 				</Menu.Popover>
 			</Menu.Root>
 
-			<Menu.Root data-testid="menu2-root">
+			<Menu.Root>
 				<Menu.Trigger data-testid="menu2-trigger">Open Menu 2</Menu.Trigger>
 				<Menu.Popover data-testid="menu2-list">
 					<Menu.Item data-testid="menu2-item-1">Menu2 Item 1</Menu.Item>

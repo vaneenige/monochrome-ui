@@ -3,7 +3,7 @@ import { scrollAndSettle } from "./helpers";
 
 test.describe("Menu", () => {
 	test.beforeEach(async ({ page, renderer }) => {
-		await page.goto(`/${renderer}/menu/dropdown`);
+		await page.goto(`/${renderer}/menu/basic`);
 	});
 
 	test.describe("ARIA Attributes", () => {
@@ -896,7 +896,7 @@ test.describe("Menu", () => {
 			page,
 			renderer,
 		}) => {
-			await page.goto(`/${renderer}/menu/dropdown`);
+			await page.goto(`/${renderer}/menu/basic`);
 			const svg = page.getByTestId("svg-icon");
 			const list = page.getByTestId("svg-list");
 
@@ -2118,7 +2118,7 @@ test.describe("Separator Navigation", () => {
 
 test.describe("Click Handler", () => {
 	test.beforeEach(async ({ page, renderer }) => {
-		await page.goto(`/${renderer}/menu/dropdown`);
+		await page.goto(`/${renderer}/menu/basic`);
 	});
 
 	test("should fire click handler on trigger click", async ({
@@ -2236,14 +2236,11 @@ test.describe("Click Handler", () => {
 });
 
 test.describe("Dynamic", () => {
-	test("should handle dynamic items, submenu, checkbox, radio, disabled, href, label, separator, multi-instance, props passthrough", async ({
+	test("should handle dynamic items, submenu, checkbox, radio, disabled, href, label, separator, multi-instance", async ({
 		page,
 		renderer,
 	}) => {
 		await page.goto(`/${renderer}/menu/dynamic`);
-
-		// Props passthrough: className on Root reaches DOM
-		await expect(page.getByTestId("menu-root")).toHaveClass(/menu-root/);
 
 		// Open menu, navigate existing items
 		await page.getByTestId("trigger").click();

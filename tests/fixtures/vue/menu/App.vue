@@ -71,10 +71,7 @@ function handleItemClick(index: number) {
         Toggle Disabled
       </button>
     </div>
-    <Menu.Root
-      class="menu-root"
-      data-testid="menu-root"
-    >
+    <Menu.Root>
       <Menu.Trigger
         data-testid="trigger"
         data-action="trigger-clicked"
@@ -138,7 +135,7 @@ function handleItemClick(index: number) {
         </Menu.Group>
       </Menu.Popover>
     </Menu.Root>
-    <Menu.Root data-testid="menu2-root">
+    <Menu.Root>
       <Menu.Trigger data-testid="menu2-trigger">
         Open Menu 2
       </Menu.Trigger>

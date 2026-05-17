@@ -102,8 +102,8 @@
     "gzipSize": 2697,
     "routerGzipSize": 1057,
     "wrappersGzipSize": {
-      "react": 2159,
-      "vue": 2327
+      "react": 2165,
+      "vue": 2326
     },
     "tests": {
       "total": 463,

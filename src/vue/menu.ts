@@ -6,7 +6,7 @@ const Root = defineComponent({
 		// biome-ignore lint/correctness/useHookAtTopLevel: Vue useId, not React
 		const id = useId();
 		provide(MenuKey, { id, root: true });
-		return () => h("div", slots.default?.());
+		return () => slots.default?.();
 	},
 });
 

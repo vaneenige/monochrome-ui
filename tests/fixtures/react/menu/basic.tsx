@@ -2,36 +2,7 @@ import { Menu } from "monochrome/react";
 
 export default () => (
 	<>
-		<style>{`
-      .menu {
-        position: relative;
-        display: inline-block;
-      }
-      [role="menu"] {
-        position: fixed;
-        inset: auto;
-        margin: 0;
-        top: var(--bottom);
-        left: var(--left);
-      }
-      [role="menu"] [role="menu"] {
-        top: var(--top);
-        left: var(--right);
-        margin-left: 16px;
-      }
-    `}</style>
 		<div id="output" data-testid="output" />
-		<script
-			// biome-ignore lint/security/noDangerouslySetInnerHtml: test fixture click tracking
-			dangerouslySetInnerHTML={{
-				__html: `
-          document.addEventListener('click', (e) => {
-            const item = e.target.closest('[data-action]')
-            if (item) document.getElementById('output').textContent = item.dataset.action
-          })
-        `,
-			}}
-		/>
 		<div
 			data-testid="scroll-container"
 			style={{
@@ -52,7 +23,7 @@ export default () => (
 			<button type="button" data-testid="focus-before">
 				Focus before
 			</button>
-			<Menu.Root className="menu">
+			<Menu.Root>
 				<Menu.Trigger data-testid="root-trigger">MenuTrigger</Menu.Trigger>
 				<Menu.Popover data-testid="root-list">
 					<Menu.Item data-testid="root-item-1">MenuItem 1</Menu.Item>
@@ -79,7 +50,7 @@ export default () => (
 			<button type="button" data-testid="focus-after">
 				Focus after
 			</button>
-			<Menu.Root className="menu">
+			<Menu.Root>
 				<Menu.Trigger data-testid="second-trigger">Second Menu</Menu.Trigger>
 				<Menu.Popover data-testid="second-list">
 					<Menu.Item data-testid="second-item-1">Second Item 1</Menu.Item>

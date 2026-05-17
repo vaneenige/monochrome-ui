@@ -2,6 +2,7 @@ import {
 	createContext,
 	createElement,
 	type ReactElement,
+	type ReactNode,
 	useContext,
 	useId,
 } from "react";
@@ -22,12 +23,12 @@ function useMenuContext() {
 	return context;
 }
 
-function Root({ children, ...props }: BaseProps): ReactElement {
+function Root({ children }: { children: ReactNode }): ReactElement {
 	const id = useId();
 	return createElement(
 		MenuContext.Provider,
 		{ value: { id, root: true } },
-		createElement("div", props, children),
+		children,
 	);
 }
 

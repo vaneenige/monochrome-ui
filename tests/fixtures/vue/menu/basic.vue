@@ -27,7 +27,7 @@ import { Menu } from "monochrome/vue"
       >
         Focus before
       </button>
-      <Menu.Root class="menu">
+      <Menu.Root>
         <Menu.Trigger data-testid="root-trigger">
           MenuTrigger
         </Menu.Trigger>
@@ -65,7 +65,7 @@ import { Menu } from "monochrome/vue"
       >
         Focus after
       </button>
-      <Menu.Root class="menu">
+      <Menu.Root>
         <Menu.Trigger data-testid="second-trigger">
           Second Menu
         </Menu.Trigger>
