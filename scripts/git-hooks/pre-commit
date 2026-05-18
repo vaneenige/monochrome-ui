@@ -17,7 +17,16 @@ bun run lint
 bun run typecheck
 
 # Build produces dist/ and rewrites package.json's versionMeta to
-# match the current source. Re-adding it ensures the commit carries
-# that update. See AGENTS.md › Build pipeline.
+# match the current source. See AGENTS.md › Build pipeline.
 bun run build
+
+# Run the full Playwright suite. ~22s but catches regressions before
+# they reach the branch; the library's accessibility guarantees are
+# only as good as the tests that pin them.
+bun run test
+
+# Stage the build-touched package.json only after every gate has
+# passed. If lint / typecheck / build / test had failed earlier, the
+# rewrite stays in the working tree, not the index, so an aborted
+# commit leaves no half-staged state behind.
 git add package.json
