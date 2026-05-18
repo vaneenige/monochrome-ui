@@ -298,3 +298,34 @@ AGENTS.md, commit messages, PR descriptions.
 The build step strips every comment before `Bun.build` sees it
 (`build.ts › stripComments`). Comments are free in source; they
 never reach `dist/`.
+
+## Test naming
+
+The describe block already names the subject; the test name should
+state the behaviour, nothing else.
+
+- **Imperative present tense, no `should`.** `opens on Enter`, not
+  `should open on Enter`. The describe block already says "this is
+  the Menu Activation spec"; the `should` is a redundant aspiration.
+- **Subject is the protagonist of the assertion.** Use the SUT when
+  the test is about a property (`declares aria-haspopup="menu"`).
+  Use the input when the test is action-driven (`Enter opens the
+  menu`).
+- **No filler.** Drop `test that`, `ensure`, `verify`, `make sure`,
+  `correctly`, `properly`, `as expected`. If the assertion exists,
+  the behaviour IS the expected one.
+- **Backticks for kebab-case attributes and ambiguous tokens.**
+  ``aria-expanded``, ``data-mode``, ``role="menu"``, ``Tab`` (the
+  key, to disambiguate from the noun) always quoted with backticks.
+  PascalCase key names (`Enter`, `ArrowDown`, `Home`, `End`) are
+  visually distinct enough that backticks are optional, but be
+  consistent within a single test name.
+- **One sentence, sentence-case, no trailing period, ≤80 chars.**
+  Code identifiers keep their casing.
+- **Describe blocks use a fixed top-level vocabulary** so the same
+  capability has the same name across components: `ARIA`,
+  `Initial state`, `Activation`, `Keyboard`, `Mouse`,
+  `Focus management`, `Disabled`, `Edge cases`,
+  `Structure independence`, `Click handler`, `Dynamic`. Per-component
+  refinements (`Trigger keyboard`, `Item keyboard`, `Keyboard
+  (horizontal)`) are fine when the structure genuinely splits.
