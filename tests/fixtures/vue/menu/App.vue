@@ -128,7 +128,7 @@ function handleItemClick(index: number) {
             <Menu.Item data-testid="submenu-item-1">
               Sub Item 1
             </Menu.Item>
-            <Menu.Item data-testid="submenu-item-2">
+            <Menu.Item>
               Sub Item 2
             </Menu.Item>
           </Menu.Popover>
@@ -140,7 +140,7 @@ function handleItemClick(index: number) {
         Open Menu 2
       </Menu.Trigger>
       <Menu.Popover data-testid="menu2-list">
-        <Menu.Item data-testid="menu2-item-1">
+        <Menu.Item>
           Menu2 Item 1
         </Menu.Item>
       </Menu.Popover>

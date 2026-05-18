@@ -16,9 +16,9 @@ import { Accordion } from "monochrome/vue"
     </button>
     <Accordion.Root
       type="single"
-      data-testid="single-accordion"
+     
     >
-      <Accordion.Item data-testid="single-item-1">
+      <Accordion.Item>
         <Accordion.Header>
           <Accordion.Trigger
             data-testid="single-trigger-1"
@@ -40,7 +40,7 @@ import { Accordion } from "monochrome/vue"
           <p>Content for section 1. When you open another section, this one closes.</p>
         </Accordion.Panel>
       </Accordion.Item>
-      <Accordion.Item data-testid="single-item-2">
+      <Accordion.Item>
         <Accordion.Header>
           <Accordion.Trigger data-testid="single-trigger-2">
             Section 2
@@ -50,8 +50,8 @@ import { Accordion } from "monochrome/vue"
           <p>Content for section 2. Only one section can be open at a time.</p>
         </Accordion.Panel>
       </Accordion.Item>
-      <Accordion.Item data-testid="single-item-3">
-        <Accordion.Header>
+      <Accordion.Item>
+        <Accordion.Header as="h2">
           <Accordion.Trigger data-testid="single-trigger-3">
             Section 3
           </Accordion.Trigger>

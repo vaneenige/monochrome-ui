@@ -5,147 +5,115 @@ test.describe("Tooltip", () => {
 		await page.goto(`/${renderer}/tooltip/basic`);
 	});
 
-	test.describe("ARIA Attributes", () => {
-		test("should have `role='tooltip'` on content", async ({ page }) => {
-			await expect(page.getByTestId("tooltip-content")).toHaveAttribute(
-				"role",
-				"tooltip",
-			);
-		});
-
-		test("should have `aria-describedby` on trigger matching content id", async ({
+	test.describe("ARIA", () => {
+		test("links trigger to content via `aria-describedby` and keeps it stable across visibility", async ({
 			page,
 		}) => {
-			const describedBy = await page
-				.getByTestId("tooltip-trigger")
-				.getAttribute("aria-describedby");
-			const contentId = await page
-				.getByTestId("tooltip-content")
-				.getAttribute("id");
-			expect(describedBy).toBe(contentId);
-		});
+			const trigger = page.getByTestId("tooltip-trigger");
+			const content = page.getByTestId("tooltip-content");
+			const contentId = await content.getAttribute("id");
 
-		test("should have `popover='manual'` on content", async ({ page }) => {
-			await expect(page.getByTestId("tooltip-content")).toHaveAttribute(
-				"popover",
-				"manual",
-			);
-		});
-
-		test("should have `type='button'` on trigger", async ({ page }) => {
-			await expect(page.getByTestId("tooltip-trigger")).toHaveAttribute(
-				"type",
-				"button",
-			);
-		});
-
-		test("should not have `aria-expanded` on trigger", async ({ page }) => {
-			await expect(page.getByTestId("tooltip-trigger")).not.toHaveAttribute(
-				"aria-expanded",
-				/.*/,
-			);
-		});
-
-		test("should not have `aria-controls` on trigger", async ({ page }) => {
-			await expect(page.getByTestId("tooltip-trigger")).not.toHaveAttribute(
-				"aria-controls",
-				/.*/,
-			);
-		});
-
-		test("should keep `aria-describedby` when tooltip is hidden", async ({
-			page,
-		}) => {
-			await expect(page.getByTestId("tooltip-content")).not.toBeVisible();
-			await expect(page.getByTestId("tooltip-trigger")).toHaveAttribute(
+			await expect(content).toHaveAttribute("role", "tooltip");
+			await expect(content).toHaveAttribute("popover", "manual");
+			await expect(trigger).toHaveAttribute("type", "button");
+			await expect(trigger).toHaveAttribute(
 				"aria-describedby",
-				/.+/,
+				contentId as string,
 			);
+			// Disclosure-style attrs are intentionally absent: a tooltip is
+			// not interactive and is announced via aria-describedby alone.
+			await expect(trigger).not.toHaveAttribute("aria-expanded", /.*/);
+			await expect(trigger).not.toHaveAttribute("aria-controls", /.*/);
+
+			// aria-describedby is the static contract even while hidden.
+			await expect(content).not.toBeVisible();
+			await expect(trigger).toHaveAttribute("aria-describedby", /.+/);
 		});
 	});
 
-	test.describe("Hover Behavior", () => {
-		test("should show on hover", async ({ page }) => {
-			await page.getByTestId("tooltip-trigger").hover();
-			await expect(page.getByTestId("tooltip-content")).toBeVisible();
-		});
-
-		test("should hide when hover leaves", async ({ page }) => {
-			await page.getByTestId("tooltip-trigger").hover();
-			await expect(page.getByTestId("tooltip-content")).toBeVisible();
-			await page.getByTestId("focus-before").hover();
-			await expect(page.getByTestId("tooltip-content")).not.toBeVisible();
-		});
-
-		test("should switch when hover moves to another tooltip trigger", async ({
+	test.describe("Hover", () => {
+		test("shows on hover, hides when hover leaves, switches across triggers", async ({
 			page,
 		}) => {
 			await page.getByTestId("tooltip-trigger").hover();
 			await expect(page.getByTestId("tooltip-content")).toBeVisible();
+
 			await page.getByTestId("second-trigger").hover();
 			await expect(page.getByTestId("tooltip-content")).not.toBeVisible();
 			await expect(page.getByTestId("second-content")).toBeVisible();
+
+			await page.getByTestId("focus-before").hover();
+			await expect(page.getByTestId("second-content")).not.toBeVisible();
+		});
+
+		test("does not hide when the pointer enters the tooltip itself (WCAG 1.4.13 Hoverable)", async ({
+			page,
+		}) => {
+			await page.getByTestId("tooltip-trigger").hover();
+			await expect(page.getByTestId("tooltip-content")).toBeVisible();
+			// Dispatch a pointermove targeted at the tooltip content. The
+			// source intentionally ignores pointer events inside tooltip
+			// content so the cursor can move across it without dismissing.
+			await page.getByTestId("tooltip-content").dispatchEvent("pointermove");
+			await expect(page.getByTestId("tooltip-content")).toBeVisible();
 		});
 	});
 
-	test.describe("Focus Behavior", () => {
-		test("should show on focus", async ({ page }) => {
-			await page.getByTestId("tooltip-trigger").focus();
-			await expect(page.getByTestId("tooltip-content")).toBeVisible();
-		});
-
-		test("should hide on blur", async ({ page }) => {
+	test.describe("Focus", () => {
+		test("shows on focus and hides on blur", async ({ page }) => {
 			await page.getByTestId("tooltip-trigger").focus();
 			await expect(page.getByTestId("tooltip-content")).toBeVisible();
 			await page.getByTestId("focus-before").focus();
 			await expect(page.getByTestId("tooltip-content")).not.toBeVisible();
 		});
 
-		test("should show when tabbing onto a trigger", async ({ page }) => {
-			await page.getByTestId("focus-before").focus();
-			await page.keyboard.press("Tab");
-			await expect(page.getByTestId("tooltip-trigger")).toBeFocused();
-			await expect(page.getByTestId("tooltip-content")).toBeVisible();
-		});
-
-		test("should not move focus when shown", async ({ page }) => {
+		test("hover-shown tooltip does not steal focus from the active element", async ({
+			page,
+		}) => {
 			await page.getByTestId("focus-before").focus();
 			await page.getByTestId("tooltip-trigger").hover();
 			await expect(page.getByTestId("tooltip-content")).toBeVisible();
 			await expect(page.getByTestId("focus-before")).toBeFocused();
 		});
+
+		test("shows when Tab moves focus onto the trigger", async ({ page }) => {
+			await page.getByTestId("focus-before").focus();
+			await page.keyboard.press("Tab");
+			await expect(page.getByTestId("tooltip-trigger")).toBeFocused();
+			await expect(page.getByTestId("tooltip-content")).toBeVisible();
+		});
 	});
 
-	test.describe("Mixed hover + focus", () => {
-		test("hover shows B's tooltip while focus is on A", async ({ page }) => {
-			await page.getByTestId("tooltip-trigger").focus();
-			await expect(page.getByTestId("tooltip-content")).toBeVisible();
-			await page.getByTestId("second-trigger").hover();
-			await expect(page.getByTestId("tooltip-content")).not.toBeVisible();
-			await expect(page.getByTestId("second-content")).toBeVisible();
-		});
-
-		test("unhover falls back to focused trigger's tooltip", async ({
+	test.describe("Mixed hover and focus", () => {
+		test("hover wins over focus, then unhover falls back to the focused trigger", async ({
 			page,
 		}) => {
 			await page.getByTestId("tooltip-trigger").focus();
+			await expect(page.getByTestId("tooltip-content")).toBeVisible();
+
 			await page.getByTestId("second-trigger").hover();
+			await expect(page.getByTestId("tooltip-content")).not.toBeVisible();
 			await expect(page.getByTestId("second-content")).toBeVisible();
+
 			await page.getByTestId("focus-between").hover();
 			await expect(page.getByTestId("second-content")).not.toBeVisible();
 			await expect(page.getByTestId("tooltip-content")).toBeVisible();
 		});
 	});
 
-	test.describe("Dismissal by press", () => {
-		test("should hide on trigger click", async ({ page }) => {
+	test.describe("Dismissal", () => {
+		test("a click on the trigger hides the tooltip (suppression)", async ({
+			page,
+		}) => {
 			await page.getByTestId("tooltip-trigger").hover();
 			await expect(page.getByTestId("tooltip-content")).toBeVisible();
 			await page.getByTestId("tooltip-trigger").click();
 			await expect(page.getByTestId("tooltip-content")).not.toBeVisible();
 		});
 
-		test("should hide on Escape without moving focus", async ({ page }) => {
+		test("Escape hides without moving focus (WCAG 1.4.13 Dismissable)", async ({
+			page,
+		}) => {
 			await page.getByTestId("tooltip-trigger").focus();
 			await expect(page.getByTestId("tooltip-content")).toBeVisible();
 			await page.keyboard.press("Escape");
@@ -153,7 +121,7 @@ test.describe("Tooltip", () => {
 			await expect(page.getByTestId("tooltip-trigger")).toBeFocused();
 		});
 
-		test("should stay suppressed until focus leaves and returns", async ({
+		test("suppression lasts until focus leaves and returns to the trigger", async ({
 			page,
 		}) => {
 			await page.getByTestId("tooltip-trigger").focus();
@@ -163,19 +131,15 @@ test.describe("Tooltip", () => {
 			await page.getByTestId("tooltip-trigger").focus();
 			await expect(page.getByTestId("tooltip-content")).toBeVisible();
 		});
-	});
 
-	test.describe("Disabled", () => {
-		test("should still show tooltip when trigger is aria-disabled", async ({
-			page,
-		}) => {
-			await page.getByTestId("disabled-trigger").hover();
-			await expect(page.getByTestId("disabled-content")).toBeVisible();
+		test("viewport resize hides the tooltip", async ({ page }) => {
+			await page.getByTestId("tooltip-trigger").hover();
+			await expect(page.getByTestId("tooltip-content")).toBeVisible();
+			await page.setViewportSize({ width: 800, height: 400 });
+			await expect(page.getByTestId("tooltip-content")).not.toBeVisible();
 		});
-	});
 
-	test.describe("Dismissal", () => {
-		test("should hide on scroll", async ({ page }) => {
+		test("scroll hides the tooltip", async ({ page }) => {
 			await page.setViewportSize({ width: 800, height: 300 });
 			await page.evaluate(() => {
 				const div = document.createElement("div");
@@ -189,18 +153,40 @@ test.describe("Tooltip", () => {
 		});
 	});
 
+	test.describe("Disabled", () => {
+		test("still shows a tooltip when the trigger is `aria-disabled`", async ({
+			page,
+		}) => {
+			await page.getByTestId("disabled-trigger").hover();
+			await expect(page.getByTestId("disabled-content")).toBeVisible();
+		});
+	});
+
+	test.describe("Structure independence", () => {
+		test("shows and hides when trigger and content live in different containers", async ({
+			page,
+			renderer,
+		}) => {
+			await page.goto(`/${renderer}/tooltip/structure-independence`);
+			await page.getByTestId("trigger").hover();
+			await expect(page.getByTestId("content")).toBeVisible();
+			await page.getByTestId("main").hover();
+			await expect(page.getByTestId("content")).not.toBeVisible();
+		});
+	});
+
 	test.describe("Interaction with other components", () => {
-		test("should not block popover trigger click", async ({ page }) => {
+		test("does not block clicks on popover or menu triggers", async ({
+			page,
+		}) => {
 			await page.getByTestId("popover-trigger").click();
 			await expect(page.getByTestId("popover-content")).toBeVisible();
-		});
-
-		test("should not block menu trigger click", async ({ page }) => {
+			await page.keyboard.press("Escape");
 			await page.getByTestId("menu-trigger").click();
 			await expect(page.getByTestId("menu-list")).toBeVisible();
 		});
 
-		test("clicking another (non-tooltip) trigger does not suppress future tooltips", async ({
+		test("clicking a non-tooltip trigger does not suppress future tooltips", async ({
 			page,
 		}) => {
 			await page.getByTestId("popover-trigger").click();

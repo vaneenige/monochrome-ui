@@ -12,7 +12,7 @@ import { Tabs } from "monochrome/vue"
     </button>
     <Tabs.Root
       default-value="tab1"
-      data-testid="tabs-container"
+     
     >
       <Tabs.List data-testid="tablist">
         <Tabs.Tab
@@ -49,7 +49,7 @@ import { Tabs } from "monochrome/vue"
       </Tabs.Panel>
       <Tabs.Panel
         value="tab3"
-        data-testid="dpanel-3"
+       
       >
         <p>Content for Tab 3</p>
       </Tabs.Panel>

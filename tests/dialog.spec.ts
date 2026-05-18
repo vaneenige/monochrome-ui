@@ -5,90 +5,47 @@ test.describe("Dialog", () => {
 		await page.goto(`/${renderer}/dialog/basic`);
 	});
 
-	test.describe("ARIA Attributes", () => {
-		test("should have `aria-haspopup='dialog'` on trigger", async ({
+	test.describe("ARIA", () => {
+		test("declares the modern dialog contract on trigger and content", async ({
 			page,
 		}) => {
-			await expect(page.getByTestId("primary-trigger")).toHaveAttribute(
-				"aria-haspopup",
-				"dialog",
+			const trigger = page.getByTestId("primary-trigger");
+			const content = page.getByTestId("primary-content");
+			const contentId = await content.getAttribute("id");
+
+			await expect(trigger).toHaveAttribute("type", "button");
+			await expect(trigger).toHaveAttribute("aria-haspopup", "dialog");
+			await expect(trigger).toHaveAttribute(
+				"aria-controls",
+				contentId as string,
 			);
+			// Disclosure pattern attrs do not apply to a modal opened via
+			// showModal(); aria-modal is implied by the native <dialog>.
+			await expect(trigger).not.toHaveAttribute("aria-expanded", /.*/);
+			await expect(content).toHaveJSProperty("tagName", "DIALOG");
+			await expect(content).not.toHaveAttribute("aria-modal", /.*/);
+			await expect(content).not.toHaveAttribute("popover", /.*/);
 		});
 
-		test("should have `aria-controls` on trigger matching content id", async ({
+		test("auto-wires `aria-labelledby` and `aria-describedby` from Title and Description", async ({
 			page,
 		}) => {
-			const controls = await page
-				.getByTestId("primary-trigger")
-				.getAttribute("aria-controls");
-			const contentId = await page
-				.getByTestId("primary-content")
-				.getAttribute("id");
-			expect(controls).toBe(contentId);
-		});
-
-		test("should have `type='button'` on trigger", async ({ page }) => {
-			await expect(page.getByTestId("primary-trigger")).toHaveAttribute(
-				"type",
-				"button",
-			);
-		});
-
-		test("should not have `aria-expanded` on trigger", async ({ page }) => {
-			await expect(page.getByTestId("primary-trigger")).not.toHaveAttribute(
-				"aria-expanded",
-				/.*/,
-			);
-		});
-
-		test("content is a native `<dialog>` element", async ({ page }) => {
-			const tagName = await page
-				.getByTestId("primary-content")
-				.evaluate((el) => el.tagName);
-			expect(tagName).toBe("DIALOG");
-		});
-
-		test("content does not declare `aria-modal` (native dialog implies it)", async ({
-			page,
-		}) => {
-			await expect(page.getByTestId("primary-content")).not.toHaveAttribute(
-				"aria-modal",
-				/.*/,
-			);
-		});
-
-		test("content does not declare `popover` (uses showModal, not popover API)", async ({
-			page,
-		}) => {
-			await expect(page.getByTestId("primary-content")).not.toHaveAttribute(
-				"popover",
-				/.*/,
-			);
-		});
-
-		test("aria-labelledby on content matches Title id", async ({ page }) => {
 			await page.getByTestId("primary-trigger").click();
-			const labelledby = await page
-				.getByTestId("primary-content")
-				.getAttribute("aria-labelledby");
 			const titleId = await page
 				.getByTestId("primary-title")
 				.getAttribute("id");
-			expect(labelledby).toBe(titleId);
-		});
-
-		test("aria-describedby on content matches Description id", async ({
-			page,
-		}) => {
-			await page.getByTestId("primary-trigger").click();
-			const describedby = await page
-				.getByTestId("primary-content")
-				.getAttribute("aria-describedby");
 			const descId = await page.getByTestId("primary-desc").getAttribute("id");
-			expect(describedby).toBe(descId);
+			await expect(page.getByTestId("primary-content")).toHaveAttribute(
+				"aria-labelledby",
+				titleId as string,
+			);
+			await expect(page.getByTestId("primary-content")).toHaveAttribute(
+				"aria-describedby",
+				descId as string,
+			);
 		});
 
-		test("aria-label on Content is preserved and no aria-labelledby is added", async ({
+		test("a user-supplied `aria-label` suppresses the default `aria-labelledby`", async ({
 			page,
 		}) => {
 			const content = page.getByTestId("bare-content");
@@ -96,9 +53,7 @@ test.describe("Dialog", () => {
 			await expect(content).not.toHaveAttribute("aria-labelledby", /.*/);
 		});
 
-		test("should pass through `role='alertdialog'` on content", async ({
-			page,
-		}) => {
+		test("passes through `role='alertdialog'` on Content", async ({ page }) => {
 			await expect(page.getByTestId("alert-content")).toHaveAttribute(
 				"role",
 				"alertdialog",
@@ -106,123 +61,88 @@ test.describe("Dialog", () => {
 		});
 	});
 
-	test.describe("Default State", () => {
-		test("should be closed by default", async ({ page }) => {
-			await expect(page.getByTestId("primary-content")).not.toBeVisible();
-		});
-
-		test("dialog.open is false by default", async ({ page }) => {
-			const open = await page
-				.getByTestId("primary-content")
-				.evaluate((el) => (el as HTMLDialogElement).open);
-			expect(open).toBe(false);
-		});
-	});
-
 	test.describe("Opening", () => {
-		test("should open when trigger is clicked", async ({ page }) => {
-			await page.getByTestId("primary-trigger").click();
-			await expect(page.getByTestId("primary-content")).toBeVisible();
+		test("opens on click, Enter, or Space and reflects dialog.open", async ({
+			page,
+		}) => {
+			for (const action of ["click", "Enter", "Space"] as const) {
+				if (action === "click") {
+					await page.getByTestId("primary-trigger").click();
+				} else {
+					await page.getByTestId("primary-trigger").focus();
+					await page.keyboard.press(action);
+				}
+				await expect(page.getByTestId("primary-content")).toBeVisible();
+				const open = await page
+					.getByTestId("primary-content")
+					.evaluate((el) => (el as HTMLDialogElement).open);
+				expect(open).toBe(true);
+				await page.keyboard.press("Escape");
+				await expect(page.getByTestId("primary-content")).not.toBeVisible();
+			}
 		});
 
-		test("dialog.open is true when opened", async ({ page }) => {
-			await page.getByTestId("primary-trigger").click();
-			const open = await page
-				.getByTestId("primary-content")
-				.evaluate((el) => (el as HTMLDialogElement).open);
-			expect(open).toBe(true);
-		});
-
-		test("should open when `Enter` is pressed on trigger", async ({ page }) => {
-			await page.getByTestId("primary-trigger").focus();
-			await page.keyboard.press("Enter");
-			await expect(page.getByTestId("primary-content")).toBeVisible();
-		});
-
-		test("should open when `Space` is pressed on trigger", async ({ page }) => {
-			await page.getByTestId("primary-trigger").focus();
-			await page.keyboard.press("Space");
-			await expect(page.getByTestId("primary-content")).toBeVisible();
-		});
-
-		test("should not open when trigger is aria-disabled", async ({ page }) => {
+		test("ignores `aria-disabled` triggers", async ({ page }) => {
 			await page.getByTestId("disabled-trigger").click({ force: true });
 			await expect(page.getByTestId("disabled-content")).not.toBeVisible();
 		});
 	});
 
 	test.describe("Modality", () => {
-		test("background interactive content is inert when open", async ({
+		test("blocks interaction with background content while open", async ({
 			page,
 		}) => {
 			await page.getByTestId("primary-trigger").click();
-			await expect(page.getByTestId("focus-before")).not.toBeFocused();
-			// `inert` blocks tab navigation entirely; clicks on inert
-			// elements also don't dispatch listeners. Verify by attempting
-			// to click and observing focus stays in dialog.
 			await page
 				.getByTestId("focus-before")
 				.click({ force: true, timeout: 100 })
 				.catch(() => {});
-			const stillFocused = await page
+			const inside = await page
 				.getByTestId("primary-content")
 				.evaluate((el) => el.contains(document.activeElement));
-			expect(stillFocused).toBe(true);
+			expect(inside).toBe(true);
 		});
 
-		test("backdrop click does NOT close (true modal)", async ({ page }) => {
+		test("does not dismiss on backdrop click, scroll, or content click", async ({
+			page,
+		}) => {
 			await page.getByTestId("primary-trigger").click();
 			await expect(page.getByTestId("primary-content")).toBeVisible();
-			// Click far outside the dialog body. With showModal() the
-			// backdrop click lands on the dialog itself and is ignored.
+
+			// Backdrop click lands on the <dialog> itself; we ignore it.
 			await page.mouse.click(5, 5);
 			await expect(page.getByTestId("primary-content")).toBeVisible();
-		});
 
-		test("scroll does not dismiss", async ({ page }) => {
 			await page.setViewportSize({ width: 800, height: 300 });
 			await page.evaluate(() => {
 				const div = document.createElement("div");
 				div.style.height = "2000px";
 				document.body.appendChild(div);
 			});
-			await page.getByTestId("primary-trigger").click();
 			await page.evaluate(() => window.scrollTo(0, 200));
 			await expect(page.getByTestId("primary-content")).toBeVisible();
-		});
 
-		test("clicking inside content does not close", async ({ page }) => {
-			await page.getByTestId("primary-trigger").click();
 			await page.getByTestId("primary-title").click();
 			await expect(page.getByTestId("primary-content")).toBeVisible();
 		});
 	});
 
 	test.describe("Closing", () => {
-		test("should close when Close button is clicked", async ({ page }) => {
+		test("closes via Close button (mouse and keyboard) and via Escape", async ({
+			page,
+		}) => {
 			await page.getByTestId("primary-trigger").click();
 			await page.getByTestId("primary-close").click();
 			await expect(page.getByTestId("primary-content")).not.toBeVisible();
-		});
 
-		test("should close when Close button is activated via keyboard", async ({
-			page,
-		}) => {
 			await page.getByTestId("primary-trigger").click();
 			await page.getByTestId("primary-close").focus();
 			await page.keyboard.press("Enter");
 			await expect(page.getByTestId("primary-content")).not.toBeVisible();
-		});
 
-		test("should close on Escape", async ({ page }) => {
 			await page.getByTestId("primary-trigger").click();
 			await page.keyboard.press("Escape");
 			await expect(page.getByTestId("primary-content")).not.toBeVisible();
-		});
-
-		test("dialog.open is false after close", async ({ page }) => {
-			await page.getByTestId("primary-trigger").click();
-			await page.keyboard.press("Escape");
 			const open = await page
 				.getByTestId("primary-content")
 				.evaluate((el) => (el as HTMLDialogElement).open);
@@ -230,26 +150,20 @@ test.describe("Dialog", () => {
 		});
 	});
 
-	test.describe("Focus Management", () => {
-		// The core does NOT trap focus. The user agent's "dialog
-		// focusing steps" handle initial focus (autofocus, then first
-		// focusable, then the dialog itself); `inert` on the rest of
-		// the page keeps Tab navigation out of background content. We
-		// only verify the spec-defined behaviours we depend on.
-
-		test("should focus first focusable element on open (when no autofocus)", async ({
+	test.describe("Focus management", () => {
+		test("focuses the first focusable element when no autofocus is set", async ({
 			page,
 		}) => {
 			await page.getByTestId("primary-trigger").click();
 			await expect(page.getByTestId("primary-close")).toBeFocused();
 		});
 
-		test("should honor autofocus attribute", async ({ page }) => {
+		test("honors the autofocus attribute", async ({ page }) => {
 			await page.getByTestId("autofocus-trigger").click();
 			await expect(page.getByTestId("autofocus-target")).toBeFocused();
 		});
 
-		test("focus lands inside the dialog on open even when there is nothing to focus but Close", async ({
+		test("lands inside the dialog even when only Close is focusable", async ({
 			page,
 		}) => {
 			await page.getByTestId("bare-trigger").click();
@@ -259,38 +173,33 @@ test.describe("Dialog", () => {
 			expect(inside).toBe(true);
 		});
 
-		test("background content is unreachable from inside the dialog (inert)", async ({
+		test("background content is unreachable from within the dialog", async ({
 			page,
 		}) => {
 			await page.getByTestId("primary-trigger").click();
 			await page.getByTestId("primary-action").focus();
 			await page.keyboard.press("Tab");
-			// `focus-after` lives outside the dialog and must be inert
-			// while a modal dialog is open.
 			await expect(page.getByTestId("focus-after")).not.toBeFocused();
 		});
 
-		test("should return focus to trigger on close", async ({ page }) => {
+		test("returns focus to the trigger on close", async ({ page }) => {
 			await page.getByTestId("primary-trigger").click();
 			await page.keyboard.press("Escape");
 			await expect(page.getByTestId("primary-trigger")).toBeFocused();
 		});
 	});
 
-	test.describe("Tabs inside Dialog", () => {
-		test("initial tab order reflects selected tab", async ({ page }) => {
+	test.describe("Tabs inside dialog", () => {
+		test("initial tab order reflects the selected tab and excludes inactive panel content", async ({
+			page,
+		}) => {
 			await page.getByTestId("tabs-dialog-trigger").click();
 			await expect(page.getByTestId("tabs-dialog-close")).toBeFocused();
 			await page.keyboard.press("Tab");
 			await expect(page.getByTestId("t1-trigger")).toBeFocused();
 			await page.keyboard.press("Tab");
 			await expect(page.getByTestId("t1-input")).toBeFocused();
-		});
 
-		test("content in inactive tab panel is excluded from tab order", async ({
-			page,
-		}) => {
-			await page.getByTestId("tabs-dialog-trigger").click();
 			await page.getByTestId("t2-trigger").click();
 			await page.getByTestId("tabs-dialog-close").focus();
 			await page.keyboard.press("Tab");
@@ -301,22 +210,37 @@ test.describe("Dialog", () => {
 		});
 	});
 
-	test.describe("Overlay Stacking", () => {
-		test("should close open popover when opening dialog", async ({ page }) => {
+	test.describe("Structure independence", () => {
+		test("opens, focuses inside, and closes when trigger and content live in different containers", async ({
+			page,
+			renderer,
+		}) => {
+			await page.goto(`/${renderer}/dialog/structure-independence`);
+			await page.getByTestId("trigger").click();
+			await expect(page.getByTestId("content")).toBeVisible();
+			await expect(page.getByTestId("close")).toBeFocused();
+			await page.keyboard.press("Escape");
+			await expect(page.getByTestId("content")).not.toBeVisible();
+			await expect(page.getByTestId("trigger")).toBeFocused();
+		});
+	});
+
+	test.describe("Overlay stacking", () => {
+		test("opening the dialog dismisses any open popover, menu, or tooltip", async ({
+			page,
+		}) => {
 			await page.getByTestId("popover-trigger").click();
 			await expect(page.getByTestId("popover-content")).toBeVisible();
 			await page.getByTestId("primary-trigger").click();
 			await expect(page.getByTestId("popover-content")).not.toBeVisible();
-		});
+			await page.keyboard.press("Escape");
 
-		test("should close open menu when opening dialog", async ({ page }) => {
 			await page.getByTestId("menu-trigger").click();
 			await expect(page.getByTestId("menu-list")).toBeVisible();
 			await page.getByTestId("primary-trigger").click();
 			await expect(page.getByTestId("menu-list")).not.toBeVisible();
-		});
+			await page.keyboard.press("Escape");
 
-		test("should hide tooltip when opening dialog", async ({ page }) => {
 			await page.getByTestId("tooltip-trigger").focus();
 			await expect(page.getByTestId("tooltip-content")).toBeVisible();
 			await page.getByTestId("primary-trigger").click();

@@ -2,13 +2,6 @@ import { Dialog, Menu, Popover, Tabs, Tooltip } from "monochrome/react";
 
 export default () => (
 	<>
-		<style>{`
-      .popover, .tooltip { position: relative; display: inline-block; }
-      [popover] { position: fixed; inset: auto; margin: 0; top: var(--bottom); left: var(--left); }
-      [role="tooltip"] { pointer-events: none; }
-      dialog { width: 300px; padding: 0; margin: auto; border: 1px solid #ccc; background: white; }
-      dialog::backdrop { background: rgb(0 0 0 / 0.3); }
-    `}</style>
 		<div id="output" data-testid="output" />
 		<button type="button" data-testid="focus-before">
 			Focus before
@@ -38,7 +31,7 @@ export default () => (
 			<Dialog.Trigger data-testid="autofocus-trigger">
 				Open autofocus
 			</Dialog.Trigger>
-			<Dialog.Content data-testid="autofocus-content">
+			<Dialog.Content>
 				<Dialog.Title>Autofocus</Dialog.Title>
 				<Dialog.Description>Body</Dialog.Description>
 				<Dialog.Close>First</Dialog.Close>
@@ -50,11 +43,11 @@ export default () => (
 		</Dialog.Root>
 
 		<Dialog.Root>
-			<Dialog.Trigger data-testid="alert-trigger">Open alert</Dialog.Trigger>
+			<Dialog.Trigger>Open alert</Dialog.Trigger>
 			<Dialog.Content data-testid="alert-content" role="alertdialog">
 				<Dialog.Title>Alert</Dialog.Title>
 				<Dialog.Description>Important message</Dialog.Description>
-				<Dialog.Close data-testid="alert-close">OK</Dialog.Close>
+				<Dialog.Close>OK</Dialog.Close>
 			</Dialog.Content>
 		</Dialog.Root>
 
@@ -72,7 +65,7 @@ export default () => (
 		<Dialog.Root>
 			<Dialog.Trigger data-testid="bare-trigger">Open bare</Dialog.Trigger>
 			<Dialog.Content data-testid="bare-content" aria-label="Quick choice">
-				<Dialog.Close data-testid="bare-close">Close</Dialog.Close>
+				<Dialog.Close>Close</Dialog.Close>
 			</Dialog.Content>
 		</Dialog.Root>
 
@@ -80,7 +73,7 @@ export default () => (
 			<Dialog.Trigger data-testid="tabs-dialog-trigger">
 				Open tabs dialog
 			</Dialog.Trigger>
-			<Dialog.Content data-testid="tabs-dialog-content">
+			<Dialog.Content>
 				<Dialog.Title>Tabs dialog</Dialog.Title>
 				<Dialog.Description>
 					Switching tabs should update the focus trap.
@@ -95,10 +88,10 @@ export default () => (
 							T2
 						</Tabs.Tab>
 					</Tabs.List>
-					<Tabs.Panel value="t1" focusable={false} data-testid="t1-panel">
+					<Tabs.Panel value="t1" focusable={false}>
 						<input data-testid="t1-input" />
 					</Tabs.Panel>
-					<Tabs.Panel value="t2" focusable={false} data-testid="t2-panel">
+					<Tabs.Panel value="t2" focusable={false}>
 						<a data-testid="t2-link" href="/link">
 							Link
 						</a>
@@ -117,7 +110,7 @@ export default () => (
 		<Menu.Root>
 			<Menu.Trigger data-testid="menu-trigger">Menu</Menu.Trigger>
 			<Menu.Popover data-testid="menu-list">
-				<Menu.Item data-testid="menu-item-1">Item</Menu.Item>
+				<Menu.Item>Item</Menu.Item>
 			</Menu.Popover>
 		</Menu.Root>
 

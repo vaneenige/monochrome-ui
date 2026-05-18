@@ -2,8 +2,8 @@ import { Tabs } from "monochrome/react";
 
 export default () => (
 	<>
-		<Tabs.Root defaultValue="dtab2" data-testid="default-second-container">
-			<Tabs.List data-testid="default-second-tablist">
+		<Tabs.Root defaultValue="dtab2">
+			<Tabs.List>
 				<Tabs.Tab value="dtab1" data-testid="dtab-1">
 					Tab 1
 				</Tabs.Tab>
@@ -20,7 +20,7 @@ export default () => (
 			<Tabs.Panel value="dtab2" data-testid="dpanel-2">
 				<p>Content for Tab 2 (default selected)</p>
 			</Tabs.Panel>
-			<Tabs.Panel value="dtab3" data-testid="dpanel-3">
+			<Tabs.Panel value="dtab3">
 				<p>Content for Tab 3</p>
 			</Tabs.Panel>
 		</Tabs.Root>

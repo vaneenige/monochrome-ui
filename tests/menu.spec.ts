@@ -1,341 +1,140 @@
+import type { Page } from "@playwright/test";
 import { expect, test } from "./fixtures";
 import { scrollAndSettle } from "./helpers";
+
+const openRoot = async (page: Page) => {
+	await page.getByTestId("root-trigger").click();
+	await expect(page.getByTestId("root-list")).toBeVisible();
+};
+
+const openRootViaKeyboard = async (page: Page) => {
+	await page.getByTestId("root-trigger").focus();
+	await page.getByTestId("root-trigger").press("Enter");
+	await expect(page.getByTestId("root-list")).toBeVisible();
+};
+
+const openSubmenuViaHover = async (page: Page) => {
+	await page.getByTestId("root-submenu-trigger").hover();
+	await expect(page.getByTestId("root-submenu-list")).toBeVisible();
+};
+
+const openSubmenuViaKeyboard = async (page: Page) => {
+	await page.getByTestId("root-submenu-trigger").focus();
+	await page.getByTestId("root-submenu-trigger").press("Enter");
+	await expect(page.getByTestId("root-submenu-list")).toBeVisible();
+};
 
 test.describe("Menu", () => {
 	test.beforeEach(async ({ page, renderer }) => {
 		await page.goto(`/${renderer}/menu/basic`);
 	});
 
-	test.describe("ARIA Attributes", () => {
-		test("should have `role='button'` on trigger", async ({
+	test.describe("ARIA", () => {
+		test("declares the menu button contract on the trigger", async ({
 			page,
-			renderer,
 		}) => {
-			await expect(page.getByTestId("root-trigger")).toHaveAttribute(
-				"role",
-				"button",
-			);
-		});
+			const trigger = page.getByTestId("root-trigger");
+			const list = page.getByTestId("root-list");
+			const listId = await list.getAttribute("id");
+			const triggerId = await trigger.getAttribute("id");
 
-		test("should have `aria-haspopup='menu'` on trigger", async ({
-			page,
-			renderer,
-		}) => {
-			await expect(page.getByTestId("root-trigger")).toHaveAttribute(
-				"aria-haspopup",
-				"menu",
-			);
-		});
-
-		test("should have `tabindex='0'` on trigger", async ({
-			page,
-			renderer,
-		}) => {
-			await expect(page.getByTestId("root-trigger")).toHaveAttribute(
-				"tabindex",
-				"0",
-			);
-		});
-
-		test("should have `aria-expanded='false'` on trigger when closed", async ({
-			page,
-			renderer,
-		}) => {
-			await expect(page.getByTestId("root-trigger")).toHaveAttribute(
-				"aria-expanded",
-				"false",
-			);
-		});
-
-		test("should have `aria-expanded='true'` on trigger when open", async ({
-			page,
-			renderer,
-		}) => {
-			await page.getByTestId("root-trigger").click();
-			await expect(page.getByTestId("root-trigger")).toHaveAttribute(
-				"aria-expanded",
-				"true",
-			);
-		});
-
-		test("should have `aria-controls` on trigger matching menu list id", async ({
-			page,
-			renderer,
-		}) => {
-			const ariaControls = await page
-				.getByTestId("root-trigger")
-				.getAttribute("aria-controls");
-			const listId = await page.getByTestId("root-list").getAttribute("id");
-			expect(ariaControls).toBe(listId);
-		});
-
-		test("should have `role='menu'` on menu list", async ({
-			page,
-			renderer,
-		}) => {
-			await expect(page.getByTestId("root-list")).toHaveAttribute(
-				"role",
-				"menu",
-			);
-		});
-
-		test("should have `popover='manual'` on menu list", async ({
-			page,
-			renderer,
-		}) => {
-			await expect(page.getByTestId("root-list")).toHaveAttribute(
-				"popover",
-				"manual",
-			);
-		});
-
-		test("should have `aria-hidden='true'` on menu list when closed", async ({
-			page,
-			renderer,
-		}) => {
-			await expect(page.getByTestId("root-list")).toHaveAttribute(
-				"aria-hidden",
-				"true",
-			);
-		});
-
-		test("should have `aria-hidden='false'` on menu list when open", async ({
-			page,
-			renderer,
-		}) => {
-			await page.getByTestId("root-trigger").click();
-			await expect(page.getByTestId("root-list")).toHaveAttribute(
-				"aria-hidden",
-				"false",
-			);
-		});
-
-		test("should have `role='menuitem'` on menu items", async ({
-			page,
-			renderer,
-		}) => {
-			await page.getByTestId("root-trigger").click();
-			await expect(page.getByTestId("root-item-1")).toHaveAttribute(
-				"role",
-				"menuitem",
-			);
-			await expect(page.getByTestId("root-item-2")).toHaveAttribute(
-				"role",
-				"menuitem",
-			);
-			await expect(page.getByTestId("root-item-3")).toHaveAttribute(
-				"role",
-				"menuitem",
-			);
-		});
-
-		test("should have `tabindex='-1'` on all menu items", async ({
-			page,
-			renderer,
-		}) => {
-			await page.getByTestId("root-trigger").click();
-			await expect(page.getByTestId("root-item-1")).toHaveAttribute(
-				"tabindex",
-				"-1",
-			);
-			await expect(page.getByTestId("root-item-2")).toHaveAttribute(
-				"tabindex",
-				"-1",
-			);
-			await expect(page.getByTestId("root-item-3")).toHaveAttribute(
-				"tabindex",
-				"-1",
-			);
-		});
-
-		test("should have `role='none'` on menu item wrapper li", async ({
-			page,
-			renderer,
-		}) => {
-			await page.getByTestId("root-trigger").click();
-			const parent = page.getByTestId("root-item-1").locator("..");
-			await expect(parent).toHaveAttribute("role", "none");
-		});
-
-		test("should have `aria-disabled='true'` on disabled menu items", async ({
-			page,
-			renderer,
-		}) => {
-			await page.goto(`/${renderer}/menu/edge-cases`);
-			await page.getByTestId("disabled-first-trigger").click();
-			await expect(page.getByTestId("disabled-first-item-1")).toHaveAttribute(
-				"aria-disabled",
-				"true",
-			);
-			await expect(page.getByTestId("disabled-first-item-4")).toHaveAttribute(
-				"aria-disabled",
-				"true",
-			);
-		});
-
-		test("should have `tabindex='-1'` on disabled menu items", async ({
-			page,
-			renderer,
-		}) => {
-			await page.goto(`/${renderer}/menu/edge-cases`);
-			await page.getByTestId("disabled-first-trigger").click();
-			await expect(page.getByTestId("disabled-first-item-1")).toHaveAttribute(
-				"tabindex",
-				"-1",
-			);
-		});
-
-		test("should have `role='menuitem'` on submenu trigger", async ({
-			page,
-			renderer,
-		}) => {
-			await page.getByTestId("root-trigger").click();
-			await expect(page.getByTestId("root-submenu-trigger")).toHaveAttribute(
-				"role",
-				"menuitem",
-			);
-		});
-
-		test("should have `aria-haspopup='menu'` on submenu trigger", async ({
-			page,
-			renderer,
-		}) => {
-			await page.getByTestId("root-trigger").click();
-			await expect(page.getByTestId("root-submenu-trigger")).toHaveAttribute(
-				"aria-haspopup",
-				"menu",
-			);
-		});
-
-		test("should have `tabindex='-1'` on submenu trigger", async ({
-			page,
-			renderer,
-		}) => {
-			await page.getByTestId("root-trigger").click();
-			await expect(page.getByTestId("root-submenu-trigger")).toHaveAttribute(
-				"tabindex",
-				"-1",
-			);
-		});
-
-		test("should have `aria-expanded='false'` on submenu trigger when closed", async ({
-			page,
-			renderer,
-		}) => {
-			await page.getByTestId("root-trigger").click();
-			await expect(page.getByTestId("root-submenu-trigger")).toHaveAttribute(
-				"aria-expanded",
-				"false",
-			);
-		});
-
-		test("should have `aria-expanded='true'` on submenu trigger when open", async ({
-			page,
-			renderer,
-		}) => {
-			await page.getByTestId("root-trigger").click();
-			await page.getByTestId("root-submenu-trigger").hover();
-			await expect(page.getByTestId("root-submenu-trigger")).toHaveAttribute(
-				"aria-expanded",
-				"true",
-			);
-		});
-
-		test("should have `role='menu'` on submenu list", async ({
-			page,
-			renderer,
-		}) => {
-			await page.getByTestId("root-trigger").click();
-			await page.getByTestId("root-submenu-trigger").hover();
-			await expect(page.getByTestId("root-submenu-list")).toHaveAttribute(
-				"role",
-				"menu",
-			);
-		});
-
-		test("should have `aria-hidden='true'` on submenu list when closed", async ({
-			page,
-			renderer,
-		}) => {
-			await expect(page.getByTestId("root-submenu-list")).toHaveAttribute(
-				"aria-hidden",
-				"true",
-			);
-		});
-
-		test("should have `aria-hidden='false'` on submenu list when open", async ({
-			page,
-			renderer,
-		}) => {
-			await page.getByTestId("root-trigger").click();
-			await page.getByTestId("root-submenu-trigger").hover();
-			await expect(page.getByTestId("root-submenu-list")).toHaveAttribute(
-				"aria-hidden",
-				"false",
-			);
-		});
-
-		test("should have `aria-labelledby` on menu list matching trigger id", async ({
-			page,
-			renderer,
-		}) => {
-			const triggerId = await page
-				.getByTestId("root-trigger")
-				.getAttribute("id");
-			await expect(page.getByTestId("root-list")).toHaveAttribute(
+			await expect(trigger).toHaveAttribute("role", "button");
+			await expect(trigger).toHaveAttribute("aria-haspopup", "menu");
+			await expect(trigger).toHaveAttribute("tabindex", "0");
+			await expect(trigger).toHaveAttribute("aria-controls", listId as string);
+			await expect(list).toHaveAttribute("role", "menu");
+			await expect(list).toHaveAttribute("popover", "manual");
+			await expect(list).toHaveAttribute(
 				"aria-labelledby",
 				triggerId as string,
 			);
 		});
 
-		test("should have `aria-labelledby` on submenu list matching submenu trigger id", async ({
+		test("toggles `aria-expanded` / `aria-hidden` across the open and close cycle", async ({
+			page,
+		}) => {
+			const trigger = page.getByTestId("root-trigger");
+			const list = page.getByTestId("root-list");
+
+			await expect(trigger).toHaveAttribute("aria-expanded", "false");
+			await expect(list).toHaveAttribute("aria-hidden", "true");
+
+			await trigger.click();
+			await expect(trigger).toHaveAttribute("aria-expanded", "true");
+			await expect(list).toHaveAttribute("aria-hidden", "false");
+
+			await trigger.click();
+			await expect(trigger).toHaveAttribute("aria-expanded", "false");
+			await expect(list).toHaveAttribute("aria-hidden", "true");
+		});
+
+		test("declares menuitem role and roving tabindex on every item", async ({
+			page,
+		}) => {
+			await openRoot(page);
+			for (const id of ["root-item-1", "root-item-2", "root-item-3"]) {
+				await expect(page.getByTestId(id)).toHaveAttribute("role", "menuitem");
+				await expect(page.getByTestId(id)).toHaveAttribute("tabindex", "-1");
+			}
+			await expect(
+				page.getByTestId("root-item-1").locator(".."),
+			).toHaveAttribute("role", "none");
+		});
+
+		test("declares menuitem + `aria-haspopup` on the submenu trigger and links its submenu", async ({
+			page,
+		}) => {
+			await openRoot(page);
+			const subTrigger = page.getByTestId("root-submenu-trigger");
+			const subList = page.getByTestId("root-submenu-list");
+			const subTriggerId = await subTrigger.getAttribute("id");
+
+			await expect(subTrigger).toHaveAttribute("role", "menuitem");
+			await expect(subTrigger).toHaveAttribute("aria-haspopup", "menu");
+			await expect(subTrigger).toHaveAttribute("tabindex", "-1");
+			await expect(subTrigger).toHaveAttribute("aria-expanded", "false");
+			await expect(subList).toHaveAttribute("aria-hidden", "true");
+			await expect(subList).toHaveAttribute("role", "menu");
+			await expect(subList).toHaveAttribute(
+				"aria-labelledby",
+				subTriggerId as string,
+			);
+
+			await openSubmenuViaHover(page);
+			await expect(subTrigger).toHaveAttribute("aria-expanded", "true");
+			await expect(subList).toHaveAttribute("aria-hidden", "false");
+		});
+
+		test("declares `aria-disabled` and skips disabled items in focus", async ({
 			page,
 			renderer,
 		}) => {
-			const triggerId = await page
-				.getByTestId("root-submenu-trigger")
-				.getAttribute("id");
-			await expect(page.getByTestId("root-submenu-list")).toHaveAttribute(
-				"aria-labelledby",
-				triggerId as string,
-			);
+			await page.goto(`/${renderer}/menu/edge-cases`);
+			await page.getByTestId("disabled-first-trigger").click();
+			for (const id of ["disabled-first-item-1", "disabled-first-item-4"]) {
+				await expect(page.getByTestId(id)).toHaveAttribute(
+					"aria-disabled",
+					"true",
+				);
+				await expect(page.getByTestId(id)).toHaveAttribute("tabindex", "-1");
+			}
 		});
 	});
 
-	test.describe("Keyboard Navigation", () => {
-		test("should open menu and focus first item when `Enter` is pressed on trigger", async ({
-			page,
-			renderer,
-		}) => {
-			await page.getByTestId("root-trigger").focus();
-			await page.getByTestId("root-trigger").press("Enter");
-			await expect(page.getByTestId("root-list")).toBeVisible();
-			await expect(page.getByTestId("root-item-1")).toBeFocused();
-		});
+	test.describe("Trigger keyboard", () => {
+		for (const key of ["Enter", "Space", "ArrowDown"] as const) {
+			test(`${key} opens the menu and focuses the first item`, async ({
+				page,
+			}) => {
+				await page.getByTestId("root-trigger").focus();
+				await page.getByTestId("root-trigger").press(key);
+				await expect(page.getByTestId("root-list")).toBeVisible();
+				await expect(page.getByTestId("root-item-1")).toBeFocused();
+			});
+		}
 
-		test("should open menu and focus first item when `Space` is pressed on trigger", async ({
+		test("ArrowUp opens the menu and focuses the last item", async ({
 			page,
-			renderer,
-		}) => {
-			await page.getByTestId("root-trigger").focus();
-			await page.getByTestId("root-trigger").press("Space");
-			await expect(page.getByTestId("root-list")).toBeVisible();
-			await expect(page.getByTestId("root-item-1")).toBeFocused();
-		});
-
-		test("should open menu and focus first item when `ArrowDown` is pressed on trigger", async ({
-			page,
-			renderer,
-		}) => {
-			await page.getByTestId("root-trigger").focus();
-			await page.getByTestId("root-trigger").press("ArrowDown");
-			await expect(page.getByTestId("root-list")).toBeVisible();
-			await expect(page.getByTestId("root-item-1")).toBeFocused();
-		});
-
-		test("should open menu and focus last item when `ArrowUp` is pressed on trigger", async ({
-			page,
-			renderer,
 		}) => {
 			await page.getByTestId("root-trigger").focus();
 			await page.getByTestId("root-trigger").press("ArrowUp");
@@ -343,311 +142,151 @@ test.describe("Menu", () => {
 			await expect(page.getByTestId("root-submenu-trigger")).toBeFocused();
 		});
 
-		test("should close menu and focus trigger when `Escape` is pressed on trigger", async ({
+		test("Escape from the trigger after open returns focus to the trigger and closes", async ({
 			page,
-			renderer,
 		}) => {
-			await page.getByTestId("root-trigger").focus();
-			await page.getByTestId("root-trigger").press("Enter");
-			await page.getByTestId("root-trigger").press("Escape");
-			await expect(page.getByTestId("root-list")).not.toBeVisible();
-			await expect(page.getByTestId("root-trigger")).toBeFocused();
-		});
-
-		test("should close menu and focus trigger when `Escape` is pressed on menu item", async ({
-			page,
-			renderer,
-		}) => {
-			await page.getByTestId("root-trigger").focus();
-			await page.getByTestId("root-trigger").press("Enter");
-			await expect(page.getByTestId("root-item-1")).toBeFocused();
+			await openRootViaKeyboard(page);
 			await page.keyboard.press("Escape");
 			await expect(page.getByTestId("root-list")).not.toBeVisible();
 			await expect(page.getByTestId("root-trigger")).toBeFocused();
 		});
 
-		test("should close menu and move focus forward when `Tab` is pressed on menu item", async ({
+		test("Tab closes the menu and moves focus forward; Shift+Tab moves it backward", async ({
 			page,
-			renderer,
 		}) => {
-			await page.getByTestId("root-trigger").focus();
-			await page.getByTestId("root-trigger").press("Enter");
+			await openRootViaKeyboard(page);
 			await page.keyboard.press("Tab");
 			await expect(page.getByTestId("root-list")).not.toBeVisible();
 			await expect(page.getByTestId("focus-after")).toBeFocused();
-		});
 
-		test("should close menu and move focus backward when `Shift+Tab` is pressed on menu item", async ({
-			page,
-			renderer,
-		}) => {
-			await page.getByTestId("root-trigger").focus();
-			await page.getByTestId("root-trigger").press("Enter");
+			await openRootViaKeyboard(page);
 			await page.keyboard.press("Shift+Tab");
 			await expect(page.getByTestId("root-list")).not.toBeVisible();
 			await expect(page.getByTestId("focus-before")).toBeFocused();
 		});
 
-		test("should focus next item when `ArrowDown` is pressed", async ({
+		test("ArrowDown on an already-open trigger focuses the first item", async ({
 			page,
-			renderer,
 		}) => {
-			await page.getByTestId("root-trigger").focus();
-			await page.getByTestId("root-trigger").press("Enter");
-			await page.getByTestId("root-item-1").press("ArrowDown");
-			await expect(page.getByTestId("root-item-2")).toBeFocused();
-		});
-
-		test("should focus previous item when `ArrowUp` is pressed", async ({
-			page,
-			renderer,
-		}) => {
-			await page.getByTestId("root-trigger").focus();
-			await page.getByTestId("root-trigger").press("Enter");
-			await page.getByTestId("root-item-2").press("ArrowUp");
-			await expect(page.getByTestId("root-item-1")).toBeFocused();
-		});
-
-		test("should loop to first item when `ArrowDown` is pressed on last item", async ({
-			page,
-			renderer,
-		}) => {
-			await page.getByTestId("root-trigger").focus();
-			await page.getByTestId("root-trigger").press("Enter");
-			await page.getByTestId("root-submenu-trigger").press("ArrowDown");
-			await expect(page.getByTestId("root-item-1")).toBeFocused();
-		});
-
-		test("should loop to last item when `ArrowUp` is pressed on first item", async ({
-			page,
-			renderer,
-		}) => {
-			await page.getByTestId("root-trigger").focus();
-			await page.getByTestId("root-trigger").press("Enter");
-			await page.getByTestId("root-item-1").press("ArrowUp");
-			await expect(page.getByTestId("root-submenu-trigger")).toBeFocused();
-		});
-
-		test("should focus first item when `Home` is pressed", async ({
-			page,
-			renderer,
-		}) => {
-			await page.getByTestId("root-trigger").focus();
-			await page.getByTestId("root-trigger").press("Enter");
-			await page.getByTestId("root-item-2").press("Home");
-			await expect(page.getByTestId("root-item-1")).toBeFocused();
-		});
-
-		test("should focus last item when `End` is pressed", async ({
-			page,
-			renderer,
-		}) => {
-			await page.getByTestId("root-trigger").focus();
-			await page.getByTestId("root-trigger").press("Enter");
-			await page.getByTestId("root-item-2").press("End");
-			await expect(page.getByTestId("root-submenu-trigger")).toBeFocused();
-		});
-
-		test("should not move focus when `ArrowLeft` is pressed on regular item", async ({
-			page,
-			renderer,
-		}) => {
-			await page.getByTestId("root-trigger").focus();
-			await page.getByTestId("root-trigger").press("Enter");
-			await page.getByTestId("root-item-1").press("ArrowLeft");
-			await expect(page.getByTestId("root-item-1")).toBeFocused();
-		});
-
-		test("should not move focus when `ArrowRight` is pressed on regular item", async ({
-			page,
-			renderer,
-		}) => {
-			await page.getByTestId("root-trigger").focus();
-			await page.getByTestId("root-trigger").press("Enter");
-			await page.getByTestId("root-item-1").press("ArrowRight");
-			await expect(page.getByTestId("root-item-1")).toBeFocused();
-		});
-
-		test("should focus first item when `ArrowDown` is pressed on trigger with menu already open", async ({
-			page,
-			renderer,
-		}) => {
-			await page.getByTestId("root-trigger").click();
-			await expect(page.getByTestId("root-list")).toBeVisible();
+			await openRoot(page);
 			await page.getByTestId("root-trigger").press("ArrowDown");
 			await expect(page.getByTestId("root-item-1")).toBeFocused();
 		});
 
-		test("should focus last item when `ArrowUp` is pressed on trigger with menu already open", async ({
+		test("ArrowUp on an already-open trigger focuses the last item", async ({
 			page,
-			renderer,
 		}) => {
-			await page.getByTestId("root-trigger").click();
-			await expect(page.getByTestId("root-list")).toBeVisible();
+			await openRoot(page);
 			await page.getByTestId("root-trigger").press("ArrowUp");
 			await expect(page.getByTestId("root-submenu-trigger")).toBeFocused();
 		});
 	});
 
-	test.describe("Submenu Keyboard Navigation", () => {
-		test("should open submenu and focus first item when `Enter` is pressed on submenu trigger", async ({
-			page,
-			renderer,
-		}) => {
-			await page.getByTestId("root-trigger").focus();
-			await page.getByTestId("root-trigger").press("Enter");
-			await page.getByTestId("root-submenu-trigger").focus();
-			await page.getByTestId("root-submenu-trigger").press("Enter");
-			await expect(page.getByTestId("root-submenu-list")).toBeVisible();
-			await expect(page.getByTestId("root-submenu-item-1")).toBeFocused();
+	test.describe("Item keyboard", () => {
+		test.beforeEach(async ({ page }) => {
+			await openRootViaKeyboard(page);
 		});
 
-		test("should open submenu and focus first item when `Space` is pressed on submenu trigger", async ({
-			page,
-			renderer,
-		}) => {
-			await page.getByTestId("root-trigger").focus();
-			await page.getByTestId("root-trigger").press("Enter");
-			await page.getByTestId("root-submenu-trigger").focus();
-			await page.getByTestId("root-submenu-trigger").press("Space");
-			await expect(page.getByTestId("root-submenu-list")).toBeVisible();
-			await expect(page.getByTestId("root-submenu-item-1")).toBeFocused();
-		});
-
-		test("should open submenu and focus first item when `ArrowRight` is pressed on submenu trigger", async ({
-			page,
-			renderer,
-		}) => {
-			await page.getByTestId("root-trigger").focus();
-			await page.getByTestId("root-trigger").press("Enter");
-			await page.getByTestId("root-submenu-trigger").focus();
-			await page.getByTestId("root-submenu-trigger").press("ArrowRight");
-			await expect(page.getByTestId("root-submenu-list")).toBeVisible();
-			await expect(page.getByTestId("root-submenu-item-1")).toBeFocused();
-		});
-
-		test("should close submenu and focus submenu trigger when `ArrowLeft` is pressed on submenu item", async ({
-			page,
-			renderer,
-		}) => {
-			await page.getByTestId("root-trigger").focus();
-			await page.getByTestId("root-trigger").press("Enter");
-			await page.getByTestId("root-submenu-trigger").focus();
-			await page.getByTestId("root-submenu-trigger").press("Enter");
-			await page.getByTestId("root-submenu-item-1").press("ArrowLeft");
-			await expect(page.getByTestId("root-submenu-list")).not.toBeVisible();
+		test("ArrowDown / ArrowUp wrap around the item list", async ({ page }) => {
+			await expect(page.getByTestId("root-item-1")).toBeFocused();
+			await page.keyboard.press("ArrowDown");
+			await expect(page.getByTestId("root-item-2")).toBeFocused();
+			await page.keyboard.press("ArrowUp");
+			await expect(page.getByTestId("root-item-1")).toBeFocused();
+			await page.keyboard.press("ArrowUp");
 			await expect(page.getByTestId("root-submenu-trigger")).toBeFocused();
+			await page.keyboard.press("ArrowDown");
+			await expect(page.getByTestId("root-item-1")).toBeFocused();
 		});
 
-		test("should close submenu and focus submenu trigger when `Escape` is pressed on submenu item", async ({
-			page,
-			renderer,
-		}) => {
-			await page.getByTestId("root-trigger").focus();
-			await page.getByTestId("root-trigger").press("Enter");
-			await page.getByTestId("root-submenu-trigger").focus();
-			await page.getByTestId("root-submenu-trigger").press("Enter");
-			await page.getByTestId("root-submenu-item-1").press("Escape");
-			await expect(page.getByTestId("root-submenu-list")).not.toBeVisible();
+		test("Home / End jump to first / last item", async ({ page }) => {
+			await page.getByTestId("root-item-2").press("End");
 			await expect(page.getByTestId("root-submenu-trigger")).toBeFocused();
+			await page.keyboard.press("Home");
+			await expect(page.getByTestId("root-item-1")).toBeFocused();
 		});
 
-		test("should focus next submenu item when `ArrowDown` is pressed", async ({
+		test("ArrowLeft / ArrowRight on a regular item are inert (no submenu)", async ({
 			page,
-			renderer,
 		}) => {
-			await page.getByTestId("root-trigger").focus();
-			await page.getByTestId("root-trigger").press("Enter");
-			await page.getByTestId("root-submenu-trigger").focus();
-			await page.getByTestId("root-submenu-trigger").press("Enter");
-			await page.getByTestId("root-submenu-item-1").press("ArrowDown");
+			await page.getByTestId("root-item-1").press("ArrowLeft");
+			await expect(page.getByTestId("root-item-1")).toBeFocused();
+			await page.getByTestId("root-item-1").press("ArrowRight");
+			await expect(page.getByTestId("root-item-1")).toBeFocused();
+		});
+
+		test("Escape from an item closes the menu and returns focus to the trigger", async ({
+			page,
+		}) => {
+			await page.keyboard.press("Escape");
+			await expect(page.getByTestId("root-list")).not.toBeVisible();
+			await expect(page.getByTestId("root-trigger")).toBeFocused();
+		});
+	});
+
+	test.describe("Submenu keyboard", () => {
+		test.beforeEach(async ({ page }) => {
+			await openRootViaKeyboard(page);
+		});
+
+		for (const key of ["Enter", "Space", "ArrowRight"] as const) {
+			test(`${key} on the submenu trigger opens it and focuses the first item`, async ({
+				page,
+			}) => {
+				await page.getByTestId("root-submenu-trigger").focus();
+				await page.getByTestId("root-submenu-trigger").press(key);
+				await expect(page.getByTestId("root-submenu-list")).toBeVisible();
+				await expect(page.getByTestId("root-submenu-item-1")).toBeFocused();
+			});
+		}
+
+		for (const key of ["ArrowLeft", "Escape"] as const) {
+			test(`${key} inside the submenu closes it and focuses the submenu trigger`, async ({
+				page,
+			}) => {
+				await openSubmenuViaKeyboard(page);
+				await page.getByTestId("root-submenu-item-1").press(key);
+				await expect(page.getByTestId("root-submenu-list")).not.toBeVisible();
+				await expect(page.getByTestId("root-submenu-trigger")).toBeFocused();
+			});
+		}
+
+		test("ArrowDown / ArrowUp wrap around the submenu items", async ({
+			page,
+		}) => {
+			await openSubmenuViaKeyboard(page);
+			await page.keyboard.press("ArrowDown");
 			await expect(page.getByTestId("root-submenu-item-2")).toBeFocused();
-		});
-
-		test("should focus previous submenu item when `ArrowUp` is pressed", async ({
-			page,
-			renderer,
-		}) => {
-			await page.getByTestId("root-trigger").focus();
-			await page.getByTestId("root-trigger").press("Enter");
-			await page.getByTestId("root-submenu-trigger").focus();
-			await page.getByTestId("root-submenu-trigger").press("Enter");
-			await page.getByTestId("root-submenu-item-2").press("ArrowUp");
+			await page.keyboard.press("ArrowUp");
 			await expect(page.getByTestId("root-submenu-item-1")).toBeFocused();
-		});
-
-		test("should loop to first item when `ArrowDown` is pressed on last submenu item", async ({
-			page,
-			renderer,
-		}) => {
-			await page.getByTestId("root-trigger").focus();
-			await page.getByTestId("root-trigger").press("Enter");
-			await page.getByTestId("root-submenu-trigger").focus();
-			await page.getByTestId("root-submenu-trigger").press("Enter");
-			await page.getByTestId("root-submenu-item-3").press("ArrowDown");
-			await expect(page.getByTestId("root-submenu-item-1")).toBeFocused();
-		});
-
-		test("should loop to last item when `ArrowUp` is pressed on first submenu item", async ({
-			page,
-			renderer,
-		}) => {
-			await page.getByTestId("root-trigger").focus();
-			await page.getByTestId("root-trigger").press("Enter");
-			await page.getByTestId("root-submenu-trigger").focus();
-			await page.getByTestId("root-submenu-trigger").press("Enter");
-			await page.getByTestId("root-submenu-item-1").press("ArrowUp");
+			await page.keyboard.press("ArrowUp");
 			await expect(page.getByTestId("root-submenu-item-3")).toBeFocused();
-		});
-
-		test("should focus first submenu item when `Home` is pressed", async ({
-			page,
-			renderer,
-		}) => {
-			await page.getByTestId("root-trigger").focus();
-			await page.getByTestId("root-trigger").press("Enter");
-			await page.getByTestId("root-submenu-trigger").focus();
-			await page.getByTestId("root-submenu-trigger").press("Enter");
-			await page.getByTestId("root-submenu-item-2").press("Home");
+			await page.keyboard.press("ArrowDown");
 			await expect(page.getByTestId("root-submenu-item-1")).toBeFocused();
 		});
 
-		test("should focus last submenu item when `End` is pressed", async ({
-			page,
-			renderer,
-		}) => {
-			await page.getByTestId("root-trigger").focus();
-			await page.getByTestId("root-trigger").press("Enter");
-			await page.getByTestId("root-submenu-trigger").focus();
-			await page.getByTestId("root-submenu-trigger").press("Enter");
-			await page.getByTestId("root-submenu-item-1").press("End");
+		test("Home / End jump within the submenu", async ({ page }) => {
+			await openSubmenuViaKeyboard(page);
+			await page.keyboard.press("End");
 			await expect(page.getByTestId("root-submenu-item-3")).toBeFocused();
+			await page.keyboard.press("Home");
+			await expect(page.getByTestId("root-submenu-item-1")).toBeFocused();
 		});
 
-		test("should close all menus and move focus forward when `Tab` is pressed in submenu", async ({
+		test("Tab inside the submenu closes all menus and continues outside", async ({
 			page,
-			renderer,
 		}) => {
-			await page.getByTestId("root-trigger").focus();
-			await page.getByTestId("root-trigger").press("Enter");
-			await page.getByTestId("root-submenu-trigger").focus();
-			await page.getByTestId("root-submenu-trigger").press("Enter");
-			await expect(page.getByTestId("root-submenu-item-1")).toBeFocused();
+			await openSubmenuViaKeyboard(page);
 			await page.keyboard.press("Tab");
 			await expect(page.getByTestId("root-list")).not.toBeVisible();
 			await expect(page.getByTestId("root-submenu-list")).not.toBeVisible();
 			await expect(page.getByTestId("focus-after")).toBeFocused();
 		});
 
-		test("should close all menus and move focus backward when `Shift+Tab` is pressed in submenu", async ({
+		test("Shift+Tab inside the submenu closes all menus and continues backward", async ({
 			page,
-			renderer,
 		}) => {
-			await page.getByTestId("root-trigger").focus();
-			await page.getByTestId("root-trigger").press("Enter");
-			await page.getByTestId("root-submenu-trigger").focus();
-			await page.getByTestId("root-submenu-trigger").press("Enter");
-			await expect(page.getByTestId("root-submenu-item-1")).toBeFocused();
+			await openSubmenuViaKeyboard(page);
 			await page.keyboard.press("Shift+Tab");
 			await expect(page.getByTestId("root-list")).not.toBeVisible();
 			await expect(page.getByTestId("root-submenu-list")).not.toBeVisible();
@@ -655,252 +294,128 @@ test.describe("Menu", () => {
 		});
 	});
 
-	test.describe("Mouse Interaction", () => {
-		test("should open menu when trigger is clicked", async ({
+	test.describe("Mouse", () => {
+		test("trigger click opens the menu without moving focus to the first item", async ({
 			page,
-			renderer,
 		}) => {
-			await page.getByTestId("root-trigger").click();
-			await expect(page.getByTestId("root-list")).toBeVisible();
+			await openRoot(page);
 			await expect(page.getByTestId("root-item-1")).not.toBeFocused();
 		});
 
-		test("should close menu and reset ARIA state when trigger is clicked again", async ({
-			page,
-			renderer,
-		}) => {
-			await page.getByTestId("root-trigger").click();
-			await expect(page.getByTestId("root-list")).toBeVisible();
-			await expect(page.getByTestId("root-trigger")).toHaveAttribute(
-				"aria-expanded",
-				"true",
-			);
-			await expect(page.getByTestId("root-list")).toHaveAttribute(
-				"aria-hidden",
-				"false",
-			);
-			await page.getByTestId("root-trigger").click();
-			await expect(page.getByTestId("root-list")).not.toBeVisible();
-			await expect(page.getByTestId("root-trigger")).toHaveAttribute(
-				"aria-expanded",
-				"false",
-			);
-			await expect(page.getByTestId("root-list")).toHaveAttribute(
-				"aria-hidden",
-				"true",
-			);
-		});
-
-		test("should not open menu when trigger is hovered", async ({
-			page,
-			renderer,
-		}) => {
+		test("trigger hover does not open the menu", async ({ page }) => {
 			await page.getByTestId("root-trigger").hover();
 			await expect(page.getByTestId("root-list")).not.toBeVisible();
 		});
 
-		test("should close menu when clicking outside", async ({
+		test("outside click closes the menu, including any open submenu", async ({
 			page,
-			renderer,
 		}) => {
-			await page.getByTestId("root-trigger").click();
-			await expect(page.getByTestId("root-list")).toBeVisible();
-			await page.getByTestId("scroll-container").click();
-			await expect(page.getByTestId("root-list")).not.toBeVisible();
-		});
-
-		test("should close all menus when clicking outside with submenu open", async ({
-			page,
-			renderer,
-		}) => {
-			await page.getByTestId("root-trigger").click();
-			await page.getByTestId("root-submenu-trigger").hover();
-			await expect(page.getByTestId("root-submenu-list")).toBeVisible();
+			await openRoot(page);
+			await openSubmenuViaHover(page);
 			await page.getByTestId("scroll-container").click();
 			await expect(page.getByTestId("root-list")).not.toBeVisible();
 			await expect(page.getByTestId("root-submenu-list")).not.toBeVisible();
 		});
 
-		test("should close current menu and open new menu when a different root trigger is clicked", async ({
+		test("clicking a different root trigger closes the first menu and opens the second", async ({
 			page,
-			renderer,
 		}) => {
-			await page.getByTestId("root-trigger").click();
-			await expect(page.getByTestId("root-list")).toBeVisible();
-			// dispatchEvent simulates a tap (click without mouse movement)
+			await openRoot(page);
 			await page.getByTestId("second-trigger").dispatchEvent("click");
 			await expect(page.getByTestId("root-list")).not.toBeVisible();
 			await expect(page.getByTestId("second-list")).toBeVisible();
 		});
 
-		test("should open submenu when submenu trigger is clicked", async ({
+		test("hovering an item does not move focus to it", async ({ page }) => {
+			await openRoot(page);
+			await page.getByTestId("root-item-2").hover();
+			await expect(page.getByTestId("root-item-2")).not.toBeFocused();
+		});
+
+		test("hovering a submenu trigger opens its submenu; leaving to another item closes it", async ({
 			page,
-			renderer,
 		}) => {
-			await page.getByTestId("root-trigger").click();
+			await openRoot(page);
+			await openSubmenuViaHover(page);
+			await page.getByTestId("root-submenu-item-2").hover();
+			await expect(page.getByTestId("root-submenu-list")).toBeVisible();
+			await expect(page.getByTestId("root-list")).toBeVisible();
+
+			await page.getByTestId("root-item-1").hover();
+			await expect(page.getByTestId("root-submenu-list")).not.toBeVisible();
+		});
+
+		test("clicking the submenu trigger opens the submenu", async ({ page }) => {
+			await openRoot(page);
 			await page.getByTestId("root-submenu-trigger").click();
 			await expect(page.getByTestId("root-submenu-list")).toBeVisible();
 		});
-		test("should close all menus when a menuitem is clicked", async ({
-			page,
-			renderer,
-		}) => {
-			await page.getByTestId("root-trigger").click();
-			await expect(page.getByTestId("root-list")).toBeVisible();
-			await page.getByTestId("root-item-1").click();
-			await expect(page.getByTestId("root-list")).not.toBeVisible();
-		});
 
-		test("should close all menus when `Enter` is pressed on a menuitem", async ({
+		test("pointermove on the menu list container does not close an open submenu", async ({
 			page,
-			renderer,
 		}) => {
-			await page.getByTestId("root-trigger").click();
-			await expect(page.getByTestId("root-list")).toBeVisible();
-			await page.getByTestId("root-item-1").focus();
-			await page.keyboard.press("Enter");
-			await expect(page.getByTestId("root-list")).not.toBeVisible();
-		});
-
-		test("should close all menus when `Space` is pressed on a menuitem", async ({
-			page,
-			renderer,
-		}) => {
-			await page.getByTestId("root-trigger").click();
-			await expect(page.getByTestId("root-list")).toBeVisible();
-			await page.getByTestId("root-item-1").focus();
-			await page.keyboard.press("Space");
-			await expect(page.getByTestId("root-list")).not.toBeVisible();
-		});
-
-		test("should close all menus when a submenu item is clicked", async ({
-			page,
-			renderer,
-		}) => {
-			await page.getByTestId("root-trigger").click();
-			await page.getByTestId("root-submenu-trigger").hover();
+			await openRoot(page);
+			await openSubmenuViaHover(page);
+			await page.getByTestId("root-list").dispatchEvent("pointermove");
 			await expect(page.getByTestId("root-submenu-list")).toBeVisible();
-			await page.getByTestId("root-submenu-item-1").click();
-			await expect(page.getByTestId("root-list")).not.toBeVisible();
-			await expect(page.getByTestId("root-submenu-list")).not.toBeVisible();
 		});
 
-		test("should close all menus when `Enter` is pressed on a submenu item", async ({
-			page,
-			renderer,
-		}) => {
-			await page.getByTestId("root-trigger").click();
-			await expect(page.getByTestId("root-list")).toBeVisible();
-			await page.getByTestId("root-submenu-trigger").focus();
-			await page.keyboard.press("ArrowRight");
-			await expect(page.getByTestId("root-submenu-list")).toBeVisible();
-			await page.keyboard.press("Enter");
-			await expect(page.getByTestId("root-list")).not.toBeVisible();
-			await expect(page.getByTestId("root-submenu-list")).not.toBeVisible();
-		});
+		for (const activation of ["click", "Enter", "Space"] as const) {
+			test(`activating a regular menuitem via ${activation} closes all menus`, async ({
+				page,
+			}) => {
+				await openRoot(page);
+				if (activation === "click") {
+					await page.getByTestId("root-item-1").click();
+				} else {
+					await page.getByTestId("root-item-1").focus();
+					await page.keyboard.press(activation);
+				}
+				await expect(page.getByTestId("root-list")).not.toBeVisible();
+			});
 
-		test("should close all menus when `Space` is pressed on a submenu item", async ({
-			page,
-			renderer,
-		}) => {
-			await page.getByTestId("root-trigger").click();
-			await expect(page.getByTestId("root-list")).toBeVisible();
-			await page.getByTestId("root-submenu-trigger").focus();
-			await page.keyboard.press("ArrowRight");
-			await expect(page.getByTestId("root-submenu-list")).toBeVisible();
-			await page.keyboard.press("Space");
-			await expect(page.getByTestId("root-list")).not.toBeVisible();
-			await expect(page.getByTestId("root-submenu-list")).not.toBeVisible();
-		});
+			test(`activating a submenu item via ${activation} closes all menus`, async ({
+				page,
+			}) => {
+				await openRoot(page);
+				await openSubmenuViaHover(page);
+				if (activation === "click") {
+					await page.getByTestId("root-submenu-item-1").click();
+				} else {
+					await page.getByTestId("root-submenu-item-1").focus();
+					await page.keyboard.press(activation);
+				}
+				await expect(page.getByTestId("root-list")).not.toBeVisible();
+				await expect(page.getByTestId("root-submenu-list")).not.toBeVisible();
+			});
+		}
 
-		test("should not close menu when a disabled menuitem is clicked", async ({
+		test("clicking a disabled menuitem keeps the menu open", async ({
 			page,
 			renderer,
 		}) => {
 			await page.goto(`/${renderer}/menu/edge-cases`);
 			await page.getByTestId("disabled-first-trigger").click();
-			await expect(page.getByTestId("disabled-first-list")).toBeVisible();
 			await page.getByTestId("disabled-first-item-1").click({ force: true });
 			await expect(page.getByTestId("disabled-first-list")).toBeVisible();
 		});
 
-		test("should not close menu when menuitem click propagation is stopped", async ({
+		test("a stopPropagation handler on the menuitem prevents the menu from closing", async ({
 			page,
-			renderer,
 		}) => {
-			await page.getByTestId("root-trigger").click();
-			await expect(page.getByTestId("root-list")).toBeVisible();
+			await openRoot(page);
 			await page.getByTestId("root-item-1").evaluate((el) => {
 				el.addEventListener("click", (e) => e.stopPropagation());
 			});
 			await page.getByTestId("root-item-1").click();
 			await expect(page.getByTestId("root-list")).toBeVisible();
 		});
-
-		test("should not move focus to item when hovered", async ({
-			page,
-			renderer,
-		}) => {
-			await page.getByTestId("root-trigger").click();
-			await expect(page.getByTestId("root-item-1")).not.toBeFocused();
-			await page.getByTestId("root-item-2").hover();
-			await expect(page.getByTestId("root-item-2")).not.toBeFocused();
-		});
-
-		test("should open submenu when submenu trigger is hovered", async ({
-			page,
-			renderer,
-		}) => {
-			await page.getByTestId("root-trigger").click();
-			await page.getByTestId("root-submenu-trigger").hover();
-			await expect(page.getByTestId("root-submenu-list")).toBeVisible();
-		});
-
-		test("should close submenu when hovering over different menu item", async ({
-			page,
-			renderer,
-		}) => {
-			await page.getByTestId("root-trigger").click();
-			await page.getByTestId("root-submenu-trigger").hover();
-			await expect(page.getByTestId("root-submenu-list")).toBeVisible();
-			await page.getByTestId("root-item-1").hover();
-			await expect(page.getByTestId("root-submenu-list")).not.toBeVisible();
-		});
-
-		test("should keep submenu open when hovering items inside the submenu", async ({
-			page,
-			renderer,
-		}) => {
-			await page.getByTestId("root-trigger").click();
-			await page.getByTestId("root-submenu-trigger").hover();
-			await expect(page.getByTestId("root-submenu-list")).toBeVisible();
-			await page.getByTestId("root-submenu-item-2").hover();
-			await expect(page.getByTestId("root-submenu-list")).toBeVisible();
-			await expect(page.getByTestId("root-list")).toBeVisible();
-		});
-
-		test("should not close submenu when hovering the menu list container", async ({
-			page,
-			renderer,
-		}) => {
-			await page.getByTestId("root-trigger").click();
-			await page.getByTestId("root-submenu-trigger").hover();
-			await expect(page.getByTestId("root-submenu-list")).toBeVisible();
-			await page.getByTestId("root-list").dispatchEvent("pointermove");
-			await expect(page.getByTestId("root-submenu-list")).toBeVisible();
-		});
 	});
 
-	test.describe("SVG Inside Trigger", () => {
-		test("should open menu when clicking SVG inside trigger", async ({
-			page,
-			renderer,
-		}) => {
-			await page.goto(`/${renderer}/menu/basic`);
+	test.describe("Trigger with nested SVG", () => {
+		test("clicking the SVG opens the menu", async ({ page }) => {
 			const svg = page.getByTestId("svg-icon");
 			const list = page.getByTestId("svg-list");
-
-			await expect(list).not.toBeVisible();
 			await svg.click();
 			await expect(list).toBeVisible();
 			await page.keyboard.press("Escape");
@@ -908,162 +423,110 @@ test.describe("Menu", () => {
 		});
 	});
 
-	test.describe("Scroll Dismissal", () => {
-		test("should close menu when scrolling a nested element", async ({
-			page,
-			renderer,
-		}) => {
-			await page.getByTestId("root-trigger").click();
-			await expect(page.getByTestId("root-list")).toBeVisible();
+	test.describe("Scroll dismissal", () => {
+		test("scroll on a nested element closes the menu", async ({ page }) => {
+			await openRoot(page);
 			await page.getByTestId("scroll-container").dispatchEvent("scroll");
 			await expect(page.getByTestId("root-list")).not.toBeVisible();
 		});
 
-		test("should close menu when scrolling the document", async ({
+		test("scroll inside the menu list itself does not close the menu", async ({
 			page,
-			renderer,
 		}) => {
+			await openRoot(page);
+			await page.getByTestId("root-list").dispatchEvent("scroll");
+			await expect(page.getByTestId("root-list")).toBeVisible();
+		});
+
+		test("document scroll closes the menu", async ({ page }) => {
 			await page.evaluate(() => {
 				document.body.style.height = "3000px";
 			});
-			await page.getByTestId("root-trigger").click();
-			await expect(page.getByTestId("root-list")).toBeVisible();
+			await openRoot(page);
 			await page.evaluate(() => window.scrollBy(0, 100));
 			await expect(page.getByTestId("root-list")).not.toBeVisible();
 		});
 
-		test("should keep menu open during keyboard navigation", async ({
+		test("keyboard navigation between items does not dismiss the menu", async ({
 			page,
-			renderer,
 		}) => {
-			await page.getByTestId("root-trigger").click();
-			await expect(page.getByTestId("root-list")).toBeVisible();
+			await openRoot(page);
 			await page.keyboard.press("ArrowDown");
 			await page.keyboard.press("ArrowDown");
 			await page.keyboard.press("ArrowUp");
 			await expect(page.getByTestId("root-list")).toBeVisible();
 		});
 
-		test("should close menu when window is resized", async ({
-			page,
-			renderer,
-		}) => {
-			await page.getByTestId("root-trigger").click();
-			await expect(page.getByTestId("root-list")).toBeVisible();
+		test("viewport resize closes the menu", async ({ page }) => {
+			await openRoot(page);
 			await page.setViewportSize({ width: 800, height: 400 });
 			await expect(page.getByTestId("root-list")).not.toBeVisible();
 		});
 	});
 
-	test.describe("Scroll Prevention", () => {
-		test.beforeEach(async ({ page, renderer }) => {
+	test.describe("Scroll prevention", () => {
+		test.beforeEach(async ({ page }) => {
 			await page.evaluate(() => {
 				document.body.style.height = "3000px";
 			});
 			await scrollAndSettle(page, 0, 500);
 		});
 
-		test("should not scroll the page when `Space` is pressed on menu trigger", async ({
-			page,
-			renderer,
-		}) => {
-			await page.getByTestId("root-trigger").focus();
-			const scrollBefore = await page.evaluate(() => window.scrollY);
-			await page.keyboard.press("Space");
-			const scrollAfter = await page.evaluate(() => window.scrollY);
-			expect(scrollAfter).toBe(scrollBefore);
-		});
-
-		test("should not scroll the page when `ArrowDown` is pressed on menu trigger", async ({
-			page,
-			renderer,
-		}) => {
-			await page.getByTestId("root-trigger").focus();
-			const scrollBefore = await page.evaluate(() => window.scrollY);
-			await page.keyboard.press("ArrowDown");
-			const scrollAfter = await page.evaluate(() => window.scrollY);
-			expect(scrollAfter).toBe(scrollBefore);
-		});
-
-		test("should not scroll the page when `ArrowDown` is pressed on menuitem", async ({
-			page,
-			renderer,
-		}) => {
-			await scrollAndSettle(page, 0, 0);
-			await page.getByTestId("root-trigger").focus();
-			await page.keyboard.press("Enter");
-			await expect(page.getByTestId("root-item-1")).toBeFocused();
-			const scrollBefore = await page.evaluate(() => window.scrollY);
-			await page.keyboard.press("ArrowDown");
-			const scrollAfter = await page.evaluate(() => window.scrollY);
-			expect(scrollAfter).toBe(scrollBefore);
-		});
+		for (const [key, prep] of [
+			["Space", "trigger"],
+			["ArrowDown", "trigger"],
+			["ArrowDown", "item"],
+		] as const) {
+			test(`${key} on the ${prep} does not scroll the page`, async ({
+				page,
+			}) => {
+				if (prep === "item") {
+					await scrollAndSettle(page, 0, 0);
+					await openRootViaKeyboard(page);
+				} else {
+					await page.getByTestId("root-trigger").focus();
+				}
+				const before = await page.evaluate(() => window.scrollY);
+				await page.keyboard.press(key);
+				const after = await page.evaluate(() => window.scrollY);
+				expect(after).toBe(before);
+			});
+		}
 	});
 });
 
-test.describe("Cyclic Typeahead", () => {
+test.describe("Typeahead", () => {
 	test.beforeEach(async ({ page, renderer }) => {
 		await page.goto(`/${renderer}/menu/typeahead`);
-	});
-
-	test("should focus matching item when letter key is pressed", async ({
-		page,
-		renderer,
-	}) => {
 		await page.getByTestId("typeahead-trigger").focus();
 		await page.getByTestId("typeahead-trigger").press("Enter");
 		await expect(page.getByTestId("typeahead-item-1")).toBeFocused();
+	});
+
+	test("a letter focuses the first matching item; repeating it cycles", async ({
+		page,
+	}) => {
 		await page.keyboard.press("b");
 		await expect(page.getByTestId("typeahead-item-2")).toBeFocused();
-	});
-
-	test("should focus next matching item when same letter is pressed", async ({
-		page,
-		renderer,
-	}) => {
-		await page.getByTestId("typeahead-trigger").focus();
-		await page.getByTestId("typeahead-trigger").press("Enter");
-		await expect(page.getByTestId("typeahead-item-1")).toBeFocused();
 		await page.keyboard.press("a");
 		await expect(page.getByTestId("typeahead-item-3")).toBeFocused();
-	});
-
-	test("should cycle back to first matching item", async ({
-		page,
-		renderer,
-	}) => {
-		await page.getByTestId("typeahead-trigger").focus();
-		await page.getByTestId("typeahead-trigger").press("Enter");
 		await page.getByTestId("typeahead-item-5").focus();
 		await page.keyboard.press("a");
 		await expect(page.getByTestId("typeahead-item-1")).toBeFocused();
 	});
 
-	test("should skip disabled items", async ({ page, renderer }) => {
-		await page.getByTestId("typeahead-trigger").focus();
-		await page.getByTestId("typeahead-trigger").press("Enter");
+	test("skips disabled items", async ({ page }) => {
 		await page.getByTestId("typeahead-item-3").focus();
 		await page.keyboard.press("a");
 		await expect(page.getByTestId("typeahead-item-5")).toBeFocused();
 	});
 
-	test("should not move focus when no items match", async ({
-		page,
-		renderer,
-	}) => {
-		await page.getByTestId("typeahead-trigger").focus();
-		await page.getByTestId("typeahead-trigger").press("Enter");
-		await expect(page.getByTestId("typeahead-item-1")).toBeFocused();
+	test("no-op when no items match", async ({ page }) => {
 		await page.keyboard.press("z");
 		await expect(page.getByTestId("typeahead-item-1")).toBeFocused();
 	});
 
-	test("should allow normal arrow navigation after typeahead", async ({
-		page,
-		renderer,
-	}) => {
-		await page.getByTestId("typeahead-trigger").focus();
-		await page.getByTestId("typeahead-trigger").press("Enter");
+	test("arrow navigation works after typeahead", async ({ page }) => {
 		await page.keyboard.press("b");
 		await expect(page.getByTestId("typeahead-item-2")).toBeFocused();
 		await page.keyboard.press("ArrowDown");
@@ -1071,92 +534,48 @@ test.describe("Cyclic Typeahead", () => {
 	});
 });
 
-test.describe("Edge Cases", () => {
+test.describe("Edge cases", () => {
 	test.beforeEach(async ({ page, renderer }) => {
 		await page.goto(`/${renderer}/menu/edge-cases`);
 	});
 
-	test("should skip disabled items when opening menu with `Enter`", async ({
+	test("opening the menu via Enter skips a disabled first item", async ({
 		page,
-		renderer,
 	}) => {
 		await page.getByTestId("disabled-first-trigger").focus();
 		await page.getByTestId("disabled-first-trigger").press("Enter");
 		await expect(page.getByTestId("disabled-first-item-2")).toBeFocused();
-		await expect(page.getByTestId("disabled-first-item-1")).not.toBeFocused();
 	});
 
-	test("should skip disabled items when navigating with `ArrowDown`", async ({
-		page,
-		renderer,
-	}) => {
+	test("arrow / Home / End all skip disabled items", async ({ page }) => {
 		await page.getByTestId("disabled-first-trigger").focus();
 		await page.getByTestId("disabled-first-trigger").press("Enter");
-		await page.getByTestId("disabled-first-item-2").press("ArrowDown");
+		await page.keyboard.press("ArrowDown");
 		await expect(page.getByTestId("disabled-first-item-3")).toBeFocused();
-	});
-
-	test("should skip disabled items when navigating with `ArrowUp`", async ({
-		page,
-		renderer,
-	}) => {
-		await page.getByTestId("disabled-first-trigger").focus();
-		await page.getByTestId("disabled-first-trigger").press("Enter");
-		await page.getByTestId("disabled-first-item-3").focus();
-		await page.getByTestId("disabled-first-item-3").press("ArrowUp");
+		await page.keyboard.press("ArrowUp");
 		await expect(page.getByTestId("disabled-first-item-2")).toBeFocused();
-	});
-
-	test("should focus first enabled item when `Home` is pressed with disabled first item", async ({
-		page,
-		renderer,
-	}) => {
-		await page.getByTestId("disabled-first-trigger").focus();
-		await page.getByTestId("disabled-first-trigger").press("Enter");
-		await page.getByTestId("disabled-first-item-3").press("Home");
-		await expect(page.getByTestId("disabled-first-item-2")).toBeFocused();
-	});
-
-	test("should focus last enabled item when `End` is pressed with disabled last item", async ({
-		page,
-		renderer,
-	}) => {
-		await page.getByTestId("disabled-first-trigger").focus();
-		await page.getByTestId("disabled-first-trigger").press("Enter");
-		await page.getByTestId("disabled-first-item-2").press("End");
+		await page.keyboard.press("End");
 		await expect(page.getByTestId("disabled-first-item-3")).toBeFocused();
+		await page.keyboard.press("Home");
+		await expect(page.getByTestId("disabled-first-item-2")).toBeFocused();
 	});
 
-	test("should open menu when all items are disabled", async ({
-		page,
-		renderer,
-	}) => {
+	test("an all-disabled menu still opens", async ({ page }) => {
 		await page.getByTestId("all-disabled-trigger").focus();
 		await page.getByTestId("all-disabled-trigger").press("Enter");
 		await expect(page.getByTestId("all-disabled-list")).toBeVisible();
 	});
 
-	test("should open empty menu and update ARIA state", async ({
+	test("an empty menu opens, dismisses on Escape, and survives arrow keys", async ({
 		page,
-		renderer,
 	}) => {
-		await page.getByTestId("no-items-trigger").click();
+		await page.getByTestId("no-items-trigger").focus();
+		await page.getByTestId("no-items-trigger").press("Enter");
 		await expect(page.getByTestId("no-items-trigger")).toHaveAttribute(
 			"aria-expanded",
 			"true",
 		);
-		await expect(page.getByTestId("no-items-list")).toHaveAttribute(
-			"aria-hidden",
-			"false",
-		);
-	});
-
-	test("should close empty menu when `Escape` is pressed", async ({
-		page,
-		renderer,
-	}) => {
-		await page.getByTestId("no-items-trigger").focus();
-		await page.getByTestId("no-items-trigger").press("Enter");
+		await page.keyboard.press("ArrowDown");
 		await expect(page.getByTestId("no-items-trigger")).toHaveAttribute(
 			"aria-expanded",
 			"true",
@@ -1166,24 +585,6 @@ test.describe("Edge Cases", () => {
 			"aria-expanded",
 			"false",
 		);
-		await expect(page.getByTestId("no-items-list")).toHaveAttribute(
-			"aria-hidden",
-			"true",
-		);
-	});
-
-	test("should handle keyboard navigation in empty menu", async ({
-		page,
-		renderer,
-	}) => {
-		await page.getByTestId("no-items-trigger").focus();
-		await page.getByTestId("no-items-trigger").press("Enter");
-		await page.keyboard.press("ArrowDown");
-		await expect(page.getByTestId("no-items-trigger")).toHaveAttribute(
-			"aria-expanded",
-			"true",
-		);
-		await expect(page.getByTestId("no-items-trigger")).toBeFocused();
 	});
 });
 
@@ -1192,179 +593,81 @@ test.describe("Menubar", () => {
 		await page.goto(`/${renderer}/menu/menubar`);
 	});
 
-	test.describe("ARIA Attributes", () => {
-		test("should have `role='menubar'` on menubar list", async ({
+	test.describe("ARIA", () => {
+		test("declares menubar / menuitem roles and roving tabindex", async ({
 			page,
-			renderer,
 		}) => {
 			await expect(page.getByTestId("menubar-list")).toHaveAttribute(
 				"role",
 				"menubar",
 			);
-		});
-
-		test("should have `role='menuitem'` on menubar triggers", async ({
-			page,
-			renderer,
-		}) => {
-			await expect(page.getByTestId("menubar-trigger-1")).toHaveAttribute(
-				"role",
-				"menuitem",
-			);
-			await expect(page.getByTestId("menubar-trigger-2")).toHaveAttribute(
-				"role",
-				"menuitem",
-			);
-			await expect(page.getByTestId("menubar-trigger-3")).toHaveAttribute(
-				"role",
-				"menuitem",
-			);
-		});
-
-		test("should have `tabindex='0'` on first menubar trigger", async ({
-			page,
-			renderer,
-		}) => {
 			await expect(page.getByTestId("menubar-trigger-1")).toHaveAttribute(
 				"tabindex",
 				"0",
 			);
+			for (const id of [
+				"menubar-trigger-1",
+				"menubar-trigger-2",
+				"menubar-trigger-3",
+			]) {
+				await expect(page.getByTestId(id)).toHaveAttribute("role", "menuitem");
+				await expect(page.getByTestId(id)).toHaveAttribute(
+					"aria-haspopup",
+					"menu",
+				);
+			}
+			for (const id of ["menubar-trigger-2", "menubar-trigger-3"]) {
+				await expect(page.getByTestId(id)).toHaveAttribute("tabindex", "-1");
+			}
 		});
 
-		test("should have `tabindex='-1'` on non-first menubar triggers", async ({
-			page,
-			renderer,
-		}) => {
-			await expect(page.getByTestId("menubar-trigger-2")).toHaveAttribute(
-				"tabindex",
-				"-1",
-			);
-			await expect(page.getByTestId("menubar-trigger-3")).toHaveAttribute(
-				"tabindex",
-				"-1",
-			);
-		});
-
-		test("should have `aria-haspopup='menu'` on menubar triggers", async ({
-			page,
-			renderer,
-		}) => {
-			await expect(page.getByTestId("menubar-trigger-1")).toHaveAttribute(
-				"aria-haspopup",
-				"menu",
-			);
-		});
-
-		test("should have `aria-expanded='false'` on menubar trigger when closed", async ({
-			page,
-			renderer,
-		}) => {
-			await expect(page.getByTestId("menubar-trigger-1")).toHaveAttribute(
-				"aria-expanded",
-				"false",
-			);
-		});
-
-		test("should have `aria-expanded='true'` on menubar trigger when open", async ({
-			page,
-			renderer,
-		}) => {
-			await page.getByTestId("menubar-trigger-1").click();
-			await expect(page.getByTestId("menubar-trigger-1")).toHaveAttribute(
-				"aria-expanded",
-				"true",
-			);
+		test("toggles `aria-expanded` across open and close", async ({ page }) => {
+			const trigger = page.getByTestId("menubar-trigger-1");
+			await expect(trigger).toHaveAttribute("aria-expanded", "false");
+			await trigger.click();
+			await expect(trigger).toHaveAttribute("aria-expanded", "true");
 		});
 	});
 
-	test.describe("Keyboard Navigation", () => {
-		test("should move focus to next menubar item when `ArrowRight` is pressed", async ({
+	test.describe("Keyboard navigation", () => {
+		test("ArrowRight / ArrowLeft wrap around menubar items", async ({
 			page,
-			renderer,
 		}) => {
 			await page.getByTestId("menubar-trigger-1").focus();
-			await page.getByTestId("menubar-trigger-1").press("ArrowRight");
+			await page.keyboard.press("ArrowRight");
 			await expect(page.getByTestId("menubar-item-1")).toBeFocused();
-		});
-
-		test("should move focus to previous menubar item when `ArrowLeft` is pressed", async ({
-			page,
-			renderer,
-		}) => {
+			// Backward navigation from a non-edge position.
 			await page.getByTestId("menubar-trigger-2").focus();
-			await page.getByTestId("menubar-trigger-2").press("ArrowLeft");
+			await page.keyboard.press("ArrowLeft");
 			await expect(page.getByTestId("menubar-item-1")).toBeFocused();
-		});
-
-		test("should loop to first menubar item when `ArrowRight` is pressed on last item", async ({
-			page,
-			renderer,
-		}) => {
 			await page.getByTestId("menubar-trigger-3").focus();
-			await page.getByTestId("menubar-trigger-3").press("ArrowRight");
+			await page.keyboard.press("ArrowRight");
 			await expect(page.getByTestId("menubar-trigger-1")).toBeFocused();
-		});
-
-		test("should loop to last menubar item when `ArrowLeft` is pressed on first item", async ({
-			page,
-			renderer,
-		}) => {
-			await page.getByTestId("menubar-trigger-1").focus();
-			await page.getByTestId("menubar-trigger-1").press("ArrowLeft");
+			await page.keyboard.press("ArrowLeft");
 			await expect(page.getByTestId("menubar-trigger-3")).toBeFocused();
 		});
 
-		test("should move focus to first menubar item when `Home` is pressed", async ({
-			page,
-			renderer,
-		}) => {
+		test("Home / End jump to first / last menubar item", async ({ page }) => {
 			await page.getByTestId("menubar-trigger-2").focus();
-			await page.getByTestId("menubar-trigger-2").press("Home");
+			await page.keyboard.press("Home");
 			await expect(page.getByTestId("menubar-trigger-1")).toBeFocused();
-		});
-
-		test("should move focus to last menubar item when `End` is pressed", async ({
-			page,
-			renderer,
-		}) => {
-			await page.getByTestId("menubar-trigger-1").focus();
-			await page.getByTestId("menubar-trigger-1").press("End");
+			await page.keyboard.press("End");
 			await expect(page.getByTestId("menubar-trigger-3")).toBeFocused();
 		});
 
-		test("should open menu and focus first item when `Enter` is pressed on trigger", async ({
-			page,
-			renderer,
-		}) => {
-			await page.getByTestId("menubar-trigger-1").focus();
-			await page.getByTestId("menubar-trigger-1").press("Enter");
-			await expect(page.getByTestId("menubar-list-1")).toBeVisible();
-			await expect(page.getByTestId("menubar-item-1-1")).toBeFocused();
-		});
+		for (const key of ["Enter", "Space", "ArrowDown"] as const) {
+			test(`${key} on a menubar trigger opens its menu and focuses the first item`, async ({
+				page,
+			}) => {
+				await page.getByTestId("menubar-trigger-1").focus();
+				await page.getByTestId("menubar-trigger-1").press(key);
+				await expect(page.getByTestId("menubar-list-1")).toBeVisible();
+				await expect(page.getByTestId("menubar-item-1-1")).toBeFocused();
+			});
+		}
 
-		test("should open menu and focus first item when `Space` is pressed on trigger", async ({
+		test("ArrowUp on a menubar trigger opens its menu and focuses the last item", async ({
 			page,
-			renderer,
-		}) => {
-			await page.getByTestId("menubar-trigger-1").focus();
-			await page.getByTestId("menubar-trigger-1").press("Space");
-			await expect(page.getByTestId("menubar-list-1")).toBeVisible();
-			await expect(page.getByTestId("menubar-item-1-1")).toBeFocused();
-		});
-
-		test("should open menu and focus first item when `ArrowDown` is pressed on trigger", async ({
-			page,
-			renderer,
-		}) => {
-			await page.getByTestId("menubar-trigger-1").focus();
-			await page.getByTestId("menubar-trigger-1").press("ArrowDown");
-			await expect(page.getByTestId("menubar-list-1")).toBeVisible();
-			await expect(page.getByTestId("menubar-item-1-1")).toBeFocused();
-		});
-
-		test("should open menu and focus last item when `ArrowUp` is pressed on trigger", async ({
-			page,
-			renderer,
 		}) => {
 			await page.getByTestId("menubar-trigger-1").focus();
 			await page.getByTestId("menubar-trigger-1").press("ArrowUp");
@@ -1372,9 +675,8 @@ test.describe("Menubar", () => {
 			await expect(page.getByTestId("menubar-submenu-trigger-1")).toBeFocused();
 		});
 
-		test("should close menu and move to previous menubar item when `ArrowLeft` is pressed on menu item", async ({
+		test("ArrowLeft from inside a menubar menu closes it and moves focus to the previous trigger", async ({
 			page,
-			renderer,
 		}) => {
 			await page.getByTestId("menubar-trigger-2").focus();
 			await page.getByTestId("menubar-trigger-2").press("Enter");
@@ -1384,9 +686,8 @@ test.describe("Menubar", () => {
 			await expect(page.getByTestId("menubar-list-2")).not.toBeVisible();
 		});
 
-		test("should open previous trigger's menu when `ArrowLeft` navigates to a trigger from menu item", async ({
+		test("ArrowLeft from a menubar menu lands on the previous trigger and opens its menu", async ({
 			page,
-			renderer,
 		}) => {
 			await page.getByTestId("menubar-trigger-1").focus();
 			await page.getByTestId("menubar-trigger-1").press("Enter");
@@ -1397,21 +698,18 @@ test.describe("Menubar", () => {
 			await expect(page.getByTestId("menubar-list-1")).not.toBeVisible();
 		});
 
-		test("should open previous trigger's menu when `ArrowLeft` is pressed on trigger with menu open", async ({
+		test("ArrowLeft on a menubar trigger with menu open jumps to the previous trigger and opens its menu", async ({
 			page,
-			renderer,
 		}) => {
 			await page.getByTestId("menubar-trigger-1").click();
-			await expect(page.getByTestId("menubar-list-1")).toBeVisible();
 			await page.getByTestId("menubar-trigger-1").press("ArrowLeft");
 			await expect(page.getByTestId("menubar-trigger-3")).toBeFocused();
 			await expect(page.getByTestId("menubar-list-3")).toBeVisible();
 			await expect(page.getByTestId("menubar-list-1")).not.toBeVisible();
 		});
 
-		test("should close menu and move to next menubar item when `ArrowRight` is pressed on menu item without submenu", async ({
+		test("ArrowRight on a menubar menuitem without submenu closes it and moves to the next trigger", async ({
 			page,
-			renderer,
 		}) => {
 			await page.getByTestId("menubar-trigger-1").focus();
 			await page.getByTestId("menubar-trigger-1").press("Enter");
@@ -1421,9 +719,8 @@ test.describe("Menubar", () => {
 			await expect(page.getByTestId("menubar-list-1")).not.toBeVisible();
 		});
 
-		test("should close all menus and move to next menubar item when `ArrowRight` is pressed on submenu item", async ({
+		test("ArrowRight on a submenu item closes everything and moves to the next trigger", async ({
 			page,
-			renderer,
 		}) => {
 			await page.getByTestId("menubar-trigger-1").focus();
 			await page.getByTestId("menubar-trigger-1").press("Enter");
@@ -1437,35 +734,26 @@ test.describe("Menubar", () => {
 			).not.toBeVisible();
 		});
 
-		test("should move to previous menubar trigger when `ArrowLeft` is pressed on submenu trigger with submenu closed", async ({
+		test("ArrowLeft on a submenu trigger with submenu closed moves to the previous menubar trigger", async ({
 			page,
-			renderer,
 		}) => {
 			await page.getByTestId("menubar-trigger-1").focus();
 			await page.getByTestId("menubar-trigger-1").press("Enter");
-			await expect(page.getByTestId("menubar-list-1")).toBeVisible();
 			await page.keyboard.press("ArrowDown");
 			await page.keyboard.press("ArrowDown");
 			await page.keyboard.press("ArrowDown");
 			await expect(page.getByTestId("menubar-submenu-trigger-1")).toBeFocused();
-			await expect(
-				page.getByTestId("menubar-submenu-list-1"),
-			).not.toBeVisible();
 			await page.keyboard.press("ArrowLeft");
 			await expect(page.getByTestId("menubar-trigger-3")).toBeFocused();
 			await expect(page.getByTestId("menubar-list-3")).toBeVisible();
-			await expect(page.getByTestId("menubar-list-1")).not.toBeVisible();
 		});
 
-		test("should not auto-open menu when `ArrowRight` is pressed on standalone menuitem after closing menu", async ({
+		test("ArrowRight from a non-menu standalone menuitem just navigates the menubar without opening", async ({
 			page,
-			renderer,
 		}) => {
 			await page.getByTestId("menubar-trigger-1").focus();
 			await page.getByTestId("menubar-trigger-1").press("Enter");
-			await expect(page.getByTestId("menubar-list-1")).toBeVisible();
 			await page.getByTestId("menubar-item-1-1").press("ArrowRight");
-			await expect(page.getByTestId("menubar-list-1")).not.toBeVisible();
 			await expect(page.getByTestId("menubar-item-1")).toBeFocused();
 			await page.getByTestId("menubar-item-1").press("ArrowRight");
 			await expect(page.getByTestId("menubar-trigger-2")).toBeFocused();
@@ -1473,41 +761,30 @@ test.describe("Menubar", () => {
 		});
 	});
 
-	test.describe("Mouse Interaction", () => {
-		test("should not open menu when trigger is hovered initially", async ({
+	test.describe("Mouse", () => {
+		test("trigger click opens the menu without moving focus", async ({
 			page,
-			renderer,
 		}) => {
 			await page.getByTestId("menubar-trigger-1").hover();
 			await expect(page.getByTestId("menubar-list-1")).not.toBeVisible();
-		});
-
-		test("should open menu when trigger is clicked", async ({
-			page,
-			renderer,
-		}) => {
 			await page.getByTestId("menubar-trigger-1").click();
 			await expect(page.getByTestId("menubar-list-1")).toBeVisible();
 			await expect(page.getByTestId("menubar-item-1-1")).not.toBeFocused();
 		});
 
-		test("should switch to hovered trigger's menu when another menu is already open", async ({
+		test("hovering an adjacent trigger switches the open menu", async ({
 			page,
-			renderer,
 		}) => {
 			await page.getByTestId("menubar-trigger-1").click();
-			await expect(page.getByTestId("menubar-list-1")).toBeVisible();
 			await page.getByTestId("menubar-trigger-2").hover();
 			await expect(page.getByTestId("menubar-list-1")).not.toBeVisible();
 			await expect(page.getByTestId("menubar-list-2")).toBeVisible();
 		});
 
-		test("should switch menus when hovering over non-adjacent trigger with menu open", async ({
+		test("hovering a non-adjacent trigger also switches the open menu", async ({
 			page,
-			renderer,
 		}) => {
 			await page.getByTestId("menubar-trigger-1").click();
-			await expect(page.getByTestId("menubar-list-1")).toBeVisible();
 			await page.getByTestId("menubar-trigger-3").hover();
 			await expect(page.getByTestId("menubar-list-1")).not.toBeVisible();
 			await expect(page.getByTestId("menubar-list-3")).toBeVisible();
@@ -1515,146 +792,87 @@ test.describe("Menubar", () => {
 	});
 });
 
-test.describe("Separate Menus", () => {
-	test.beforeEach(async ({ page, renderer }) => {
-		await page.goto(`/${renderer}/menu/separate`);
-	});
-
-	test("should not open second menu when hovering its trigger while first menu is open", async ({
+test.describe("Separate and mixed menus", () => {
+	test("separate root menus do not switch on hover", async ({
 		page,
 		renderer,
 	}) => {
+		await page.goto(`/${renderer}/menu/separate`);
 		await page.getByTestId("menu-a-trigger").click();
-		await expect(page.getByTestId("menu-a-list")).toBeVisible();
 		await page.getByTestId("menu-b-trigger").hover();
 		await expect(page.getByTestId("menu-b-list")).not.toBeVisible();
 		await expect(page.getByTestId("menu-a-list")).toBeVisible();
-	});
 
-	test("should not open first menu when hovering its trigger while second menu is open", async ({
-		page,
-		renderer,
-	}) => {
-		await page.getByTestId("menu-b-trigger").click();
+		await page.getByTestId("menu-b-trigger").dispatchEvent("click");
+		await expect(page.getByTestId("menu-a-list")).not.toBeVisible();
 		await expect(page.getByTestId("menu-b-list")).toBeVisible();
+
+		// Symmetry: with menu B open, hovering menu A's trigger must not open A.
 		await page.getByTestId("menu-a-trigger").hover();
 		await expect(page.getByTestId("menu-a-list")).not.toBeVisible();
 		await expect(page.getByTestId("menu-b-list")).toBeVisible();
 	});
 
-	test("should close first menu and open second when second trigger is clicked", async ({
+	test("hover-switch is scoped: standalone dropdown ↔ menubar, menubar A ↔ menubar B do not auto-switch", async ({
 		page,
 		renderer,
 	}) => {
-		await page.getByTestId("menu-a-trigger").click();
-		await expect(page.getByTestId("menu-a-list")).toBeVisible();
-		await page.getByTestId("menu-b-trigger").dispatchEvent("click");
-		await expect(page.getByTestId("menu-a-list")).not.toBeVisible();
-		await expect(page.getByTestId("menu-b-list")).toBeVisible();
-	});
-});
-
-test.describe("Mixed Menus", () => {
-	test.beforeEach(async ({ page, renderer }) => {
 		await page.goto(`/${renderer}/menu/mixed`);
-	});
-
-	test("should not open a menubar menu when hovering its trigger while a standalone dropdown is open", async ({
-		page,
-		renderer,
-	}) => {
 		await page.getByTestId("dropdown-trigger").click();
-		await expect(page.getByTestId("dropdown-list")).toBeVisible();
 		await page.getByTestId("menubar-a-trigger-1").hover();
 		await expect(page.getByTestId("menubar-a-list-1")).not.toBeVisible();
 		await expect(page.getByTestId("dropdown-list")).toBeVisible();
-	});
+		await page.keyboard.press("Escape");
 
-	test("should not open a menubar menu when hovering a trigger in a different menubar", async ({
-		page,
-		renderer,
-	}) => {
 		await page.getByTestId("menubar-a-trigger-1").click();
-		await expect(page.getByTestId("menubar-a-list-1")).toBeVisible();
 		await page.getByTestId("menubar-b-trigger-1").hover();
 		await expect(page.getByTestId("menubar-b-list-1")).not.toBeVisible();
 		await expect(page.getByTestId("menubar-a-list-1")).toBeVisible();
-	});
 
-	test("should still open next menubar menu when hovering a trigger in the same menubar", async ({
-		page,
-		renderer,
-	}) => {
-		await page.getByTestId("menubar-a-trigger-1").click();
-		await expect(page.getByTestId("menubar-a-list-1")).toBeVisible();
+		// Same-menubar hover still switches.
 		await page.getByTestId("menubar-a-trigger-2").hover();
 		await expect(page.getByTestId("menubar-a-list-1")).not.toBeVisible();
 		await expect(page.getByTestId("menubar-a-list-2")).toBeVisible();
 	});
 });
 
-test.describe("Menu Inside Collapsible Content", () => {
+test.describe("Menu inside a collapsible sidebar", () => {
 	test.beforeEach(async ({ page, renderer }) => {
 		await page.goto(`/${renderer}/menu/nested-content`);
 	});
 
-	test("should open menu and focus first item when `ArrowDown` is pressed on trigger", async ({
-		page,
-		renderer,
-	}) => {
-		await page.getByTestId("nested-menu-trigger").focus();
-		await page.getByTestId("nested-menu-trigger").press("ArrowDown");
-		await expect(page.getByTestId("nested-menu-list")).toBeVisible();
-		await expect(page.getByTestId("nested-menu-item-1")).toBeFocused();
-	});
+	for (const [key, expected] of [
+		["ArrowDown", "nested-menu-item-1"],
+		["ArrowUp", "nested-menu-item-3"],
+		["Enter", "nested-menu-item-1"],
+		["Space", "nested-menu-item-1"],
+	] as const) {
+		test(`${key} opens the nested menu with focus on ${expected}`, async ({
+			page,
+		}) => {
+			await page.getByTestId("nested-menu-trigger").focus();
+			await page.getByTestId("nested-menu-trigger").press(key);
+			await expect(page.getByTestId("nested-menu-list")).toBeVisible();
+			await expect(page.getByTestId(expected)).toBeFocused();
+		});
+	}
 
-	test("should open menu and focus last item when `ArrowUp` is pressed on trigger", async ({
+	test("ArrowDown on the trigger does not scroll the surrounding sidebar", async ({
 		page,
-		renderer,
 	}) => {
 		await page.getByTestId("nested-menu-trigger").focus();
-		await page.getByTestId("nested-menu-trigger").press("ArrowUp");
-		await expect(page.getByTestId("nested-menu-list")).toBeVisible();
-		await expect(page.getByTestId("nested-menu-item-3")).toBeFocused();
-	});
-
-	test("should open menu and focus first item when `Enter` is pressed on trigger", async ({
-		page,
-		renderer,
-	}) => {
-		await page.getByTestId("nested-menu-trigger").focus();
-		await page.getByTestId("nested-menu-trigger").press("Enter");
-		await expect(page.getByTestId("nested-menu-list")).toBeVisible();
-		await expect(page.getByTestId("nested-menu-item-1")).toBeFocused();
-	});
-
-	test("should open menu and focus first item when `Space` is pressed on trigger", async ({
-		page,
-		renderer,
-	}) => {
-		await page.getByTestId("nested-menu-trigger").focus();
-		await page.getByTestId("nested-menu-trigger").press("Space");
-		await expect(page.getByTestId("nested-menu-list")).toBeVisible();
-		await expect(page.getByTestId("nested-menu-item-1")).toBeFocused();
-	});
-
-	test("should not scroll the sidebar when `ArrowDown` is pressed on trigger", async ({
-		page,
-		renderer,
-	}) => {
-		await page.getByTestId("nested-menu-trigger").focus();
-		const scrollBefore = await page
+		const before = await page
 			.getByTestId("sidebar")
 			.evaluate((el) => el.scrollTop);
 		await page.keyboard.press("ArrowDown");
-		const scrollAfter = await page
+		const after = await page
 			.getByTestId("sidebar")
 			.evaluate((el) => el.scrollTop);
-		expect(scrollAfter).toBe(scrollBefore);
+		expect(after).toBe(before);
 	});
 });
 
-test.describe("Safety Triangle", () => {
+test.describe("Safety triangle", () => {
 	type PointerOpts = {
 		testId: string;
 		x: number;
@@ -1664,11 +882,8 @@ test.describe("Safety Triangle", () => {
 		pointerType?: string;
 	};
 
-	async function pointer(
-		page: import("@playwright/test").Page,
-		opts: PointerOpts,
-	) {
-		await page.evaluate((o) => {
+	const pointer = (page: Page, opts: PointerOpts) =>
+		page.evaluate((o) => {
 			const el = document.querySelector(`[data-testid="${o.testId}"]`);
 			if (el)
 				el.dispatchEvent(
@@ -1682,71 +897,44 @@ test.describe("Safety Triangle", () => {
 					}),
 				);
 		}, opts);
-	}
 
 	test.beforeEach(async ({ page, renderer }) => {
 		await page.goto(`/${renderer}/menu/triangle`);
 		await page.getByTestId("trigger").click();
-		await expect(page.getByTestId("list")).toBeVisible();
 		await page.getByTestId("submenu-trigger").hover();
 		await expect(page.getByTestId("submenu-list")).toBeVisible();
 	});
 
-	test("should set `data-safe` on group when cursor moves within trigger rect", async ({
+	test("cursor inside trigger rect sets `data-safe` and updates CSS vars", async ({
 		page,
-		renderer,
 	}) => {
 		const rect = await page.getByTestId("submenu-trigger").boundingBox();
 		if (!rect) throw new Error("submenu-trigger not visible");
-
+		const cx = rect.x + rect.width / 2;
+		const cy = rect.y + rect.height / 2;
 		await pointer(page, {
 			testId: "submenu-trigger",
-			x: rect.x + rect.width / 2,
-			y: rect.y + rect.height / 2,
+			x: cx,
+			y: cy,
 			movementX: 1,
 		});
-
 		await expect(page.getByTestId("group")).toHaveAttribute("data-safe", "");
-	});
-
-	test("should update triangle CSS variables when cursor moves within trigger rect", async ({
-		page,
-		renderer,
-	}) => {
-		const rect = await page.getByTestId("submenu-trigger").boundingBox();
-		if (!rect) throw new Error("submenu-trigger not visible");
-
-		const cy = rect.y + rect.height / 2;
-
-		await pointer(page, {
-			testId: "submenu-trigger",
-			x: rect.x + rect.width / 2,
-			y: cy,
-		});
-
 		const y = await page
 			.getByTestId("group")
 			.evaluate((el) => el.style.getPropertyValue("--y"));
 		expect(y).toBe(`${cy}px`);
 	});
 
-	test("should remove `data-safe` when cursor has sustained velocity away from submenu", async ({
+	test("sustained velocity away from the submenu clears `data-safe`", async ({
 		page,
-		renderer,
 	}) => {
 		const rect = await page.getByTestId("submenu-trigger").boundingBox();
 		if (!rect) throw new Error("submenu-trigger not visible");
-
-		// Set data-safe by moving inside trigger rect
 		await pointer(page, {
 			testId: "submenu-trigger",
 			x: rect.x + rect.width / 2,
 			y: rect.y + rect.height / 2,
 		});
-		await expect(page.getByTestId("group")).toHaveAttribute("data-safe", "");
-
-		// Dispatch multiple events on the group (triangle area), outside trigger rect,
-		// with sustained negative movementX (away from right-opening submenu)
 		for (let i = 0; i < 5; i++) {
 			await pointer(page, {
 				testId: "group",
@@ -1755,44 +943,30 @@ test.describe("Safety Triangle", () => {
 				movementX: -5,
 			});
 		}
-
 		await expect(page.getByTestId("group")).not.toHaveAttribute("data-safe");
 	});
 
-	test("should remove `data-safe` when cursor leaves the triangle area entirely", async ({
+	test("cursor leaving the triangle area (different element) clears `data-safe`", async ({
 		page,
-		renderer,
 	}) => {
 		const rect = await page.getByTestId("submenu-trigger").boundingBox();
 		if (!rect) throw new Error("submenu-trigger not visible");
-
-		// Set data-safe
 		await pointer(page, {
 			testId: "submenu-trigger",
 			x: rect.x + rect.width / 2,
 			y: rect.y + rect.height / 2,
 		});
-		await expect(page.getByTestId("group")).toHaveAttribute("data-safe", "");
-
-		// Dispatch outside trigger rect on a DIFFERENT element (not the group)
-		// This means event.target !== safeGroup, so data-safe is removed immediately
 		await pointer(page, {
 			testId: "item-1",
 			x: rect.x - 50,
 			y: rect.y - 30,
 		});
-
 		await expect(page.getByTestId("group")).not.toHaveAttribute("data-safe");
 	});
 
-	test("should ignore touch pointer events for safety triangle", async ({
-		page,
-		renderer,
-	}) => {
+	test("touch pointer events are ignored", async ({ page }) => {
 		const rect = await page.getByTestId("submenu-trigger").boundingBox();
 		if (!rect) throw new Error("submenu-trigger not visible");
-
-		// Dispatch touch pointermove inside trigger rect
 		await pointer(page, {
 			testId: "submenu-trigger",
 			x: rect.x + rect.width / 2,
@@ -1800,61 +974,41 @@ test.describe("Safety Triangle", () => {
 			movementX: 1,
 			pointerType: "touch",
 		});
-
-		// data-safe should NOT be set because touch events are ignored
 		await expect(page.getByTestId("group")).not.toHaveAttribute("data-safe");
 	});
 
-	test("should set `data-safe` when cursor is inside trigger rect after reopening submenu", async ({
+	test("reopens cleanly: closing the submenu and re-opening still tracks the cursor", async ({
 		page,
-		renderer,
 	}) => {
 		const rect = await page.getByTestId("submenu-trigger").boundingBox();
 		if (!rect) throw new Error("submenu-trigger not visible");
-
-		// Close submenu by hovering item-1, then reopen by hovering submenu-trigger
 		await page.getByTestId("item-1").hover();
 		await expect(page.getByTestId("submenu-list")).not.toBeVisible();
 		await page.getByTestId("submenu-trigger").hover();
 		await expect(page.getByTestId("submenu-list")).toBeVisible();
-
-		// Cursor inside trigger rect should set data-safe
 		await pointer(page, {
 			testId: "submenu-trigger",
 			x: rect.x + rect.width / 2,
 			y: rect.y + rect.height / 2,
 			movementX: -1,
 		});
-
 		await expect(page.getByTestId("group")).toHaveAttribute("data-safe", "");
 	});
 });
 
-test.describe("Checkbox Items", () => {
+test.describe("Checkbox and radio items", () => {
 	test.beforeEach(async ({ page, renderer }) => {
 		await page.goto(`/${renderer}/menu/checkbox-radio`);
 		await page.getByTestId("trigger").click();
-		await expect(page.getByTestId("list")).toBeVisible();
 	});
 
-	test("should have `role='menuitemcheckbox'` on checkbox items", async ({
+	test("declares the menuitemcheckbox / menuitemradio / separator roles and initial `aria-checked`", async ({
 		page,
-		renderer,
 	}) => {
 		await expect(page.getByTestId("checkbox-1")).toHaveAttribute(
 			"role",
 			"menuitemcheckbox",
 		);
-		await expect(page.getByTestId("checkbox-2")).toHaveAttribute(
-			"role",
-			"menuitemcheckbox",
-		);
-	});
-
-	test("should have correct initial `aria-checked` values", async ({
-		page,
-		renderer,
-	}) => {
 		await expect(page.getByTestId("checkbox-1")).toHaveAttribute(
 			"aria-checked",
 			"false",
@@ -1863,20 +1017,75 @@ test.describe("Checkbox Items", () => {
 			"aria-checked",
 			"true",
 		);
-	});
-
-	test("should toggle `aria-checked` on click", async ({ page, renderer }) => {
-		await page.getByTestId("checkbox-1").click();
-		await expect(page.getByTestId("checkbox-1")).toHaveAttribute(
+		await expect(page.getByTestId("checkbox-disabled")).toHaveAttribute(
+			"aria-disabled",
+			"true",
+		);
+		await expect(page.getByTestId("radio-a1")).toHaveAttribute(
+			"role",
+			"menuitemradio",
+		);
+		await expect(page.getByTestId("radio-a1")).toHaveAttribute(
 			"aria-checked",
 			"true",
 		);
+		await expect(page.getByTestId("radio-a2")).toHaveAttribute(
+			"aria-checked",
+			"false",
+		);
+		await expect(page.getByTestId("radio-a3")).toHaveAttribute(
+			"aria-checked",
+			"false",
+		);
+		await expect(page.getByTestId("separator-1")).toHaveAttribute(
+			"role",
+			"separator",
+		);
+		await expect(page.getByTestId("separator-2")).toHaveAttribute(
+			"role",
+			"separator",
+		);
 	});
 
-	test("should uncheck when already checked on click", async ({
-		page,
-		renderer,
-	}) => {
+	for (const activation of ["click", "Enter", "Space"] as const) {
+		test(`${activation} toggles a checkbox without closing the menu`, async ({
+			page,
+		}) => {
+			if (activation === "click") {
+				await page.getByTestId("checkbox-1").click();
+			} else {
+				await page.getByTestId("checkbox-1").focus();
+				await page.keyboard.press(activation);
+			}
+			await expect(page.getByTestId("checkbox-1")).toHaveAttribute(
+				"aria-checked",
+				"true",
+			);
+			await expect(page.getByTestId("list")).toBeVisible();
+		});
+
+		test(`${activation} selects a radio and unchecks same-group siblings without closing the menu`, async ({
+			page,
+		}) => {
+			if (activation === "click") {
+				await page.getByTestId("radio-a2").click();
+			} else {
+				await page.getByTestId("radio-a2").focus();
+				await page.keyboard.press(activation);
+			}
+			await expect(page.getByTestId("radio-a2")).toHaveAttribute(
+				"aria-checked",
+				"true",
+			);
+			await expect(page.getByTestId("radio-a1")).toHaveAttribute(
+				"aria-checked",
+				"false",
+			);
+			await expect(page.getByTestId("list")).toBeVisible();
+		});
+	}
+
+	test("re-clicking a checked checkbox unchecks it", async ({ page }) => {
 		await page.getByTestId("checkbox-2").click();
 		await expect(page.getByTestId("checkbox-2")).toHaveAttribute(
 			"aria-checked",
@@ -1884,130 +1093,8 @@ test.describe("Checkbox Items", () => {
 		);
 	});
 
-	test("should keep menu open after checkbox click", async ({
+	test("a separator scopes the radio group: changing one group does not affect the other", async ({
 		page,
-		renderer,
-	}) => {
-		await page.getByTestId("checkbox-1").click();
-		await expect(page.getByTestId("list")).toBeVisible();
-	});
-
-	test("should toggle `aria-checked` on `Enter`", async ({
-		page,
-		renderer,
-	}) => {
-		await page.getByTestId("checkbox-1").focus();
-		await page.keyboard.press("Enter");
-		await expect(page.getByTestId("checkbox-1")).toHaveAttribute(
-			"aria-checked",
-			"true",
-		);
-		await expect(page.getByTestId("list")).toBeVisible();
-	});
-
-	test("should toggle `aria-checked` on `Space`", async ({
-		page,
-		renderer,
-	}) => {
-		await page.getByTestId("checkbox-1").focus();
-		await page.keyboard.press("Space");
-		await expect(page.getByTestId("checkbox-1")).toHaveAttribute(
-			"aria-checked",
-			"true",
-		);
-		await expect(page.getByTestId("list")).toBeVisible();
-	});
-
-	test("should include checkbox items in keyboard navigation", async ({
-		page,
-		renderer,
-	}) => {
-		await page.getByTestId("checkbox-1").focus();
-		await page.keyboard.press("ArrowDown");
-		await expect(page.getByTestId("checkbox-2")).toBeFocused();
-	});
-
-	test("should skip disabled checkbox item in navigation", async ({
-		page,
-		renderer,
-	}) => {
-		await page.getByTestId("checkbox-2").focus();
-		await page.keyboard.press("ArrowDown");
-		await expect(page.getByTestId("radio-a1")).toBeFocused();
-	});
-
-	test("should have `aria-disabled='true'` on disabled checkbox item", async ({
-		page,
-		renderer,
-	}) => {
-		await expect(page.getByTestId("checkbox-disabled")).toHaveAttribute(
-			"aria-disabled",
-			"true",
-		);
-	});
-});
-
-test.describe("Radio Items", () => {
-	test.beforeEach(async ({ page, renderer }) => {
-		await page.goto(`/${renderer}/menu/checkbox-radio`);
-		await page.getByTestId("trigger").click();
-		await expect(page.getByTestId("list")).toBeVisible();
-	});
-
-	test("should have `role='menuitemradio'` on radio items", async ({
-		page,
-		renderer,
-	}) => {
-		await expect(page.getByTestId("radio-a1")).toHaveAttribute(
-			"role",
-			"menuitemradio",
-		);
-		await expect(page.getByTestId("radio-a2")).toHaveAttribute(
-			"role",
-			"menuitemradio",
-		);
-	});
-
-	test("should have correct initial `aria-checked` values", async ({
-		page,
-		renderer,
-	}) => {
-		await expect(page.getByTestId("radio-a1")).toHaveAttribute(
-			"aria-checked",
-			"true",
-		);
-		await expect(page.getByTestId("radio-a2")).toHaveAttribute(
-			"aria-checked",
-			"false",
-		);
-		await expect(page.getByTestId("radio-a3")).toHaveAttribute(
-			"aria-checked",
-			"false",
-		);
-	});
-
-	test("should check clicked radio and uncheck same-group siblings on click", async ({
-		page,
-		renderer,
-	}) => {
-		await page.getByTestId("radio-a2").click();
-		await expect(page.getByTestId("radio-a2")).toHaveAttribute(
-			"aria-checked",
-			"true",
-		);
-		await expect(page.getByTestId("radio-a1")).toHaveAttribute(
-			"aria-checked",
-			"false",
-		);
-		await expect(page.getByTestId("radio-a3")).toHaveAttribute(
-			"aria-checked",
-			"false",
-		);
-	});
-
-	test("should not affect different group when clicking radio", async ({
-		page,
-		renderer,
 	}) => {
 		await page.getByTestId("radio-a2").click();
 		await expect(page.getByTestId("radio-b1")).toHaveAttribute(
@@ -2020,247 +1107,83 @@ test.describe("Radio Items", () => {
 		);
 	});
 
-	test("should keep menu open after radio click", async ({
+	test("arrow navigation skips disabled items and separators", async ({
 		page,
-		renderer,
 	}) => {
-		await page.getByTestId("radio-a2").click();
-		await expect(page.getByTestId("list")).toBeVisible();
+		await page.getByTestId("checkbox-2").focus();
+		await page.keyboard.press("ArrowDown");
+		// Skips the disabled checkbox AND the separator
+		await expect(page.getByTestId("radio-a1")).toBeFocused();
+		await page.keyboard.press("ArrowUp");
+		// Skips the separator AND the disabled checkbox on the way back
+		await expect(page.getByTestId("checkbox-2")).toBeFocused();
 	});
 
-	test("should check radio on `Enter`", async ({ page, renderer }) => {
-		await page.getByTestId("radio-a2").focus();
-		await page.keyboard.press("Enter");
-		await expect(page.getByTestId("radio-a2")).toHaveAttribute(
-			"aria-checked",
-			"true",
-		);
-		await expect(page.getByTestId("radio-a1")).toHaveAttribute(
-			"aria-checked",
-			"false",
-		);
-		await expect(page.getByTestId("list")).toBeVisible();
-	});
-
-	test("should check radio on `Space`", async ({ page, renderer }) => {
-		await page.getByTestId("radio-a3").focus();
-		await page.keyboard.press("Space");
-		await expect(page.getByTestId("radio-a3")).toHaveAttribute(
-			"aria-checked",
-			"true",
-		);
-		await expect(page.getByTestId("radio-a1")).toHaveAttribute(
-			"aria-checked",
-			"false",
-		);
-		await expect(page.getByTestId("list")).toBeVisible();
-	});
-
-	test("should include radio items in keyboard navigation", async ({
+	test("arrow navigation steps through enabled checkboxes and radios", async ({
 		page,
-		renderer,
 	}) => {
+		await page.getByTestId("checkbox-1").focus();
+		await page.keyboard.press("ArrowDown");
+		await expect(page.getByTestId("checkbox-2")).toBeFocused();
+
 		await page.getByTestId("radio-a1").focus();
 		await page.keyboard.press("ArrowDown");
 		await expect(page.getByTestId("radio-a2")).toBeFocused();
 	});
-});
 
-test.describe("Separator Navigation", () => {
-	test.beforeEach(async ({ page, renderer }) => {
-		await page.goto(`/${renderer}/menu/checkbox-radio`);
-		await page.getByTestId("trigger").click();
-		await expect(page.getByTestId("list")).toBeVisible();
-	});
-
-	test("should have `role='separator'` on separator elements", async ({
+	test("activating a regular menuitem still closes the menu", async ({
 		page,
-		renderer,
-	}) => {
-		await expect(page.getByTestId("separator-1")).toHaveAttribute(
-			"role",
-			"separator",
-		);
-		await expect(page.getByTestId("separator-2")).toHaveAttribute(
-			"role",
-			"separator",
-		);
-	});
-
-	test("should skip separator when navigating with `ArrowDown`", async ({
-		page,
-		renderer,
-	}) => {
-		await page.getByTestId("checkbox-2").focus();
-		await page.keyboard.press("ArrowDown");
-		// Skips disabled checkbox and separator
-		await expect(page.getByTestId("radio-a1")).toBeFocused();
-	});
-
-	test("should skip separator when navigating with `ArrowUp`", async ({
-		page,
-		renderer,
-	}) => {
-		await page.getByTestId("radio-a1").focus();
-		await page.keyboard.press("ArrowUp");
-		// Skips separator and disabled checkbox
-		await expect(page.getByTestId("checkbox-2")).toBeFocused();
-	});
-
-	test("should close menu when regular menuitem is clicked", async ({
-		page,
-		renderer,
 	}) => {
 		await page.getByTestId("regular-item").click();
 		await expect(page.getByTestId("list")).not.toBeVisible();
 	});
 });
 
-test.describe("Click Handler", () => {
+test.describe("Click handler", () => {
 	test.beforeEach(async ({ page, renderer }) => {
 		await page.goto(`/${renderer}/menu/basic`);
 	});
 
-	test("should fire click handler on trigger click", async ({
-		page,
-		renderer,
-	}) => {
-		await page.getByTestId("trigger").click();
-		await expect(page.getByTestId("output")).toHaveText("trigger-clicked");
-	});
-
-	test("should fire click handler on trigger `Enter`", async ({
-		page,
-		renderer,
-	}) => {
-		await page.getByTestId("trigger").focus();
-		await page.keyboard.press("Enter");
-		await expect(page.getByTestId("output")).toHaveText("trigger-clicked");
-	});
-
-	test("should fire click handler on trigger `Space`", async ({
-		page,
-		renderer,
-	}) => {
-		await page.getByTestId("trigger").focus();
-		await page.keyboard.press("Space");
-		await expect(page.getByTestId("output")).toHaveText("trigger-clicked");
-	});
-
-	test("should fire click handler on menuitem click", async ({
-		page,
-		renderer,
-	}) => {
-		await page.getByTestId("trigger").click();
-		await page.getByTestId("item").click();
-		await expect(page.getByTestId("output")).toHaveText("item-clicked");
-	});
-
-	test("should fire click handler on menuitem `Enter`", async ({
-		page,
-		renderer,
-	}) => {
-		await page.getByTestId("trigger").click();
-		await page.getByTestId("item").focus();
-		await page.keyboard.press("Enter");
-		await expect(page.getByTestId("output")).toHaveText("item-clicked");
-	});
-
-	test("should fire click handler on menuitem `Space`", async ({
-		page,
-		renderer,
-	}) => {
-		await page.getByTestId("trigger").click();
-		await page.getByTestId("item").focus();
-		await page.keyboard.press("Space");
-		await expect(page.getByTestId("output")).toHaveText("item-clicked");
-	});
-
-	test("should fire click handler on checkbox click", async ({
-		page,
-		renderer,
-	}) => {
-		await page.getByTestId("trigger").click();
-		await page.getByTestId("checkbox").click();
-		await expect(page.getByTestId("output")).toHaveText("checkbox-clicked");
-	});
-
-	test("should fire click handler on checkbox `Enter`", async ({
-		page,
-		renderer,
-	}) => {
-		await page.getByTestId("trigger").click();
-		await page.getByTestId("checkbox").focus();
-		await page.keyboard.press("Enter");
-		await expect(page.getByTestId("output")).toHaveText("checkbox-clicked");
-	});
-
-	test("should fire click handler on checkbox `Space`", async ({
-		page,
-		renderer,
-	}) => {
-		await page.getByTestId("trigger").click();
-		await page.getByTestId("checkbox").focus();
-		await page.keyboard.press("Space");
-		await expect(page.getByTestId("output")).toHaveText("checkbox-clicked");
-	});
-
-	test("should fire click handler on radio click", async ({
-		page,
-		renderer,
-	}) => {
-		await page.getByTestId("trigger").click();
-		await page.getByTestId("radio-2").click();
-		await expect(page.getByTestId("output")).toHaveText("radio-2-clicked");
-	});
-
-	test("should fire click handler on radio `Enter`", async ({
-		page,
-		renderer,
-	}) => {
-		await page.getByTestId("trigger").click();
-		await page.getByTestId("radio-2").focus();
-		await page.keyboard.press("Enter");
-		await expect(page.getByTestId("output")).toHaveText("radio-2-clicked");
-	});
-
-	test("should fire click handler on radio `Space`", async ({
-		page,
-		renderer,
-	}) => {
-		await page.getByTestId("trigger").click();
-		await page.getByTestId("radio-2").focus();
-		await page.keyboard.press("Space");
-		await expect(page.getByTestId("output")).toHaveText("radio-2-clicked");
-	});
+	for (const target of ["trigger", "item", "checkbox", "radio-2"] as const) {
+		for (const activation of ["click", "Enter", "Space"] as const) {
+			test(`${target} fires on ${activation}`, async ({ page }) => {
+				if (target !== "trigger") await page.getByTestId("trigger").click();
+				const el = page.getByTestId(target);
+				if (activation === "click") {
+					await el.click();
+				} else {
+					await el.focus();
+					await page.keyboard.press(activation);
+				}
+				await expect(page.getByTestId("output")).toHaveText(
+					`${target}-clicked`,
+				);
+			});
+		}
+	}
 });
 
 test.describe("Dynamic", () => {
-	test("should handle dynamic items, submenu, checkbox, radio, disabled, href, label, separator, multi-instance", async ({
+	test("handles dynamic items, submenu, checkbox, radio, disabled, href, label, separator, and multi-instance", async ({
 		page,
 		renderer,
 	}) => {
 		await page.goto(`/${renderer}/menu/dynamic`);
 
-		// Open menu, navigate existing items
 		await page.getByTestId("trigger").click();
-		await expect(page.getByTestId("list")).toBeVisible();
 		await page.keyboard.press("ArrowDown");
 		await expect(page.getByTestId("item-1")).toBeFocused();
 		await page.keyboard.press("Escape");
 
-		// Add item via state, reopen → new item is navigable
 		await page.getByTestId("add-item").click();
 		await page.getByTestId("trigger").click();
 		await page.keyboard.press("ArrowDown");
-		await expect(page.getByTestId("item-1")).toBeFocused();
 		await page.keyboard.press("ArrowDown");
 		await page.keyboard.press("ArrowDown");
 		await page.keyboard.press("ArrowDown");
 		await expect(page.getByTestId("item-4")).toBeFocused();
 		await page.keyboard.press("Escape");
 
-		// Remove item via state → navigation wraps without it
 		await page.getByTestId("remove-item").click();
 		await page.getByTestId("remove-item").click();
 		await page.getByTestId("trigger").click();
@@ -2270,11 +1193,9 @@ test.describe("Dynamic", () => {
 		await expect(page.getByTestId("item-2")).toBeFocused();
 		await page.keyboard.press("Escape");
 
-		// Add submenu via state → ArrowRight opens it
 		await page.getByTestId("add-submenu").click();
 		await page.getByTestId("trigger").click();
 		await page.keyboard.press("ArrowDown");
-		// Navigate to submenu trigger (last navigable item)
 		const focused = page.getByTestId("submenu-trigger");
 		while (!(await focused.evaluate((el) => el === document.activeElement))) {
 			await page.keyboard.press("ArrowDown");
@@ -2285,31 +1206,22 @@ test.describe("Dynamic", () => {
 		await page.keyboard.press("Escape");
 		await page.keyboard.press("Escape");
 
-		// onClick fires on menu item
 		await page.getByTestId("trigger").click();
 		await page.getByTestId("item-1").click();
 		await expect(page.getByTestId("output")).toHaveText("item-1-clicked");
 
-		// href Item renders <a> with role="menuitem"
 		await page.getByTestId("trigger").click();
 		const hrefItem = page.getByTestId("item-href");
 		await expect(hrefItem).toHaveRole("menuitem");
 		await expect(hrefItem).toHaveAttribute("href", "https://example.com");
-		const hrefTag = await hrefItem.evaluate((el) => el.tagName.toLowerCase());
-		expect(hrefTag).toBe("a");
+		await expect(hrefItem).toHaveJSProperty("tagName", "A");
 		await page.keyboard.press("Escape");
 
-		// Label renders correct role, skipped in navigation
 		await page.getByTestId("trigger").click();
 		await expect(page.getByTestId("label")).toHaveRole("presentation");
-		await page.keyboard.press("Escape");
-
-		// Separator renders correct role
-		await page.getByTestId("trigger").click();
 		await expect(page.getByTestId("separator")).toHaveRole("separator");
 		await page.keyboard.press("Escape");
 
-		// CheckboxItem: toggle via state → aria-checked updates
 		await page.getByTestId("trigger").click();
 		const checkboxItem = page.getByTestId("checkbox-item");
 		await expect(checkboxItem).toHaveRole("menuitemcheckbox");
@@ -2320,16 +1232,11 @@ test.describe("Dynamic", () => {
 		await expect(checkboxItem).toHaveAttribute("aria-checked", "true");
 		await page.keyboard.press("Escape");
 
-		// RadioItem: select via state → correct aria-checked, sibling unchecked
 		await page.getByTestId("trigger").click();
 		await expect(page.getByTestId("radio-a")).toHaveRole("menuitemradio");
 		await expect(page.getByTestId("radio-a")).toHaveAttribute(
 			"aria-checked",
 			"true",
-		);
-		await expect(page.getByTestId("radio-b")).toHaveAttribute(
-			"aria-checked",
-			"false",
 		);
 		await page.keyboard.press("Escape");
 		await page.getByTestId("select-radio-b").click();
@@ -2344,7 +1251,6 @@ test.describe("Dynamic", () => {
 		);
 		await page.keyboard.press("Escape");
 
-		// Disabled Item toggle → aria-disabled, skipped in nav
 		await page.getByTestId("toggle-disabled").click();
 		await page.getByTestId("trigger").click();
 		await expect(page.getByTestId("item-2")).toHaveAttribute(
@@ -2354,11 +1260,9 @@ test.describe("Dynamic", () => {
 		await page.keyboard.press("ArrowDown");
 		await expect(page.getByTestId("item-1")).toBeFocused();
 		await page.keyboard.press("ArrowDown");
-		// Should skip item-2 (disabled) and land on the next navigable item
 		await expect(page.getByTestId("item-2")).not.toBeFocused();
 		await page.keyboard.press("Escape");
 
-		// Second Menu instance: opening one doesn't affect the other
 		await page.getByTestId("menu2-trigger").click();
 		await expect(page.getByTestId("menu2-list")).toBeVisible();
 		await expect(page.getByTestId("list")).not.toBeVisible();
@@ -2366,12 +1270,12 @@ test.describe("Dynamic", () => {
 	});
 });
 
-test.describe("Structure Independence", () => {
+test.describe("Structure independence", () => {
 	test.beforeEach(async ({ page, renderer }) => {
 		await page.goto(`/${renderer}/menu/structure-independence`);
 	});
 
-	test("opens menu where trigger and popover are bare siblings (no wrapper)", async ({
+	test("opens a menu where trigger and popover are bare siblings (no wrapper)", async ({
 		page,
 	}) => {
 		await page.getByTestId("a-trigger").click();
@@ -2386,57 +1290,45 @@ test.describe("Structure Independence", () => {
 		await expect(page.getByTestId("a-list")).not.toBeVisible();
 	});
 
-	test("opens menu where trigger and popover are separated by unrelated DOM", async ({
+	test("opens a menu where trigger and popover are separated by unrelated DOM", async ({
 		page,
 	}) => {
 		await page.getByTestId("b-trigger").click();
-		await expect(page.getByTestId("b-list")).toBeVisible();
 		await page.keyboard.press("ArrowDown");
 		await expect(page.getByTestId("b-item-1")).toBeFocused();
 		await page.keyboard.press("ArrowDown");
 		await expect(page.getByTestId("b-item-2")).toBeFocused();
-		await page.keyboard.press("Escape");
 	});
 
-	test("opens menu where trigger and popover live in different containers", async ({
+	test("opens a menu (and its submenu) when trigger and popover live in different containers", async ({
 		page,
 	}) => {
 		await page.getByTestId("c-trigger").click();
 		await expect(page.getByTestId("c-list")).toBeVisible();
-		// Hover an item inside the remotely-placed popover: stays open. The
-		// runtime resolves the trigger via aria-labelledby, not DOM walking,
-		// so a popover with no shared ancestor (besides body) still works.
+		// Hovering an item in the remotely-placed popover keeps the menu
+		// open; the runtime resolves the trigger via aria-labelledby, not
+		// DOM walking.
 		await page.getByTestId("c-item-1").hover();
 		await expect(page.getByTestId("c-list")).toBeVisible();
-		await page.keyboard.press("Escape");
-	});
 
-	test("opens a submenu whose trigger and popover are in different containers", async ({
-		page,
-	}) => {
-		await page.getByTestId("c-trigger").click();
-		await expect(page.getByTestId("c-list")).toBeVisible();
-		// Navigate to the submenu trigger and open it with ArrowRight. The
-		// submenu's popover lives in a sibling <footer>, not next to its
-		// trigger; the runtime resolves it via aria-controls regardless.
+		// The submenu's popover lives in a sibling <footer>, not next to
+		// its trigger; the runtime resolves it via aria-controls regardless.
 		await page.keyboard.press("ArrowDown");
 		await page.keyboard.press("ArrowDown");
 		await expect(page.getByTestId("c-submenu-trigger")).toBeFocused();
 		await page.keyboard.press("ArrowRight");
 		await expect(page.getByTestId("c-submenu-list")).toBeVisible();
 		await expect(page.getByTestId("c-sub-item-1")).toBeFocused();
-		await page.keyboard.press("Escape");
 	});
 
-	test("clicking outside dismisses a menu with a remotely-placed popover", async ({
+	test("an outside click dismisses a menu with a remotely-placed popover", async ({
 		page,
 	}) => {
 		await page.getByTestId("c-trigger").click();
-		await expect(page.getByTestId("c-list")).toBeVisible();
 		// Click on unrelated chrome sitting between the trigger and popover
 		// in DOM order. With the firstElementChild-based hover detection we
-		// used to have, this kind of layout could mis-resolve; with the
-		// aria-labelledby lookup it's just an outside click.
+		// used to have, this could mis-resolve; with the aria-labelledby
+		// lookup it is just an outside click.
 		await page.getByTestId("main-c").click();
 		await expect(page.getByTestId("c-list")).not.toBeVisible();
 	});

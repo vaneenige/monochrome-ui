@@ -12,7 +12,7 @@ import { Collapsible, Menu } from "monochrome/vue"
         <Collapsible.Trigger data-testid="collapsible-trigger">
           Section
         </Collapsible.Trigger>
-        <Collapsible.Panel data-testid="collapsible-panel">
+        <Collapsible.Panel>
           <Menu.Root>
             <Menu.Trigger data-testid="nested-menu-trigger">
               Nested Menu
@@ -21,7 +21,7 @@ import { Collapsible, Menu } from "monochrome/vue"
               <Menu.Item data-testid="nested-menu-item-1">
                 Item 1
               </Menu.Item>
-              <Menu.Item data-testid="nested-menu-item-2">
+              <Menu.Item>
                 Item 2
               </Menu.Item>
               <Menu.Item data-testid="nested-menu-item-3">

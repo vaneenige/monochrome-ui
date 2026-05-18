@@ -11,7 +11,7 @@
 <ul data-testid="list" role="menu" id="mcc:menu:d1" aria-labelledby="mct:menu:d1" aria-hidden="true" popover="manual">
   <li role="none"><button data-testid="item-1" type="button" role="menuitem" tabindex="-1">Item 1</button></li>
   <li role="none"><button data-testid="item-2" type="button" role="menuitem" tabindex="-1">Item 2</button></li>
-  <li role="none"><button data-testid="item-3" type="button" role="menuitem" tabindex="-1">Item 3</button></li>
+  <li role="none"><button type="button" role="menuitem" tabindex="-1">Item 3</button></li>
   <li role="none"><a data-testid="item-href" href="https://example.com" role="menuitem" tabindex="-1">Link Item</a></li>
   <li data-testid="label" role="presentation">Group Label</li>
   <li data-testid="separator" role="separator"></li>
@@ -21,7 +21,7 @@
 </ul>
 <button data-testid="menu2-trigger" type="button" id="mct:menu:d2" aria-controls="mcc:menu:d2" aria-expanded="false" aria-haspopup="menu" tabindex="0" role="button">Open Menu 2</button>
 <ul data-testid="menu2-list" role="menu" id="mcc:menu:d2" aria-labelledby="mct:menu:d2" aria-hidden="true" popover="manual">
-  <li role="none"><button data-testid="menu2-item-1" type="button" role="menuitem" tabindex="-1">Menu2 Item 1</button></li>
+  <li role="none"><button type="button" role="menuitem" tabindex="-1">Menu2 Item 1</button></li>
 </ul>
 <script>
 (function() {
@@ -83,7 +83,7 @@
     ul.setAttribute('aria-labelledby', 'mct:menu:d1sub');
     ul.setAttribute('aria-hidden', 'true');
     ul.setAttribute('popover', 'manual');
-    ul.innerHTML = '<li role="none"><button data-testid="submenu-item-1" type="button" role="menuitem" tabindex="-1">Sub Item 1</button></li><li role="none"><button data-testid="submenu-item-2" type="button" role="menuitem" tabindex="-1">Sub Item 2</button></li>';
+    ul.innerHTML = '<li role="none"><button data-testid="submenu-item-1" type="button" role="menuitem" tabindex="-1">Sub Item 1</button></li><li role="none"><button type="button" role="menuitem" tabindex="-1">Sub Item 2</button></li>';
 
     li.appendChild(trigger);
     li.appendChild(ul);

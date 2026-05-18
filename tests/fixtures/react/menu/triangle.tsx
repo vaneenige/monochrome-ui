@@ -11,7 +11,7 @@ export default () => (
 					<Menu.Trigger data-testid="submenu-trigger">Submenu</Menu.Trigger>
 					<Menu.Popover data-testid="submenu-list">
 						<Menu.Item data-testid="submenu-item-1">Sub Item 1</Menu.Item>
-						<Menu.Item data-testid="submenu-item-2">Sub Item 2</Menu.Item>
+						<Menu.Item>Sub Item 2</Menu.Item>
 					</Menu.Popover>
 				</Menu.Group>
 			</Menu.Popover>

@@ -10,7 +10,7 @@ test.describe("Router", () => {
 	});
 
 	test.describe("Root swap", () => {
-		test("should swap the root area on anchor click", async ({ page }) => {
+		test("swaps the root area on anchor click", async ({ page }) => {
 			await page.goto("/html/router/index");
 			await expect(page.getByTestId("page-title")).toHaveText("Home");
 			await page.getByTestId("nav-about").click();
@@ -18,16 +18,14 @@ test.describe("Router", () => {
 			await expect(page.getByTestId("page-title")).toHaveText("About");
 		});
 
-		test("should update the document title", async ({ page }) => {
+		test("updates the document title", async ({ page }) => {
 			await page.goto("/html/router/index");
 			await expect(page).toHaveTitle("Home");
 			await page.getByTestId("nav-about").click();
 			await expect(page).toHaveTitle("About");
 		});
 
-		test("should preserve the JS context across navigation", async ({
-			page,
-		}) => {
+		test("preserves the JS context across navigation", async ({ page }) => {
 			await page.goto("/html/router/index");
 			await page.evaluate(() => {
 				window.__sentinel = 42;
@@ -38,7 +36,7 @@ test.describe("Router", () => {
 			expect(sentinel).toBe(42);
 		});
 
-		test("should never replace the body or head", async ({ page }) => {
+		test("never replaces the body or head", async ({ page }) => {
 			await page.goto("/html/router/index");
 			await page.evaluate(() => {
 				document.body.setAttribute("data-preserved-body", "yes");
@@ -54,7 +52,7 @@ test.describe("Router", () => {
 			).toBe("yes");
 		});
 
-		test("should preserve siblings outside the root area", async ({ page }) => {
+		test("preserves siblings outside the root area", async ({ page }) => {
 			await page.goto("/html/router/index");
 			await page.evaluate(() => {
 				document.querySelector("nav")?.setAttribute("data-preserved", "yes");
@@ -66,7 +64,7 @@ test.describe("Router", () => {
 			);
 		});
 
-		test("should swap data-area elements in the head during a root swap", async ({
+		test("swaps `data-area` elements in the head during a root swap", async ({
 			page,
 		}) => {
 			await page.goto("/html/router/index");
@@ -84,7 +82,7 @@ test.describe("Router", () => {
 	});
 
 	test.describe("Structural mismatch", () => {
-		test("should fall back to a root swap when the new page introduces new areas", async ({
+		test("falls back to a root swap when the new page introduces new areas", async ({
 			page,
 		}) => {
 			await page.goto("/html/router/index");
@@ -94,7 +92,7 @@ test.describe("Router", () => {
 			await expect(page.locator("[data-area='sidebar']")).toBeVisible();
 		});
 
-		test("should hard-reload when falling back without a root area", async ({
+		test("hard-reloads when falling back without a root area", async ({
 			page,
 		}) => {
 			await page.goto("/html/router/no-root");
@@ -114,7 +112,7 @@ test.describe("Router", () => {
 	});
 
 	test.describe("Area keys", () => {
-		test("should preserve an area whose key matches across pages", async ({
+		test("preserves an area whose `data-key` matches across pages", async ({
 			page,
 		}) => {
 			await page.goto("/html/router/docs");
@@ -133,7 +131,7 @@ test.describe("Router", () => {
 			).toBe("yes");
 		});
 
-		test("should swap an area whose key differs across pages", async ({
+		test("swaps an area whose `data-key` differs across pages", async ({
 			page,
 		}) => {
 			await page.goto("/html/router/docs");
@@ -153,7 +151,7 @@ test.describe("Router", () => {
 	});
 
 	test.describe("Anchor filtering", () => {
-		test("should not intercept modifier-clicked links", async ({ page }) => {
+		test("ignores modifier-clicked links", async ({ page }) => {
 			await page.goto("/html/router/index");
 			await page
 				.getByTestId("nav-about")
@@ -162,10 +160,7 @@ test.describe("Router", () => {
 			await expect(page.getByTestId("page-title")).toHaveText("Home");
 		});
 
-		test("should not intercept target=_blank links", async ({
-			page,
-			context,
-		}) => {
+		test("ignores `target=_blank` links", async ({ page, context }) => {
 			await page.goto("/html/router/ignored");
 			const [newPage] = await Promise.all([
 				context.waitForEvent("page"),
@@ -176,7 +171,7 @@ test.describe("Router", () => {
 			await newPage.close();
 		});
 
-		test("should not intercept download links", async ({ page }) => {
+		test("ignores `download` links", async ({ page }) => {
 			await page.goto("/html/router/ignored");
 			await page.evaluate(() => {
 				document
@@ -191,7 +186,7 @@ test.describe("Router", () => {
 			await expect(page.getByTestId("page-marker")).toHaveText("ignored");
 		});
 
-		test("should not intercept cross-origin links", async ({ page }) => {
+		test("ignores cross-origin links", async ({ page }) => {
 			await page.goto("/html/router/ignored");
 			await page.evaluate(() => {
 				document
@@ -206,7 +201,7 @@ test.describe("Router", () => {
 			await expect(page.getByTestId("page-marker")).toHaveText("ignored");
 		});
 
-		test("should not intercept rel=external links", async ({ page }) => {
+		test("ignores `rel=external` links", async ({ page }) => {
 			await page.goto("/html/router/ignored");
 			await page.evaluate(() => {
 				window.__sentinel = 1;
@@ -217,7 +212,7 @@ test.describe("Router", () => {
 			expect(sentinel).toBeUndefined();
 		});
 
-		test("should not intercept same-page hash links", async ({ page }) => {
+		test("ignores same-page hash links", async ({ page }) => {
 			await page.goto("/html/router/ignored");
 			await page.evaluate(() => {
 				window.__sentinel = 1;
@@ -230,7 +225,7 @@ test.describe("Router", () => {
 	});
 
 	test.describe("History", () => {
-		test("should handle back navigation via popstate", async ({ page }) => {
+		test("handles back navigation via `popstate`", async ({ page }) => {
 			await page.goto("/html/router/index");
 			await page.getByTestId("nav-about").click();
 			await expect(page.getByTestId("page-title")).toHaveText("About");
@@ -244,9 +239,7 @@ test.describe("Router", () => {
 			expect(sentinel).toBe(99);
 		});
 
-		test("should restore scroll position on back navigation", async ({
-			page,
-		}) => {
+		test("restores scroll position on back navigation", async ({ page }) => {
 			await page.goto("/html/router/scroll");
 			await page.evaluate(() => window.scrollTo(0, 600));
 			await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(600);
@@ -264,7 +257,7 @@ test.describe("Router", () => {
 	});
 
 	test.describe("Fallback", () => {
-		test("should fall back to real navigation when fetch returns 404", async ({
+		test("falls back to real navigation when fetch returns 404", async ({
 			page,
 		}) => {
 			await page.goto("/html/router/index");
@@ -279,7 +272,7 @@ test.describe("Router", () => {
 	});
 
 	test.describe("Redirects", () => {
-		test("should follow a same-origin redirect and land on the final URL", async ({
+		test("follows a same-origin redirect and lands on the final URL", async ({
 			page,
 		}) => {
 			await page.goto("/html/router/index");
@@ -288,7 +281,7 @@ test.describe("Router", () => {
 			await expect(page.getByTestId("page-title")).toHaveText("About");
 		});
 
-		test("should fall back to real navigation on a cross-origin redirect", async ({
+		test("falls back to real navigation on a cross-origin redirect", async ({
 			page,
 		}) => {
 			await page.goto("/html/router/index");
@@ -306,9 +299,6 @@ test.describe("Router", () => {
 	});
 
 	test.describe("Prefetching", () => {
-		// Record every request the browser makes after this call. Preferred
-		// over `window.fetch` monkey-patching: no casts, no in-page globals,
-		// and the list lives on the Node side where we can assert directly.
 		const recordFetches = async (page: Page) => {
 			const urls: string[] = [];
 			await page.route("**/*", (route) => {
@@ -318,9 +308,7 @@ test.describe("Router", () => {
 			return urls;
 		};
 
-		test("should not prefetch before any user interaction", async ({
-			page,
-		}) => {
+		test("does not prefetch before any user interaction", async ({ page }) => {
 			await page.goto("/html/router/index");
 			await page.waitForLoadState("networkidle");
 			const fetched = await recordFetches(page);
@@ -328,7 +316,7 @@ test.describe("Router", () => {
 			expect(fetched).toHaveLength(0);
 		});
 
-		test("should prefetch a link on hover", async ({ page }) => {
+		test("prefetches a link on hover", async ({ page }) => {
 			await page.goto("/html/router/index");
 			const fetched = await recordFetches(page);
 			await page.getByTestId("nav-about").hover();
@@ -337,7 +325,7 @@ test.describe("Router", () => {
 				.toBe(true);
 		});
 
-		test("should prefetch a link on keyboard focus", async ({ page }) => {
+		test("prefetches a link on keyboard focus", async ({ page }) => {
 			await page.goto("/html/router/index");
 			const fetched = await recordFetches(page);
 			await page.getByTestId("nav-about").focus();
@@ -346,9 +334,7 @@ test.describe("Router", () => {
 				.toBe(true);
 		});
 
-		test("should use cached html on navigation after hover", async ({
-			page,
-		}) => {
+		test("uses cached HTML on navigation after hover", async ({ page }) => {
 			await page.goto("/html/router/index");
 			const fetched = await recordFetches(page);
 			await page.getByTestId("nav-about").hover();
@@ -363,7 +349,7 @@ test.describe("Router", () => {
 	});
 
 	test.describe("Concurrent navigation", () => {
-		test("should no-op a click on the current URL", async ({ page }) => {
+		test("no-ops a click on the current URL", async ({ page }) => {
 			await page.goto("/html/router/index");
 			await page.evaluate(() => {
 				document
@@ -377,7 +363,7 @@ test.describe("Router", () => {
 			).toBe("yes");
 		});
 
-		test("should drop a stale in-flight navigation when a later one arrives", async ({
+		test("drops a stale in-flight navigation when a later one arrives", async ({
 			page,
 		}) => {
 			await page.route("**/html/router/about", async (route) => {
@@ -412,10 +398,8 @@ test.describe("Router", () => {
 		});
 	});
 
-	test.describe("navigate event", () => {
-		test("should fire after a successful forward navigation", async ({
-			page,
-		}) => {
+	test.describe("Navigate event", () => {
+		test("fires after a successful forward navigation", async ({ page }) => {
 			await page.goto("/html/router/index");
 			await page.evaluate(() => {
 				window.__navCount = 0;

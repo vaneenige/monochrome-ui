@@ -90,13 +90,6 @@ Bun.serve({
 					headers: { "Content-Type": "application/javascript" },
 				});
 			}
-		} else if (pathname === "/test-counter.js") {
-			response = new Response(
-				"window.__counter = (window.__counter || 0) + 1;",
-				{
-					headers: { "Content-Type": "application/javascript" },
-				},
-			);
 		} else if (pathname === "/test.css") {
 			response = new Response(
 				await Bun.file(`${fixturesDir}/test.css`).arrayBuffer(),

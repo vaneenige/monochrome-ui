@@ -78,12 +78,16 @@ const routerGz = await gzip("dist/router.js");
 const reactGz = await gzip("dist/react/index.js");
 const vueGz = await gzip("dist/vue/index.js");
 
+// Counts actual runtime tests (so table-driven loops are counted by
+// iterations, not by source occurrences). Lists every spec under the
+// `html` project, which excludes only the router skips in react/vue.
+const listing = await $`bunx playwright test --list --project=html --reporter=line`
+	.quiet()
+	.text();
 const testCounts: Record<string, number> = {};
-for await (const path of new Bun.Glob("tests/*.spec.ts").scan()) {
-	const name = path.replace("tests/", "").replace(".spec.ts", "");
-	testCounts[name] = (
-		(await Bun.file(path).text()).match(/test\(/g) ?? []
-	).length;
+for (const line of listing.split("\n")) {
+	const name = line.match(/\[html\] › (\w+)\.spec\.ts:/)?.[1];
+	if (name) testCounts[name] = (testCounts[name] ?? 0) + 1;
 }
 const totalTests = Object.values(testCounts).reduce((a, b) => a + b, 0);
 

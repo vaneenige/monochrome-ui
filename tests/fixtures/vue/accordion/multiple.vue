@@ -6,9 +6,9 @@ import { Accordion } from "monochrome/vue"
   <div>
     <Accordion.Root
       type="multiple"
-      data-testid="multi-accordion"
+     
     >
-      <Accordion.Item data-testid="multi-item-1">
+      <Accordion.Item>
         <Accordion.Header>
           <Accordion.Trigger data-testid="multi-trigger-1">
             Section A
@@ -18,7 +18,7 @@ import { Accordion } from "monochrome/vue"
           <p>Content for section A. Multiple sections can be open simultaneously.</p>
         </Accordion.Panel>
       </Accordion.Item>
-      <Accordion.Item data-testid="multi-item-2">
+      <Accordion.Item>
         <Accordion.Header>
           <Accordion.Trigger data-testid="multi-trigger-2">
             Section B
@@ -28,7 +28,7 @@ import { Accordion } from "monochrome/vue"
           <p>Content for section B. Open this while A is open.</p>
         </Accordion.Panel>
       </Accordion.Item>
-      <Accordion.Item data-testid="multi-item-3">
+      <Accordion.Item>
         <Accordion.Header>
           <Accordion.Trigger data-testid="multi-trigger-3">
             Section C

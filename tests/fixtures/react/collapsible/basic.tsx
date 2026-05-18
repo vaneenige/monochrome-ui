@@ -3,17 +3,6 @@ import { Collapsible } from "monochrome/react";
 export default () => (
 	<>
 		<div id="output" data-testid="output" />
-		<script
-			// biome-ignore lint/security/noDangerouslySetInnerHtml: test fixture click tracking
-			dangerouslySetInnerHTML={{
-				__html: `
-          document.addEventListener('click', (e) => {
-            const item = e.target.closest('[data-action]')
-            if (item) document.getElementById('output').textContent = item.dataset.action
-          })
-        `,
-			}}
-		/>
 		<button type="button" data-testid="focus-before">
 			Focus before
 		</button>

@@ -49,7 +49,7 @@ import { Dialog, Menu, Popover, Tabs, Tooltip } from "monochrome/vue"
       <Dialog.Trigger data-testid="autofocus-trigger">
         Open autofocus
       </Dialog.Trigger>
-      <Dialog.Content data-testid="autofocus-content">
+      <Dialog.Content>
         <Dialog.Title>
           Autofocus
         </Dialog.Title>
@@ -70,7 +70,7 @@ import { Dialog, Menu, Popover, Tabs, Tooltip } from "monochrome/vue"
     </Dialog.Root>
 
     <Dialog.Root>
-      <Dialog.Trigger data-testid="alert-trigger">
+      <Dialog.Trigger>
         Open alert
       </Dialog.Trigger>
       <Dialog.Content
@@ -83,7 +83,7 @@ import { Dialog, Menu, Popover, Tabs, Tooltip } from "monochrome/vue"
         <Dialog.Description>
           Important message
         </Dialog.Description>
-        <Dialog.Close data-testid="alert-close">
+        <Dialog.Close>
           OK
         </Dialog.Close>
       </Dialog.Content>
@@ -117,7 +117,7 @@ import { Dialog, Menu, Popover, Tabs, Tooltip } from "monochrome/vue"
         data-testid="bare-content"
         aria-label="Quick choice"
       >
-        <Dialog.Close data-testid="bare-close">
+        <Dialog.Close>
           Close
         </Dialog.Close>
       </Dialog.Content>
@@ -128,7 +128,7 @@ import { Dialog, Menu, Popover, Tabs, Tooltip } from "monochrome/vue"
       <Dialog.Trigger data-testid="tabs-dialog-trigger">
         Open tabs dialog
       </Dialog.Trigger>
-      <Dialog.Content data-testid="tabs-dialog-content">
+      <Dialog.Content>
         <Dialog.Title>
           Tabs dialog
         </Dialog.Title>
@@ -156,14 +156,14 @@ import { Dialog, Menu, Popover, Tabs, Tooltip } from "monochrome/vue"
           <Tabs.Panel
             value="t1"
             :focusable="false"
-            data-testid="t1-panel"
+           
           >
             <input data-testid="t1-input">
           </Tabs.Panel>
           <Tabs.Panel
             value="t2"
             :focusable="false"
-            data-testid="t2-panel"
+           
           >
             <a
               data-testid="t2-link"
@@ -188,7 +188,7 @@ import { Dialog, Menu, Popover, Tabs, Tooltip } from "monochrome/vue"
         Menu
       </Menu.Trigger>
       <Menu.Popover data-testid="menu-list">
-        <Menu.Item data-testid="menu-item-1">
+        <Menu.Item>
           Item
         </Menu.Item>
       </Menu.Popover>
@@ -204,10 +204,3 @@ import { Dialog, Menu, Popover, Tabs, Tooltip } from "monochrome/vue"
     </Tooltip.Root>
   </div>
 </template>
-<style>
-.popover, .tooltip { position: relative; display: inline-block; }
-[popover] { position: fixed; inset: auto; margin: 0; top: var(--bottom); left: var(--left); }
-[role="tooltip"] { pointer-events: none; }
-dialog { width: 300px; padding: 0; margin: auto; border: 1px solid #ccc; background: white; }
-dialog::backdrop { background: rgb(0 0 0 / 0.3); }
-</style>

@@ -8,12 +8,12 @@
 <div class="tabs-root" data-testid="tabs-root" id="mcr:tabs:d1">
   <div data-testid="tablist" role="tablist" aria-orientation="horizontal"></div>
 </div>
-<div data-testid="tabs2-root" id="mcr:tabs:d2">
-  <div data-testid="tabs2-tablist" role="tablist" aria-orientation="horizontal">
+<div id="mcr:tabs:d2">
+  <div role="tablist" aria-orientation="horizontal">
     <button data-testid="tabs2-tab-1" type="button" role="tab" id="mct:tabs:d2:t1" aria-selected="true" aria-controls="mcc:tabs:d2:t1" tabindex="0">T1</button>
     <button data-testid="tabs2-tab-2" type="button" role="tab" id="mct:tabs:d2:t2" aria-selected="false" aria-controls="mcc:tabs:d2:t2" tabindex="-1">T2</button>
   </div>
-  <div data-testid="tabs2-panel-1" role="tabpanel" id="mcc:tabs:d2:t1" aria-labelledby="mct:tabs:d2:t1" aria-hidden="false" tabindex="0"><p>Panel T1</p></div>
+  <div role="tabpanel" id="mcc:tabs:d2:t1" aria-labelledby="mct:tabs:d2:t1" aria-hidden="false" tabindex="0"><p>Panel T1</p></div>
   <div data-testid="tabs2-panel-2" role="tabpanel" id="mcc:tabs:d2:t2" aria-labelledby="mct:tabs:d2:t2" aria-hidden="true" hidden tabindex="-1"><p>Panel T2</p></div>
 </div>
 <script>

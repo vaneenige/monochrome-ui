@@ -23,7 +23,7 @@ import { Menu } from "monochrome/vue"
             <Menu.Item data-testid="submenu-item-1">
               Sub Item 1
             </Menu.Item>
-            <Menu.Item data-testid="submenu-item-2">
+            <Menu.Item>
               Sub Item 2
             </Menu.Item>
           </Menu.Popover>

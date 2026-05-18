@@ -10,10 +10,10 @@ import { Menu } from "monochrome/vue"
           Menu A
         </Menu.Trigger>
         <Menu.Popover data-testid="menu-a-list">
-          <Menu.Item data-testid="menu-a-item-1">
+          <Menu.Item>
             Item A1
           </Menu.Item>
-          <Menu.Item data-testid="menu-a-item-2">
+          <Menu.Item>
             Item A2
           </Menu.Item>
         </Menu.Popover>
@@ -23,10 +23,10 @@ import { Menu } from "monochrome/vue"
           Menu B
         </Menu.Trigger>
         <Menu.Popover data-testid="menu-b-list">
-          <Menu.Item data-testid="menu-b-item-1">
+          <Menu.Item>
             Item B1
           </Menu.Item>
-          <Menu.Item data-testid="menu-b-item-2">
+          <Menu.Item>
             Item B2
           </Menu.Item>
         </Menu.Popover>

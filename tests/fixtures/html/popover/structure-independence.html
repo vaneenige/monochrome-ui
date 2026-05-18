@@ -1,0 +1,12 @@
+<header>
+  <button data-testid="trigger" type="button" id="mct:popover:s1" aria-controls="mcc:popover:s1" aria-expanded="false">Open</button>
+</header>
+<main data-testid="main">
+  <p>Unrelated chrome between the trigger and its content.</p>
+</main>
+<aside>
+  <div data-testid="content" id="mcc:popover:s1" aria-labelledby="mct:popover:s1" aria-hidden="true" popover="manual" tabindex="-1">
+    <p>Popover content</p>
+    <button type="button" data-testid="inside">Inside</button>
+  </div>
+</aside>

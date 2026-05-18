@@ -1,10 +1,3 @@
-<style>
-  .tooltip { position: relative; display: inline-block; }
-  .popover { position: relative; display: inline-block; }
-  [popover] { position: fixed; inset: auto; margin: 0; top: var(--bottom); left: var(--left); }
-  [role="tooltip"] { pointer-events: none; }
-</style>
-<div id="output" data-testid="output"></div>
 <button type="button" data-testid="focus-before">Focus before</button>
 <div class="tooltip">
   <button
@@ -73,6 +66,6 @@
 <button data-testid="menu-trigger" type="button" id="mct:menu:1" aria-controls="mcc:menu:1" aria-expanded="false" aria-haspopup="menu" tabindex="0" role="button">Menu</button>
 <ul data-testid="menu-list" role="menu" id="mcc:menu:1" aria-labelledby="mct:menu:1" aria-hidden="true" popover="manual">
   <li role="none">
-    <button data-testid="menu-item-1" type="button" role="menuitem" tabindex="-1">Menu Item 1</button>
+    <button type="button" role="menuitem" tabindex="-1">Menu Item 1</button>
   </li>
 </ul>

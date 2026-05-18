@@ -5,19 +5,9 @@ export default () => (
 		<div id="output" data-testid="output" />
 		<div
 			data-testid="scroll-container"
-			style={{
-				width: "200px",
-				height: "200px",
-				overflow: "auto",
-			}}
+			style={{ width: "200px", height: "200px", overflow: "auto" }}
 		>
-			<div style={{ height: "1000px", width: "100%" }}>
-				Scroll me! <br />
-				{Array.from({ length: 20 }).map((_, i) => (
-					// biome-ignore lint/suspicious/noArrayIndexKey: Test fixture scroll content
-					<div key={i}>Item {i + 1}</div>
-				))}
-			</div>
+			<div style={{ height: "1000px" }} />
 		</div>
 		<div>
 			<button type="button" data-testid="focus-before">
@@ -53,13 +43,13 @@ export default () => (
 			<Menu.Root>
 				<Menu.Trigger data-testid="second-trigger">Second Menu</Menu.Trigger>
 				<Menu.Popover data-testid="second-list">
-					<Menu.Item data-testid="second-item-1">Second Item 1</Menu.Item>
-					<Menu.Item data-testid="second-item-2">Second Item 2</Menu.Item>
+					<Menu.Item>Second Item 1</Menu.Item>
+					<Menu.Item>Second Item 2</Menu.Item>
 				</Menu.Popover>
 			</Menu.Root>
 		</div>
 		<Menu.Root>
-			<Menu.Trigger data-testid="svg-trigger">
+			<Menu.Trigger>
 				<svg
 					data-testid="svg-icon"
 					aria-hidden="true"
@@ -72,8 +62,8 @@ export default () => (
 				Menu with SVG
 			</Menu.Trigger>
 			<Menu.Popover data-testid="svg-list">
-				<Menu.Item data-testid="svg-item-1">SVG Menu Item 1</Menu.Item>
-				<Menu.Item data-testid="svg-item-2">SVG Menu Item 2</Menu.Item>
+				<Menu.Item>SVG Menu Item 1</Menu.Item>
+				<Menu.Item>SVG Menu Item 2</Menu.Item>
 			</Menu.Popover>
 		</Menu.Root>
 		<Menu.Root>
@@ -91,11 +81,7 @@ export default () => (
 				>
 					Bold
 				</Menu.CheckboxItem>
-				<Menu.RadioItem
-					data-testid="radio-1"
-					data-action="radio-1-clicked"
-					checked
-				>
+				<Menu.RadioItem data-action="radio-1-clicked" checked>
 					Light
 				</Menu.RadioItem>
 				<Menu.RadioItem

@@ -12,13 +12,7 @@ import { Menu } from "monochrome/vue"
       data-testid="scroll-container"
       style="width: 200px; height: 200px; overflow: auto"
     >
-      <div style="height: 1000px; width: 100%">
-        Scroll me!
-        <br>
-        <div v-for="i in 20" :key="i">
-          Item {{ i }}
-        </div>
-      </div>
+      <div style="height: 1000px" />
     </div>
     <div>
       <button
@@ -70,17 +64,17 @@ import { Menu } from "monochrome/vue"
           Second Menu
         </Menu.Trigger>
         <Menu.Popover data-testid="second-list">
-          <Menu.Item data-testid="second-item-1">
+          <Menu.Item>
             Second Item 1
           </Menu.Item>
-          <Menu.Item data-testid="second-item-2">
+          <Menu.Item>
             Second Item 2
           </Menu.Item>
         </Menu.Popover>
       </Menu.Root>
     </div>
     <Menu.Root>
-      <Menu.Trigger data-testid="svg-trigger">
+      <Menu.Trigger>
         <svg
           data-testid="svg-icon"
           aria-hidden="true"
@@ -93,10 +87,10 @@ import { Menu } from "monochrome/vue"
         Menu with SVG
       </Menu.Trigger>
       <Menu.Popover data-testid="svg-list">
-        <Menu.Item data-testid="svg-item-1">
+        <Menu.Item>
           SVG Menu Item 1
         </Menu.Item>
-        <Menu.Item data-testid="svg-item-2">
+        <Menu.Item>
           SVG Menu Item 2
         </Menu.Item>
       </Menu.Popover>
@@ -123,7 +117,7 @@ import { Menu } from "monochrome/vue"
           Bold
         </Menu.CheckboxItem>
         <Menu.RadioItem
-          data-testid="radio-1"
+         
           data-action="radio-1-clicked"
           :checked="true"
         >

@@ -6,9 +6,9 @@ import { Tabs } from "monochrome/vue"
   <div>
     <Tabs.Root
       default-value="single"
-      data-testid="single-tab-container"
+     
     >
-      <Tabs.List data-testid="single-tablist">
+      <Tabs.List>
         <Tabs.Tab
           value="single"
           data-testid="single-tab"

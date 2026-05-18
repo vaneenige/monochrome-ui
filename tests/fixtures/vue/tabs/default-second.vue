@@ -6,9 +6,9 @@ import { Tabs } from "monochrome/vue"
   <div>
     <Tabs.Root
       default-value="dtab2"
-      data-testid="default-second-container"
+     
     >
-      <Tabs.List data-testid="default-second-tablist">
+      <Tabs.List>
         <Tabs.Tab
           value="dtab1"
           data-testid="dtab-1"
@@ -42,7 +42,7 @@ import { Tabs } from "monochrome/vue"
       </Tabs.Panel>
       <Tabs.Panel
         value="dtab3"
-        data-testid="dpanel-3"
+       
       >
         <p>Content for Tab 3</p>
       </Tabs.Panel>

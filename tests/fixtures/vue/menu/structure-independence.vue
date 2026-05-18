@@ -5,7 +5,7 @@ import { Menu } from "monochrome/vue"
 <template>
   <div>
     <Menu.Root>
-      <section data-testid="section-a">
+      <section>
         <h2>Bare siblings</h2>
         <Menu.Trigger data-testid="a-trigger">
           Menu A
@@ -14,7 +14,7 @@ import { Menu } from "monochrome/vue"
           <Menu.Item data-testid="a-item-1">
             A Item 1
           </Menu.Item>
-          <Menu.Item data-testid="a-item-2">
+          <Menu.Item>
             A Item 2
           </Menu.Item>
         </Menu.Popover>
@@ -22,7 +22,7 @@ import { Menu } from "monochrome/vue"
     </Menu.Root>
 
     <Menu.Root>
-      <section data-testid="section-b">
+      <section>
         <h2>Separated by unrelated content</h2>
         <Menu.Trigger data-testid="b-trigger">
           Menu B
@@ -31,7 +31,7 @@ import { Menu } from "monochrome/vue"
         <div>
           <span>More chrome that has nothing to do with the menu.</span>
         </div>
-        <Menu.Popover data-testid="b-list">
+        <Menu.Popover>
           <Menu.Item data-testid="b-item-1">
             B Item 1
           </Menu.Item>
@@ -43,7 +43,7 @@ import { Menu } from "monochrome/vue"
     </Menu.Root>
 
     <Menu.Root>
-      <header data-testid="header-c">
+      <header>
         <h2>Trigger in a different container from popover</h2>
         <Menu.Trigger data-testid="c-trigger">
           Menu C
@@ -52,7 +52,7 @@ import { Menu } from "monochrome/vue"
       <main data-testid="main-c">
         <p>Main content lives between Menu C's trigger and its popover.</p>
       </main>
-      <aside data-testid="aside-c">
+      <aside>
         <Menu.Popover data-testid="c-list">
           <Menu.Item data-testid="c-item-1">
             C Item 1
@@ -61,12 +61,12 @@ import { Menu } from "monochrome/vue"
             <Menu.Trigger data-testid="c-submenu-trigger">
               C Submenu
             </Menu.Trigger>
-            <footer data-testid="footer-c">
+            <footer>
               <Menu.Popover data-testid="c-submenu-list">
                 <Menu.Item data-testid="c-sub-item-1">
                   C Sub Item 1
                 </Menu.Item>
-                <Menu.Item data-testid="c-sub-item-2">
+                <Menu.Item>
                   C Sub Item 2
                 </Menu.Item>
               </Menu.Popover>

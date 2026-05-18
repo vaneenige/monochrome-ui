@@ -2,8 +2,8 @@ import { Accordion } from "monochrome/react";
 
 export default () => (
 	<>
-		<Accordion.Root type="single" data-testid="single-item-accordion">
-			<Accordion.Item data-testid="only-item">
+		<Accordion.Root type="single">
+			<Accordion.Item>
 				<Accordion.Header>
 					<Accordion.Trigger data-testid="only-trigger">
 						Only Section

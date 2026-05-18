@@ -2,8 +2,8 @@ import { Accordion } from "monochrome/react";
 
 export default () => (
 	<>
-		<Accordion.Root type="multiple" data-testid="multi-accordion">
-			<Accordion.Item data-testid="multi-item-1">
+		<Accordion.Root type="multiple">
+			<Accordion.Item>
 				<Accordion.Header>
 					<Accordion.Trigger data-testid="multi-trigger-1">
 						Section A
@@ -15,7 +15,7 @@ export default () => (
 					</p>
 				</Accordion.Panel>
 			</Accordion.Item>
-			<Accordion.Item data-testid="multi-item-2">
+			<Accordion.Item>
 				<Accordion.Header>
 					<Accordion.Trigger data-testid="multi-trigger-2">
 						Section B
@@ -25,7 +25,7 @@ export default () => (
 					<p>Content for section B. Open this while A is open.</p>
 				</Accordion.Panel>
 			</Accordion.Item>
-			<Accordion.Item data-testid="multi-item-3">
+			<Accordion.Item>
 				<Accordion.Header>
 					<Accordion.Trigger data-testid="multi-trigger-3">
 						Section C

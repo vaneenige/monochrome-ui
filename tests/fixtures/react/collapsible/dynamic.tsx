@@ -50,7 +50,7 @@ function App() {
 				</Collapsible.Root>
 			)}
 
-			<Collapsible.Root data-testid="collapsible2-root">
+			<Collapsible.Root>
 				<Collapsible.Trigger data-testid="collapsible2-trigger">
 					Toggle Content 2
 				</Collapsible.Trigger>

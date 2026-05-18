@@ -6,21 +6,21 @@ import { Accordion } from "monochrome/vue"
   <div>
     <Accordion.Root
       type="single"
-      data-testid="default-open-accordion"
+     
     >
-      <Accordion.Item data-testid="default-item-1">
+      <Accordion.Item>
         <Accordion.Header>
-          <Accordion.Trigger data-testid="default-trigger-1">
+          <Accordion.Trigger>
             Closed Section
           </Accordion.Trigger>
         </Accordion.Header>
-        <Accordion.Panel data-testid="default-content-1">
+        <Accordion.Panel>
           <p>This section is closed by default.</p>
         </Accordion.Panel>
       </Accordion.Item>
       <Accordion.Item
         :open="true"
-        data-testid="default-item-2"
+       
       >
         <Accordion.Header>
           <Accordion.Trigger data-testid="default-trigger-2">
@@ -31,13 +31,13 @@ import { Accordion } from "monochrome/vue"
           <p>This section is open by default.</p>
         </Accordion.Panel>
       </Accordion.Item>
-      <Accordion.Item data-testid="default-item-3">
+      <Accordion.Item>
         <Accordion.Header>
-          <Accordion.Trigger data-testid="default-trigger-3">
+          <Accordion.Trigger>
             Another Closed Section
           </Accordion.Trigger>
         </Accordion.Header>
-        <Accordion.Panel data-testid="default-content-3">
+        <Accordion.Panel>
           <p>This section is also closed by default.</p>
         </Accordion.Panel>
       </Accordion.Item>

@@ -1,38 +1,47 @@
-/* Minimal styles required for tests */
-
-ul[popover]:popover-open {
-  display: flex;
-}
-
+/* Positions every popover-API element using the CSS variables that
+   the core publishes on the content element. One rule covers Menu,
+   Popover, and Tooltip content; native <dialog> is centered by the
+   UA when opened with showModal() and needs no positioning here. */
 [popover] {
+  position: fixed;
+  inset: auto;
+  margin: 0;
   border: none;
+  top: var(--bottom);
+  left: var(--left);
 }
 
+/* Submenus open to the side of their parent menuitem. */
+[role="menu"] [role="menu"] {
+  top: var(--top);
+  left: var(--right);
+  margin-left: 16px;
+}
+
+/* Menu items stack vertically; menubar items lay out horizontally. */
 ul {
   margin: 0;
   padding: 0;
   list-style: none;
+}
+ul[popover]:popover-open {
+  display: flex;
   flex-direction: column;
 }
-
-/* Menu positioning */
-
 [role="menubar"] {
   display: flex;
   flex-direction: row;
   gap: 8px;
 }
 
-[role="menu"] {
-  position: fixed;
-  inset: auto;
-  margin: 0;
-  top: var(--bottom);
-  left: var(--left);
+/* Popover and tooltip wrappers sit inline so their popovers (which open
+   at the trigger's bottom) don't stack over the next trigger in source
+   order. Tooltips ignore pointer events so the cursor can leave the
+   trigger through the tooltip without triggering hover on it. */
+.popover,
+.tooltip {
+  display: inline-block;
 }
-
-[role="menu"] [role="menu"] {
-  top: var(--top);
-  left: var(--right);
-  margin-left: 16px;
+[role="tooltip"] {
+  pointer-events: none;
 }

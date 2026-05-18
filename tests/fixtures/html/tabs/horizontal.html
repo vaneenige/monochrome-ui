@@ -1,11 +1,6 @@
-<div id="output" data-testid="output">
-</div>
-<script>document.addEventListener('click', (e) => {
-            const item = e.target.closest('[data-action]')
-            if (item) document.getElementById('output').textContent = item.dataset.action
-          })</script>
+<div id="output" data-testid="output"></div>
 <button type="button" data-testid="focus-before">Focus before</button>
-<div data-testid="tabs-container" id="mcr:tabs:1">
+<div id="mcr:tabs:1">
   <div data-testid="tablist" role="tablist" aria-orientation="horizontal">
     <button data-testid="tab-1" data-action="tab-1-clicked" type="button" role="tab" id="mct:tabs:1:tab1" aria-selected="true" aria-controls="mcc:tabs:1:tab1" tabindex="0">Tab 1</button>
     <button data-testid="tab-2" data-action="tab-2-clicked" type="button" role="tab" id="mct:tabs:1:tab2" aria-selected="false" aria-controls="mcc:tabs:1:tab2" tabindex="-1">Tab 2</button>
@@ -22,16 +17,16 @@
   </div>
 </div>
 <button type="button" data-testid="focus-after">Focus after</button>
-<div data-testid="svg-tabs-container" id="mcr:tabs:5">
-  <div data-testid="svg-tablist" role="tablist" aria-orientation="horizontal">
-    <button data-testid="svg-tab-1" type="button" role="tab" id="mct:tabs:5:svgtab1" aria-selected="true" aria-controls="mcc:tabs:5:svgtab1" tabindex="0">
+<div id="mcr:tabs:5">
+  <div role="tablist" aria-orientation="horizontal">
+    <button type="button" role="tab" id="mct:tabs:5:svgtab1" aria-selected="true" aria-controls="mcc:tabs:5:svgtab1" tabindex="0">
       <svg data-testid="svg-icon-1" aria-hidden="true" width="16" height="16" viewBox="0 0 16 16">
         <path d="M4 6l4 4 4-4">
         </path>
       </svg>
       Tab 1
     </button>
-    <button data-testid="svg-tab-2" type="button" role="tab" id="mct:tabs:5:svgtab2" aria-selected="false" aria-controls="mcc:tabs:5:svgtab2" tabindex="-1">
+    <button type="button" role="tab" id="mct:tabs:5:svgtab2" aria-selected="false" aria-controls="mcc:tabs:5:svgtab2" tabindex="-1">
       <svg data-testid="svg-icon-2" aria-hidden="true" width="16" height="16" viewBox="0 0 16 16">
         <path d="M4 6l4 4 4-4">
         </path>

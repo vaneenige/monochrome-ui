@@ -102,9 +102,9 @@ function toggleDisabled() {
     </Tabs.Root>
     <Tabs.Root
       default-value="t1"
-      data-testid="tabs2-root"
+     
     >
-      <Tabs.List data-testid="tabs2-tablist">
+      <Tabs.List>
         <Tabs.Tab
           value="t1"
           data-testid="tabs2-tab-1"
@@ -120,7 +120,7 @@ function toggleDisabled() {
       </Tabs.List>
       <Tabs.Panel
         value="t1"
-        data-testid="tabs2-panel-1"
+       
       >
         <p>Panel T1</p>
       </Tabs.Panel>

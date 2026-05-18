@@ -6,9 +6,9 @@ import { Accordion } from "monochrome/vue"
   <div>
     <Accordion.Root
       type="multiple"
-      data-testid="rich-accordion"
+     
     >
-      <Accordion.Item data-testid="rich-item-1">
+      <Accordion.Item>
         <Accordion.Header>
           <Accordion.Trigger data-testid="rich-trigger-1">
             Section with Form
@@ -32,13 +32,13 @@ import { Accordion } from "monochrome/vue"
           </form>
         </Accordion.Panel>
       </Accordion.Item>
-      <Accordion.Item data-testid="rich-item-2">
+      <Accordion.Item>
         <Accordion.Header>
-          <Accordion.Trigger data-testid="rich-trigger-2">
+          <Accordion.Trigger>
             Section with List
           </Accordion.Trigger>
         </Accordion.Header>
-        <Accordion.Panel data-testid="rich-content-2">
+        <Accordion.Panel>
           <ul>
             <li>Item A</li>
             <li>Item B</li>

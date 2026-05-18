@@ -5,7 +5,7 @@ export default () => (
 		<button type="button" data-testid="focus-before">
 			Focus before
 		</button>
-		<Tabs.Root defaultValue="tab1" data-testid="tabs-container">
+		<Tabs.Root defaultValue="tab1">
 			<Tabs.List data-testid="tablist">
 				<Tabs.Tab value="tab1" data-testid="dtab-1">
 					Tab 1
@@ -23,7 +23,7 @@ export default () => (
 			<Tabs.Panel value="tab2" data-testid="dpanel-2">
 				<p>Content for Tab 2</p>
 			</Tabs.Panel>
-			<Tabs.Panel value="tab3" data-testid="dpanel-3">
+			<Tabs.Panel value="tab3">
 				<p>Content for Tab 3</p>
 			</Tabs.Panel>
 		</Tabs.Root>

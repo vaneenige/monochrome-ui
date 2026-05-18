@@ -80,14 +80,14 @@ import { Menu, Popover } from "monochrome/vue"
         </Popover.Description>
         <button
           type="button"
-          data-testid="described-action"
+         
         >
           Action
         </button>
       </Popover.Content>
     </Popover.Root>
     <Popover.Root class="popover">
-      <Popover.Trigger data-testid="dialog-popover-trigger">
+      <Popover.Trigger>
         Open dialog popover
       </Popover.Trigger>
       <Popover.Content
@@ -95,22 +95,22 @@ import { Menu, Popover } from "monochrome/vue"
         role="dialog"
         aria-label="Filter results"
       >
-        <Popover.Title data-testid="dialog-popover-title">
+        <Popover.Title>
           Filter results
         </Popover.Title>
-        <Popover.Description data-testid="dialog-popover-desc">
+        <Popover.Description>
           Pick a date range.
         </Popover.Description>
         <button
           type="button"
-          data-testid="dialog-popover-apply"
+         
         >
           Apply
         </button>
       </Popover.Content>
     </Popover.Root>
     <Popover.Root class="popover">
-      <Popover.Trigger data-testid="aria-label-trigger">
+      <Popover.Trigger>
         Plain
       </Popover.Trigger>
       <Popover.Content
@@ -125,7 +125,7 @@ import { Menu, Popover } from "monochrome/vue"
         Menu
       </Menu.Trigger>
       <Menu.Popover data-testid="menu-list">
-        <Menu.Item data-testid="menu-item-1">
+        <Menu.Item>
           Menu Item 1
         </Menu.Item>
       </Menu.Popover>

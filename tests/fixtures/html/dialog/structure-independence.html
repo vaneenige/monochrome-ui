@@ -1,0 +1,12 @@
+<header>
+  <button data-testid="trigger" type="button" id="mct:dialog-open:s1" aria-haspopup="dialog" aria-controls="mcc:dialog:s1">Open</button>
+</header>
+<main data-testid="main">
+  <p>Unrelated chrome between the trigger and its dialog.</p>
+</main>
+<aside>
+  <dialog data-testid="content" id="mcc:dialog:s1" aria-labelledby="mcc:dialog-title:s1" tabindex="-1">
+    <h2 id="mcc:dialog-title:s1">Confirm</h2>
+    <button data-testid="close" type="button" id="mct:dialog-close:s1">Close</button>
+  </dialog>
+</aside>

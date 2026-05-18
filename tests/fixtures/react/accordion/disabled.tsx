@@ -5,8 +5,8 @@ export default () => (
 		<button type="button" data-testid="focus-before">
 			Focus before
 		</button>
-		<Accordion.Root type="single" data-testid="disabled-accordion">
-			<Accordion.Item data-testid="disabled-item-1">
+		<Accordion.Root type="single">
+			<Accordion.Item>
 				<Accordion.Header>
 					<Accordion.Trigger data-testid="disabled-trigger-1">
 						Section 1
@@ -16,7 +16,7 @@ export default () => (
 					<p>Content for section 1</p>
 				</Accordion.Panel>
 			</Accordion.Item>
-			<Accordion.Item disabled data-testid="disabled-item-2">
+			<Accordion.Item disabled>
 				<Accordion.Header>
 					<Accordion.Trigger data-testid="disabled-trigger-2">
 						Section 2 (Disabled)
@@ -26,7 +26,7 @@ export default () => (
 					<p>Content for section 2 (disabled)</p>
 				</Accordion.Panel>
 			</Accordion.Item>
-			<Accordion.Item data-testid="disabled-item-3">
+			<Accordion.Item>
 				<Accordion.Header>
 					<Accordion.Trigger data-testid="disabled-trigger-3">
 						Section 3

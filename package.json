@@ -106,15 +106,15 @@
       "vue": 2326
     },
     "tests": {
-      "total": 468,
-      "collapsible": 37,
+      "total": 296,
+      "accordion": 33,
+      "collapsible": 22,
+      "dialog": 17,
+      "menu": 118,
+      "popover": 24,
       "router": 28,
-      "accordion": 60,
-      "menu": 184,
-      "tooltip": 24,
-      "tabs": 66,
-      "dialog": 36,
-      "popover": 33
+      "tabs": 38,
+      "tooltip": 16
     }
   }
 }

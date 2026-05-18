@@ -2,8 +2,8 @@ import { Tabs } from "monochrome/react";
 
 export default () => (
 	<>
-		<Tabs.Root defaultValue="single" data-testid="single-tab-container">
-			<Tabs.List data-testid="single-tablist">
+		<Tabs.Root defaultValue="single">
+			<Tabs.List>
 				<Tabs.Tab value="single" data-testid="single-tab">
 					Only Tab
 				</Tabs.Tab>

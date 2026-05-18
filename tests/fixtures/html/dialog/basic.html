@@ -1,11 +1,3 @@
-<style>
-  .popover, .tooltip { position: relative; display: inline-block; }
-  [popover] { position: fixed; inset: auto; margin: 0; top: var(--bottom); left: var(--left); }
-  [role="tooltip"] { pointer-events: none; }
-  dialog { width: 300px; padding: 0; margin: auto; border: 1px solid #ccc; background: white; }
-  dialog::backdrop { background: rgb(0 0 0 / 0.3); }
-</style>
-<div id="output" data-testid="output"></div>
 <button type="button" data-testid="focus-before">Focus before</button>
 
 <div>
@@ -27,7 +19,7 @@
 <div>
   <button data-testid="autofocus-trigger" type="button"
     id="mct:dialog-open:2" aria-haspopup="dialog" aria-controls="mcc:dialog:2">Open autofocus</button>
-  <dialog data-testid="autofocus-content"
+  <dialog
     id="mcc:dialog:2"
     aria-labelledby="mcc:dialog-title:2" aria-describedby="mcc:dialog-description:2"
     tabindex="-1">
@@ -39,7 +31,7 @@
 </div>
 
 <div>
-  <button data-testid="alert-trigger" type="button"
+  <button type="button"
     id="mct:dialog-open:3" aria-haspopup="dialog" aria-controls="mcc:dialog:3">Open alert</button>
   <dialog data-testid="alert-content"
     role="alertdialog"
@@ -48,7 +40,7 @@
     tabindex="-1">
     <h2 id="mcc:dialog-title:3">Alert</h2>
     <p id="mcc:dialog-description:3">Important message</p>
-    <button data-testid="alert-close" type="button" id="mct:dialog-close:3">OK</button>
+    <button type="button" id="mct:dialog-close:3">OK</button>
   </dialog>
 </div>
 
@@ -72,29 +64,29 @@
     id="mcc:dialog:5"
     aria-label="Quick choice"
     tabindex="-1">
-    <button data-testid="bare-close" type="button" id="mct:dialog-close:5">Close</button>
+    <button type="button" id="mct:dialog-close:5">Close</button>
   </dialog>
 </div>
 
 <div>
   <button data-testid="tabs-dialog-trigger" type="button"
     id="mct:dialog-open:6" aria-haspopup="dialog" aria-controls="mcc:dialog:6">Open tabs dialog</button>
-  <dialog data-testid="tabs-dialog-content"
+  <dialog
     id="mcc:dialog:6"
     aria-labelledby="mcc:dialog-title:6" aria-describedby="mcc:dialog-description:6"
     tabindex="-1">
     <h2 id="mcc:dialog-title:6">Tabs dialog</h2>
     <p id="mcc:dialog-description:6">Switching tabs should update the focus trap.</p>
     <button data-testid="tabs-dialog-close" type="button" id="mct:dialog-close:6">Close</button>
-    <div id="mcr:tabs:100" data-orientation="horizontal">
+    <div id="mcr:tabs:100">
       <div role="tablist" aria-orientation="horizontal">
         <button data-testid="t1-trigger" type="button" role="tab" id="mct:tabs:100:t1" aria-selected="true" aria-controls="mcc:tabs:100:t1" tabindex="0">T1</button>
         <button data-testid="t2-trigger" type="button" role="tab" id="mct:tabs:100:t2" aria-selected="false" aria-controls="mcc:tabs:100:t2" tabindex="-1">T2</button>
       </div>
-      <div data-testid="t1-panel" role="tabpanel" id="mcc:tabs:100:t1" aria-labelledby="mct:tabs:100:t1" aria-hidden="false" data-orientation="horizontal">
+      <div role="tabpanel" id="mcc:tabs:100:t1" aria-labelledby="mct:tabs:100:t1" aria-hidden="false">
         <input data-testid="t1-input" />
       </div>
-      <div data-testid="t2-panel" role="tabpanel" id="mcc:tabs:100:t2" aria-labelledby="mct:tabs:100:t2" aria-hidden="true" hidden="until-found" data-orientation="horizontal">
+      <div role="tabpanel" id="mcc:tabs:100:t2" aria-labelledby="mct:tabs:100:t2" aria-hidden="true" hidden>
         <a data-testid="t2-link" href="/link">Link</a>
       </div>
     </div>
@@ -114,7 +106,7 @@
   aria-controls="mcc:menu:1" aria-expanded="false" aria-haspopup="menu" tabindex="0" role="button">Menu</button>
 <ul data-testid="menu-list" role="menu" id="mcc:menu:1"
   aria-labelledby="mct:menu:1" aria-hidden="true" popover="manual">
-  <li role="none"><button data-testid="menu-item-1" type="button" role="menuitem" tabindex="-1">Item</button></li>
+  <li role="none"><button type="button" role="menuitem" tabindex="-1">Item</button></li>
 </ul>
 
 <div class="tooltip">

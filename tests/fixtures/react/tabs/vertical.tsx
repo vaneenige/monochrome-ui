@@ -2,12 +2,8 @@ import { Tabs } from "monochrome/react";
 
 export default () => (
 	<>
-		<Tabs.Root
-			defaultValue="vtab1"
-			orientation="vertical"
-			data-testid="vertical-tabs-container"
-		>
-			<Tabs.List data-testid="vertical-tablist">
+		<Tabs.Root defaultValue="vtab1" orientation="vertical">
+			<Tabs.List>
 				<Tabs.Tab value="vtab1" data-testid="vtab-1">
 					Vertical Tab 1
 				</Tabs.Tab>

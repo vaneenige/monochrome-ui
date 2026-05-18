@@ -2,132 +2,80 @@ import { expect, test } from "./fixtures";
 import { scrollAndSettle } from "./helpers";
 
 test.describe("Tabs", () => {
-	test.describe("ARIA Attributes", () => {
+	test.describe("ARIA", () => {
 		test.beforeEach(async ({ page, renderer }) => {
 			await page.goto(`/${renderer}/tabs/horizontal`);
 		});
 
-		test("should have `role='tablist'` on the tab container", async ({
-			page,
-			renderer,
-		}) => {
-			const tablist = page.getByTestId("tab-1").locator("..");
-			await expect(tablist).toHaveAttribute("role", "tablist");
-		});
-
-		test("should have `role='tab'` on each tab trigger", async ({
-			page,
-			renderer,
-		}) => {
-			await expect(page.getByTestId("tab-1")).toHaveAttribute("role", "tab");
-			await expect(page.getByTestId("tab-2")).toHaveAttribute("role", "tab");
-			await expect(page.getByTestId("tab-3")).toHaveAttribute("role", "tab");
-		});
-
-		test("should have `role='tabpanel'` on each panel", async ({
-			page,
-			renderer,
-		}) => {
-			await expect(page.getByTestId("panel-1")).toHaveAttribute(
+		test("declares the tablist/tab/tabpanel roles", async ({ page }) => {
+			await expect(page.getByTestId("tab-1").locator("..")).toHaveAttribute(
 				"role",
-				"tabpanel",
+				"tablist",
 			);
-			await expect(page.getByTestId("panel-2")).toHaveAttribute(
-				"role",
-				"tabpanel",
-			);
-			await expect(page.getByTestId("panel-3")).toHaveAttribute(
-				"role",
-				"tabpanel",
-			);
+			for (const id of ["tab-1", "tab-2", "tab-3"]) {
+				await expect(page.getByTestId(id)).toHaveAttribute("role", "tab");
+			}
+			for (const id of ["panel-1", "panel-2", "panel-3"]) {
+				await expect(page.getByTestId(id)).toHaveAttribute("role", "tabpanel");
+			}
 		});
 
-		test("should have `aria-selected='true'` on the selected tab", async ({
+		test("links each tab to its panel via `aria-controls`/`aria-labelledby`", async ({
 			page,
-			renderer,
 		}) => {
-			await expect(page.getByTestId("tab-1")).toHaveAttribute(
-				"aria-selected",
-				"true",
-			);
-			await expect(page.getByTestId("tab-2")).toHaveAttribute(
-				"aria-selected",
-				"false",
-			);
-		});
-
-		test("should have `aria-controls` on tab linking to panel", async ({
-			page,
-			renderer,
-		}) => {
+			const tabId = await page.getByTestId("tab-1").getAttribute("id");
 			const panelId = await page.getByTestId("panel-1").getAttribute("id");
 			await expect(page.getByTestId("tab-1")).toHaveAttribute(
 				"aria-controls",
 				panelId as string,
 			);
-		});
-
-		test("should have `aria-labelledby` on panel linking to tab", async ({
-			page,
-			renderer,
-		}) => {
-			const tabId = await page.getByTestId("tab-1").getAttribute("id");
 			await expect(page.getByTestId("panel-1")).toHaveAttribute(
 				"aria-labelledby",
 				tabId as string,
 			);
 		});
 
-		test("should have correct `aria-hidden` on panels", async ({
+		test("moves selection state across the active and inactive tabs", async ({
 			page,
-			renderer,
 		}) => {
+			await expect(page.getByTestId("tab-1")).toHaveAttribute(
+				"aria-selected",
+				"true",
+			);
+			await expect(page.getByTestId("tab-1")).toHaveAttribute("tabindex", "0");
+			await expect(page.getByTestId("tab-2")).toHaveAttribute(
+				"aria-selected",
+				"false",
+			);
+			await expect(page.getByTestId("tab-2")).toHaveAttribute("tabindex", "-1");
+			await expect(page.getByTestId("tab-3")).toHaveAttribute("tabindex", "-1");
 			await expect(page.getByTestId("panel-1")).toHaveAttribute(
 				"aria-hidden",
 				"false",
 			);
-			await expect(page.getByTestId("panel-2")).toHaveAttribute(
-				"aria-hidden",
-				"true",
-			);
-			await expect(page.getByTestId("panel-3")).toHaveAttribute(
-				"aria-hidden",
-				"true",
-			);
-		});
-
-		test("should have correct `tabindex` on tabs", async ({
-			page,
-			renderer,
-		}) => {
-			await expect(page.getByTestId("tab-1")).toHaveAttribute("tabindex", "0");
-			await expect(page.getByTestId("tab-2")).toHaveAttribute("tabindex", "-1");
-			await expect(page.getByTestId("tab-3")).toHaveAttribute("tabindex", "-1");
-		});
-
-		test("should have correct `tabindex` on panels", async ({
-			page,
-			renderer,
-		}) => {
 			await expect(page.getByTestId("panel-1")).toHaveAttribute(
 				"tabindex",
 				"0",
 			);
 			await expect(page.getByTestId("panel-2")).toHaveAttribute(
+				"aria-hidden",
+				"true",
+			);
+			await expect(page.getByTestId("panel-2")).toHaveAttribute(
 				"tabindex",
 				"-1",
+			);
+			await expect(page.getByTestId("panel-3")).toHaveAttribute(
+				"aria-hidden",
+				"true",
 			);
 			await expect(page.getByTestId("panel-3")).toHaveAttribute(
 				"tabindex",
 				"-1",
 			);
-		});
 
-		test("should update `tabindex` when selection changes", async ({
-			page,
-			renderer,
-		}) => {
 			await page.getByTestId("tab-2").click();
+
 			await expect(page.getByTestId("tab-1")).toHaveAttribute("tabindex", "-1");
 			await expect(page.getByTestId("tab-2")).toHaveAttribute("tabindex", "0");
 			await expect(page.getByTestId("panel-1")).toHaveAttribute(
@@ -140,39 +88,24 @@ test.describe("Tabs", () => {
 			);
 		});
 
-		test("should have `aria-orientation` on tablist", async ({
+		test("publishes `aria-orientation` on the tablist for both layouts", async ({
 			page,
 			renderer,
 		}) => {
-			const horizontalTablist = page.getByTestId("tab-1").locator("..");
-			await expect(horizontalTablist).toHaveAttribute(
+			await expect(page.getByTestId("tab-1").locator("..")).toHaveAttribute(
 				"aria-orientation",
 				"horizontal",
 			);
-
 			await page.goto(`/${renderer}/tabs/vertical`);
-			const verticalTablist = page.getByTestId("vtab-1").locator("..");
-			await expect(verticalTablist).toHaveAttribute(
+			await expect(page.getByTestId("vtab-1").locator("..")).toHaveAttribute(
 				"aria-orientation",
 				"vertical",
 			);
 		});
 	});
 
-	test.describe("Default Selection", () => {
-		test("should select the tab matching defaultValue", async ({
-			page,
-			renderer,
-		}) => {
-			await page.goto(`/${renderer}/tabs/horizontal`);
-			await expect(page.getByTestId("tab-1")).toHaveAttribute(
-				"aria-selected",
-				"true",
-			);
-			await expect(page.getByTestId("panel-1")).toBeVisible();
-		});
-
-		test("should select specified defaultValue tab", async ({
+	test.describe("Initial state", () => {
+		test("honors `defaultValue` on initial render", async ({
 			page,
 			renderer,
 		}) => {
@@ -189,250 +122,147 @@ test.describe("Tabs", () => {
 		});
 	});
 
-	test.describe("Keyboard Navigation (Horizontal)", () => {
+	// Both orientations share the same navigation contract, just on different
+	// axes; one parameterized block covers both. ArrowLeft/Right work for
+	// horizontal, ArrowUp/Down for vertical; the off-axis keys are inert.
+	for (const layout of [
+		{
+			name: "horizontal",
+			fixture: "tabs/horizontal",
+			tabs: ["tab-1", "tab-2", "tab-3"],
+			panels: ["panel-1", "panel-2", "panel-3"],
+			next: "ArrowRight",
+			previous: "ArrowLeft",
+			inertNext: "ArrowDown",
+			inertPrevious: "ArrowUp",
+		},
+		{
+			name: "vertical",
+			fixture: "tabs/vertical",
+			tabs: ["vtab-1", "vtab-2", "vtab-3"],
+			panels: ["vpanel-1", "vpanel-2", "vpanel-3"],
+			next: "ArrowDown",
+			previous: "ArrowUp",
+			inertNext: "ArrowRight",
+			inertPrevious: "ArrowLeft",
+		},
+	] as const) {
+		test.describe(`Keyboard (${layout.name})`, () => {
+			test.beforeEach(async ({ page, renderer }) => {
+				await page.goto(`/${renderer}/${layout.fixture}`);
+			});
+
+			test(`${layout.next} / ${layout.previous} wrap around the tab list`, async ({
+				page,
+			}) => {
+				await page.getByTestId(layout.tabs[0]).focus();
+				await page.keyboard.press(layout.next);
+				await expect(page.getByTestId(layout.tabs[1])).toBeFocused();
+				// Backward navigation from a non-edge position.
+				await page.keyboard.press(layout.previous);
+				await expect(page.getByTestId(layout.tabs[0])).toBeFocused();
+				await page.keyboard.press(layout.next);
+				await page.keyboard.press(layout.next);
+				await page.keyboard.press(layout.next);
+				await expect(page.getByTestId(layout.tabs[0])).toBeFocused();
+				await page.keyboard.press(layout.previous);
+				await expect(page.getByTestId(layout.tabs[2])).toBeFocused();
+			});
+
+			test("Home / End jump to first / last tab", async ({ page }) => {
+				await page.getByTestId(layout.tabs[1]).focus();
+				await page.keyboard.press("Home");
+				await expect(page.getByTestId(layout.tabs[0])).toBeFocused();
+				await page.keyboard.press("End");
+				await expect(page.getByTestId(layout.tabs[2])).toBeFocused();
+			});
+
+			test(`${layout.inertNext} / ${layout.inertPrevious} are inert`, async ({
+				page,
+			}) => {
+				await page.getByTestId(layout.tabs[0]).focus();
+				await page.keyboard.press(layout.inertNext);
+				await expect(page.getByTestId(layout.tabs[0])).toBeFocused();
+				await page.keyboard.press(layout.inertPrevious);
+				await expect(page.getByTestId(layout.tabs[0])).toBeFocused();
+			});
+
+			for (const key of ["Enter", "Space"] as const) {
+				test(`${key} activates the focused tab and shows its panel`, async ({
+					page,
+				}) => {
+					await page.getByTestId(layout.tabs[1]).focus();
+					await page.keyboard.press(key);
+					await expect(page.getByTestId(layout.tabs[1])).toHaveAttribute(
+						"aria-selected",
+						"true",
+					);
+					await expect(page.getByTestId(layout.panels[1])).toBeVisible();
+				});
+			}
+
+			test("arrow keys move focus but do not activate", async ({ page }) => {
+				await page.getByTestId(layout.tabs[0]).focus();
+				await page.keyboard.press(layout.next);
+				await expect(page.getByTestId(layout.tabs[1])).toBeFocused();
+				await expect(page.getByTestId(layout.tabs[0])).toHaveAttribute(
+					"aria-selected",
+					"true",
+				);
+				await expect(page.getByTestId(layout.tabs[1])).toHaveAttribute(
+					"aria-selected",
+					"false",
+				);
+				await expect(page.getByTestId(layout.panels[0])).toBeVisible();
+			});
+		});
+	}
+
+	test.describe("Mouse", () => {
 		test.beforeEach(async ({ page, renderer }) => {
 			await page.goto(`/${renderer}/tabs/horizontal`);
 		});
 
-		test("should move focus to next tab when `ArrowRight` is pressed", async ({
+		test("click activates the tab and swaps panel visibility", async ({
 			page,
-			renderer,
 		}) => {
-			await page.getByTestId("tab-1").focus();
-			await page.getByTestId("tab-1").press("ArrowRight");
-			await expect(page.getByTestId("tab-2")).toBeFocused();
-		});
-
-		test("should move focus to previous tab when `ArrowLeft` is pressed", async ({
-			page,
-			renderer,
-		}) => {
-			await page.getByTestId("tab-2").focus();
-			await page.getByTestId("tab-2").press("ArrowLeft");
-			await expect(page.getByTestId("tab-1")).toBeFocused();
-		});
-
-		test("should loop to first tab when `ArrowRight` is pressed on last tab", async ({
-			page,
-			renderer,
-		}) => {
-			await page.getByTestId("tab-3").focus();
-			await page.getByTestId("tab-3").press("ArrowRight");
-			await expect(page.getByTestId("tab-1")).toBeFocused();
-		});
-
-		test("should loop to last tab when `ArrowLeft` is pressed on first tab", async ({
-			page,
-			renderer,
-		}) => {
-			await page.getByTestId("tab-1").focus();
-			await page.getByTestId("tab-1").press("ArrowLeft");
-			await expect(page.getByTestId("tab-3")).toBeFocused();
-		});
-
-		test("should move focus to first tab when `Home` is pressed", async ({
-			page,
-			renderer,
-		}) => {
-			await page.getByTestId("tab-3").focus();
-			await page.getByTestId("tab-3").press("Home");
-			await expect(page.getByTestId("tab-1")).toBeFocused();
-		});
-
-		test("should move focus to last tab when `End` is pressed", async ({
-			page,
-			renderer,
-		}) => {
-			await page.getByTestId("tab-1").focus();
-			await page.getByTestId("tab-1").press("End");
-			await expect(page.getByTestId("tab-3")).toBeFocused();
-		});
-
-		test("should activate tab when `Enter` is pressed", async ({
-			page,
-			renderer,
-		}) => {
-			await page.getByTestId("tab-2").focus();
-			await page.getByTestId("tab-2").press("Enter");
+			await page.getByTestId("tab-2").click();
 			await expect(page.getByTestId("tab-2")).toHaveAttribute(
 				"aria-selected",
 				"true",
 			);
 			await expect(page.getByTestId("panel-2")).toBeVisible();
-		});
-
-		test("should activate tab when `Space` is pressed", async ({
-			page,
-			renderer,
-		}) => {
-			await page.getByTestId("tab-3").focus();
-			await page.getByTestId("tab-3").press("Space");
-			await expect(page.getByTestId("tab-3")).toHaveAttribute(
+			await expect(page.getByTestId("tab-1")).toHaveAttribute(
 				"aria-selected",
-				"true",
+				"false",
 			);
-			await expect(page.getByTestId("panel-3")).toBeVisible();
+			await expect(page.getByTestId("panel-1")).not.toBeVisible();
 		});
 
-		test("should not activate tab when arrow key moves focus", async ({
-			page,
-			renderer,
-		}) => {
-			await page.getByTestId("tab-1").focus();
-			await page.getByTestId("tab-1").press("ArrowRight");
-			await expect(page.getByTestId("tab-2")).toBeFocused();
+		test("re-activating the selected tab is a no-op", async ({ page }) => {
+			await page.getByTestId("tab-1").click();
 			await expect(page.getByTestId("tab-1")).toHaveAttribute(
 				"aria-selected",
 				"true",
 			);
-			await expect(page.getByTestId("tab-2")).toHaveAttribute(
-				"aria-selected",
-				"false",
-			);
 			await expect(page.getByTestId("panel-1")).toBeVisible();
+
+			for (const key of ["Enter", "Space"] as const) {
+				await page.getByTestId("tab-1").focus();
+				await page.keyboard.press(key);
+				await expect(page.getByTestId("tab-1")).toHaveAttribute(
+					"aria-selected",
+					"true",
+				);
+				await expect(page.getByTestId("panel-1")).toBeVisible();
+			}
 		});
 
-		test("should allow `Tab` to move focus out of tablist to next element", async ({
+		test("click on a vertical tab swaps the active panel", async ({
 			page,
 			renderer,
 		}) => {
-			await page.getByTestId("tab-1").focus();
-			await page.keyboard.press("Tab");
-			await expect(page.getByTestId("panel-1")).toBeFocused();
-		});
-
-		test("should allow `Shift+Tab` to move focus out of tablist to previous element", async ({
-			page,
-			renderer,
-		}) => {
-			await page.getByTestId("tab-1").focus();
-			await page.keyboard.press("Shift+Tab");
-			await expect(page.getByTestId("focus-before")).toBeFocused();
-		});
-
-		test("should not respond to `ArrowUp` in horizontal tabs", async ({
-			page,
-			renderer,
-		}) => {
-			await page.getByTestId("tab-1").focus();
-			await page.getByTestId("tab-1").press("ArrowUp");
-			await expect(page.getByTestId("tab-1")).toBeFocused();
-		});
-
-		test("should not respond to `ArrowDown` in horizontal tabs", async ({
-			page,
-			renderer,
-		}) => {
-			await page.getByTestId("tab-1").focus();
-			await page.getByTestId("tab-1").press("ArrowDown");
-			await expect(page.getByTestId("tab-1")).toBeFocused();
-		});
-	});
-
-	test.describe("Keyboard Navigation (Vertical)", () => {
-		test.beforeEach(async ({ page, renderer }) => {
 			await page.goto(`/${renderer}/tabs/vertical`);
-		});
-
-		test("should move focus to next tab when `ArrowDown` is pressed", async ({
-			page,
-			renderer,
-		}) => {
-			await page.getByTestId("vtab-1").focus();
-			await page.getByTestId("vtab-1").press("ArrowDown");
-			await expect(page.getByTestId("vtab-2")).toBeFocused();
-		});
-
-		test("should move focus to previous tab when `ArrowUp` is pressed", async ({
-			page,
-			renderer,
-		}) => {
-			await page.getByTestId("vtab-2").focus();
-			await page.getByTestId("vtab-2").press("ArrowUp");
-			await expect(page.getByTestId("vtab-1")).toBeFocused();
-		});
-
-		test("should loop to first tab when `ArrowDown` is pressed on last tab", async ({
-			page,
-			renderer,
-		}) => {
-			await page.getByTestId("vtab-3").focus();
-			await page.getByTestId("vtab-3").press("ArrowDown");
-			await expect(page.getByTestId("vtab-1")).toBeFocused();
-		});
-
-		test("should loop to last tab when `ArrowUp` is pressed on first tab", async ({
-			page,
-			renderer,
-		}) => {
-			await page.getByTestId("vtab-1").focus();
-			await page.getByTestId("vtab-1").press("ArrowUp");
-			await expect(page.getByTestId("vtab-3")).toBeFocused();
-		});
-
-		test("should move focus to first tab when `Home` is pressed", async ({
-			page,
-			renderer,
-		}) => {
-			await page.getByTestId("vtab-3").focus();
-			await page.getByTestId("vtab-3").press("Home");
-			await expect(page.getByTestId("vtab-1")).toBeFocused();
-		});
-
-		test("should move focus to last tab when `End` is pressed", async ({
-			page,
-			renderer,
-		}) => {
-			await page.getByTestId("vtab-1").focus();
-			await page.getByTestId("vtab-1").press("End");
-			await expect(page.getByTestId("vtab-3")).toBeFocused();
-		});
-
-		test("should not respond to `ArrowLeft` in vertical tabs", async ({
-			page,
-			renderer,
-		}) => {
-			await page.getByTestId("vtab-1").focus();
-			await page.getByTestId("vtab-1").press("ArrowLeft");
-			await expect(page.getByTestId("vtab-1")).toBeFocused();
-		});
-
-		test("should not respond to `ArrowRight` in vertical tabs", async ({
-			page,
-			renderer,
-		}) => {
-			await page.getByTestId("vtab-1").focus();
-			await page.getByTestId("vtab-1").press("ArrowRight");
-			await expect(page.getByTestId("vtab-1")).toBeFocused();
-		});
-
-		test("should activate tab when `Enter` is pressed", async ({
-			page,
-			renderer,
-		}) => {
-			await page.getByTestId("vtab-2").focus();
-			await page.getByTestId("vtab-2").press("Enter");
-			await expect(page.getByTestId("vtab-2")).toHaveAttribute(
-				"aria-selected",
-				"true",
-			);
-			await expect(page.getByTestId("vpanel-2")).toBeVisible();
-		});
-
-		test("should activate tab when `Space` is pressed", async ({
-			page,
-			renderer,
-		}) => {
-			await page.getByTestId("vtab-3").focus();
-			await page.getByTestId("vtab-3").press("Space");
-			await expect(page.getByTestId("vtab-3")).toHaveAttribute(
-				"aria-selected",
-				"true",
-			);
-			await expect(page.getByTestId("vpanel-3")).toBeVisible();
-		});
-
-		test("should activate tab when clicked", async ({ page, renderer }) => {
 			await page.getByTestId("vtab-2").click();
 			await expect(page.getByTestId("vtab-2")).toHaveAttribute(
 				"aria-selected",
@@ -445,91 +275,23 @@ test.describe("Tabs", () => {
 			);
 			await expect(page.getByTestId("vpanel-1")).not.toBeVisible();
 		});
+
+		test("activates via a click on a nested SVG inside the tab", async ({
+			page,
+		}) => {
+			await page.getByTestId("svg-icon-2").click();
+			await expect(page.getByTestId("svg-panel-2")).toBeVisible();
+			await expect(page.getByTestId("svg-panel-1")).not.toBeVisible();
+		});
 	});
 
-	test.describe("Mouse Interaction", () => {
+	test.describe("Tab order", () => {
 		test.beforeEach(async ({ page, renderer }) => {
 			await page.goto(`/${renderer}/tabs/horizontal`);
 		});
 
-		test("should activate tab when clicked", async ({ page, renderer }) => {
-			await page.getByTestId("tab-2").click();
-			await expect(page.getByTestId("tab-2")).toHaveAttribute(
-				"aria-selected",
-				"true",
-			);
-			await expect(page.getByTestId("panel-2")).toBeVisible();
-		});
-
-		test("should deselect previous tab and hide previous panel when new tab is clicked", async ({
+		test("walks Focus before → selected tab → its panel → Focus after", async ({
 			page,
-			renderer,
-		}) => {
-			await expect(page.getByTestId("tab-1")).toHaveAttribute(
-				"aria-selected",
-				"true",
-			);
-			await expect(page.getByTestId("panel-1")).toBeVisible();
-			await page.getByTestId("tab-2").click();
-			await expect(page.getByTestId("tab-1")).toHaveAttribute(
-				"aria-selected",
-				"false",
-			);
-			await expect(page.getByTestId("panel-1")).not.toBeVisible();
-			await expect(page.getByTestId("tab-2")).toHaveAttribute(
-				"aria-selected",
-				"true",
-			);
-			await expect(page.getByTestId("panel-2")).toBeVisible();
-		});
-
-		test("should not change state when clicking already selected tab", async ({
-			page,
-			renderer,
-		}) => {
-			await page.getByTestId("tab-1").click();
-			await expect(page.getByTestId("tab-1")).toHaveAttribute(
-				"aria-selected",
-				"true",
-			);
-			await expect(page.getByTestId("panel-1")).toBeVisible();
-		});
-
-		test("should not change state when pressing `Enter` on already selected tab", async ({
-			page,
-			renderer,
-		}) => {
-			await page.getByTestId("tab-1").focus();
-			await page.keyboard.press("Enter");
-			await expect(page.getByTestId("tab-1")).toHaveAttribute(
-				"aria-selected",
-				"true",
-			);
-			await expect(page.getByTestId("panel-1")).toBeVisible();
-		});
-
-		test("should not change state when pressing `Space` on already selected tab", async ({
-			page,
-			renderer,
-		}) => {
-			await page.getByTestId("tab-1").focus();
-			await page.keyboard.press("Space");
-			await expect(page.getByTestId("tab-1")).toHaveAttribute(
-				"aria-selected",
-				"true",
-			);
-			await expect(page.getByTestId("panel-1")).toBeVisible();
-		});
-	});
-
-	test.describe("Focus Management", () => {
-		test.beforeEach(async ({ page, renderer }) => {
-			await page.goto(`/${renderer}/tabs/horizontal`);
-		});
-
-		test("should only have one tab in tab order (selected tab)", async ({
-			page,
-			renderer,
 		}) => {
 			await page.getByTestId("focus-before").focus();
 			await page.keyboard.press("Tab");
@@ -540,241 +302,167 @@ test.describe("Tabs", () => {
 			await expect(page.getByTestId("focus-after")).toBeFocused();
 		});
 
-		test("should focus selected tab when tabbing into tablist after selection change", async ({
+		test("Tab into the tablist lands on the currently selected tab", async ({
 			page,
-			renderer,
 		}) => {
 			await page.getByTestId("tab-2").click();
 			await page.getByTestId("focus-before").focus();
 			await page.keyboard.press("Tab");
 			await expect(page.getByTestId("tab-2")).toBeFocused();
 		});
-	});
 
-	test.describe("SVG Inside Trigger", () => {
-		test("should switch tab when clicking SVG inside trigger", async ({
+		test("Shift+Tab from the tablist moves to the previous focusable", async ({
 			page,
-			renderer,
 		}) => {
-			await page.goto(`/${renderer}/tabs/horizontal`);
-			const svg = page.getByTestId("svg-icon-2");
-			const panel1 = page.getByTestId("svg-panel-1");
-			const panel2 = page.getByTestId("svg-panel-2");
-
-			await expect(panel1).toBeVisible();
-			await expect(panel2).not.toBeVisible();
-			await svg.click();
-			await expect(panel2).toBeVisible();
-			await expect(panel1).not.toBeVisible();
+			await page.getByTestId("tab-1").focus();
+			await page.keyboard.press("Shift+Tab");
+			await expect(page.getByTestId("focus-before")).toBeFocused();
 		});
 	});
 
-	test.describe("Edge Cases", () => {
-		test("should handle single tab correctly", async ({ page, renderer }) => {
+	test.describe("Edge cases", () => {
+		test("a single-tab tablist no-ops on arrow navigation", async ({
+			page,
+			renderer,
+		}) => {
 			await page.goto(`/${renderer}/tabs/single`);
-			await expect(page.getByTestId("single-tab")).toHaveAttribute(
-				"aria-selected",
-				"true",
-			);
+			const tab = page.getByTestId("single-tab");
+			await expect(tab).toHaveAttribute("aria-selected", "true");
 			await expect(page.getByTestId("single-panel")).toBeVisible();
-			await page.getByTestId("single-tab").focus();
-			await page.getByTestId("single-tab").press("ArrowRight");
-			await expect(page.getByTestId("single-tab")).toBeFocused();
+			await tab.focus();
+			await tab.press("ArrowRight");
+			await expect(tab).toBeFocused();
 		});
 	});
 
-	test.describe("Scroll Prevention", () => {
-		test("should not scroll the page when `Space` is pressed on horizontal trigger", async ({
-			page,
-			renderer,
-		}) => {
-			await page.goto(`/${renderer}/tabs/horizontal`);
-			await page.evaluate(() => {
-				document.body.style.height = "3000px";
+	test.describe("Scroll prevention", () => {
+		for (const [fixture, key, axis] of [
+			["tabs/horizontal", "Space", "y"],
+			["tabs/horizontal", "ArrowRight", "x"],
+			["tabs/vertical", "ArrowDown", "y"],
+		] as const) {
+			test(`${key} on a ${fixture.split("/")[1]} tab does not scroll`, async ({
+				page,
+				renderer,
+			}) => {
+				await page.goto(`/${renderer}/${fixture}`);
+				await page.evaluate((dim) => {
+					document.body.style[dim === "y" ? "height" : "width"] = "3000px";
+				}, axis);
+				if (axis === "y") {
+					await scrollAndSettle(page, 0, 500);
+				} else {
+					await scrollAndSettle(page, 500, 0);
+				}
+				await page
+					.getByTestId(fixture.includes("vertical") ? "vtab-1" : "tab-1")
+					.focus();
+				const before = await page.evaluate(
+					(d) => (d === "y" ? window.scrollY : window.scrollX),
+					axis,
+				);
+				await page.keyboard.press(key);
+				const after = await page.evaluate(
+					(d) => (d === "y" ? window.scrollY : window.scrollX),
+					axis,
+				);
+				expect(after).toBe(before);
 			});
-			await scrollAndSettle(page, 0, 500);
-			await page.getByTestId("tab-1").focus();
-			const scrollBefore = await page.evaluate(() => window.scrollY);
-			await page.keyboard.press("Space");
-			const scrollAfter = await page.evaluate(() => window.scrollY);
-			expect(scrollAfter).toBe(scrollBefore);
-		});
-
-		test("should not scroll the page when `ArrowRight` is pressed on horizontal trigger", async ({
-			page,
-			renderer,
-		}) => {
-			await page.goto(`/${renderer}/tabs/horizontal`);
-			await page.evaluate(() => {
-				document.body.style.width = "3000px";
-			});
-			await scrollAndSettle(page, 500, 0);
-			await page.getByTestId("tab-1").focus();
-			const scrollBefore = await page.evaluate(() => window.scrollX);
-			await page.keyboard.press("ArrowRight");
-			const scrollAfter = await page.evaluate(() => window.scrollX);
-			expect(scrollAfter).toBe(scrollBefore);
-		});
-
-		test("should not scroll the page when `ArrowDown` is pressed on vertical trigger", async ({
-			page,
-			renderer,
-		}) => {
-			await page.goto(`/${renderer}/tabs/vertical`);
-			await page.evaluate(() => {
-				document.body.style.height = "3000px";
-			});
-			await scrollAndSettle(page, 0, 500);
-			await page.getByTestId("vtab-1").focus();
-			const scrollBefore = await page.evaluate(() => window.scrollY);
-			await page.keyboard.press("ArrowDown");
-			const scrollAfter = await page.evaluate(() => window.scrollY);
-			expect(scrollAfter).toBe(scrollBefore);
-		});
+		}
 	});
 
-	test.describe("Disabled Tabs", () => {
+	test.describe("Disabled", () => {
 		test.beforeEach(async ({ page, renderer }) => {
 			await page.goto(`/${renderer}/tabs/disabled`);
 		});
 
-		test("should have `aria-disabled='true'` on disabled tab", async ({
+		test("publishes `aria-disabled` only on disabled tabs", async ({
 			page,
-			renderer,
 		}) => {
 			await expect(page.getByTestId("dtab-2")).toHaveAttribute(
 				"aria-disabled",
 				"true",
 			);
-		});
-
-		test("should not have `aria-disabled` on enabled tab", async ({
-			page,
-			renderer,
-		}) => {
 			await expect(page.getByTestId("dtab-1")).not.toHaveAttribute(
 				"aria-disabled",
 			);
 		});
 
-		test("should not activate disabled tab on click", async ({
-			page,
-			renderer,
-		}) => {
+		test("ignores activation via mouse, Enter, and Space", async ({ page }) => {
 			await page.getByTestId("dtab-2").click({ force: true });
-			await expect(page.getByTestId("dtab-1")).toHaveAttribute(
-				"aria-selected",
-				"true",
-			);
 			await expect(page.getByTestId("dtab-2")).toHaveAttribute(
 				"aria-selected",
 				"false",
 			);
 			await expect(page.getByTestId("dpanel-1")).toBeVisible();
-		});
 
-		test("should not activate disabled tab on `Enter`", async ({
-			page,
-			renderer,
-		}) => {
 			await page.getByTestId("dtab-2").focus();
-			await page.getByTestId("dtab-2").press("Enter");
-			await expect(page.getByTestId("dtab-1")).toHaveAttribute(
+			await page.keyboard.press("Enter");
+			await expect(page.getByTestId("dtab-2")).toHaveAttribute(
 				"aria-selected",
-				"true",
+				"false",
 			);
+			await page.keyboard.press("Space");
 			await expect(page.getByTestId("dtab-2")).toHaveAttribute(
 				"aria-selected",
 				"false",
 			);
 		});
 
-		test("should not activate disabled tab on `Space`", async ({
+		test("skips the disabled tab across all keyboard navigation keys", async ({
 			page,
-			renderer,
-		}) => {
-			await page.getByTestId("dtab-2").focus();
-			await page.getByTestId("dtab-2").press("Space");
-			await expect(page.getByTestId("dtab-1")).toHaveAttribute(
-				"aria-selected",
-				"true",
-			);
-			await expect(page.getByTestId("dtab-2")).toHaveAttribute(
-				"aria-selected",
-				"false",
-			);
-		});
-
-		test("should skip disabled tab when navigating with `ArrowRight`", async ({
-			page,
-			renderer,
 		}) => {
 			await page.getByTestId("dtab-1").focus();
-			await page.getByTestId("dtab-1").press("ArrowRight");
+			await page.keyboard.press("ArrowRight");
 			await expect(page.getByTestId("dtab-3")).toBeFocused();
-		});
-
-		test("should skip disabled tab when navigating with `ArrowLeft`", async ({
-			page,
-			renderer,
-		}) => {
-			await page.getByTestId("dtab-3").focus();
-			await page.getByTestId("dtab-3").press("ArrowLeft");
+			await page.keyboard.press("ArrowLeft");
 			await expect(page.getByTestId("dtab-1")).toBeFocused();
-		});
-
-		test("should skip disabled tab when `Home` is pressed", async ({
-			page,
-			renderer,
-		}) => {
-			await page.getByTestId("dtab-3").focus();
-			await page.getByTestId("dtab-3").press("Home");
-			await expect(page.getByTestId("dtab-1")).toBeFocused();
-		});
-
-		test("should skip disabled tab when `End` is pressed", async ({
-			page,
-			renderer,
-		}) => {
-			await page.getByTestId("dtab-1").focus();
-			await page.getByTestId("dtab-1").press("End");
+			await page.keyboard.press("End");
 			await expect(page.getByTestId("dtab-3")).toBeFocused();
+			await page.keyboard.press("Home");
+			await expect(page.getByTestId("dtab-1")).toBeFocused();
 		});
 	});
 
-	test.describe("Non-Focusable Panels", () => {
+	test.describe("Structure independence", () => {
+		test("activates and reveals the matching panel when panels live in a different container from the tablist", async ({
+			page,
+			renderer,
+		}) => {
+			await page.goto(`/${renderer}/tabs/structure-independence`);
+			await expect(page.getByTestId("tab-1")).toHaveAttribute(
+				"aria-selected",
+				"true",
+			);
+			await expect(page.getByTestId("panel-1")).toBeVisible();
+
+			await page.getByTestId("tab-2").click();
+			await expect(page.getByTestId("tab-2")).toHaveAttribute(
+				"aria-selected",
+				"true",
+			);
+			await expect(page.getByTestId("panel-2")).toBeVisible();
+			await expect(page.getByTestId("panel-1")).not.toBeVisible();
+
+			await page.getByTestId("tab-1").focus();
+			await page.keyboard.press("ArrowRight");
+			await expect(page.getByTestId("tab-2")).toBeFocused();
+		});
+	});
+
+	test.describe("Non-focusable panels", () => {
 		test.beforeEach(async ({ page, renderer }) => {
 			await page.goto(`/${renderer}/tabs/non-focusable`);
 		});
 
-		test("should not have `tabindex` on panels when `focusable={false}`", async ({
+		test("omits tabindex on panels when `focusable={false}`", async ({
 			page,
-			renderer,
 		}) => {
-			await expect(page.getByTestId("nf-panel-1")).not.toHaveAttribute(
-				"tabindex",
-			);
-			await expect(page.getByTestId("nf-panel-2")).not.toHaveAttribute(
-				"tabindex",
-			);
-			await expect(page.getByTestId("nf-panel-3")).not.toHaveAttribute(
-				"tabindex",
-			);
-		});
-
-		test("should Tab from tab trigger to focusable content inside panel", async ({
-			page,
-			renderer,
-		}) => {
-			await page.getByTestId("nf-tab-1").focus();
-			await page.keyboard.press("Tab");
-			await expect(page.getByTestId("nf-button-1")).toBeFocused();
-		});
-
-		test("should not add `tabindex` when switching tabs with `focusable={false}`", async ({
-			page,
-			renderer,
-		}) => {
+			for (const id of ["nf-panel-1", "nf-panel-2", "nf-panel-3"]) {
+				await expect(page.getByTestId(id)).not.toHaveAttribute("tabindex");
+			}
+			// Switching tabs must not inject a tabindex on either the new or
+			// the old panel.
 			await page.getByTestId("nf-tab-2").click();
 			await expect(page.getByTestId("nf-panel-2")).not.toHaveAttribute(
 				"tabindex",
@@ -784,10 +472,13 @@ test.describe("Tabs", () => {
 			);
 		});
 
-		test("should Tab to panel content after switching tabs", async ({
+		test("Tab from the tab lands directly inside focusable panel content", async ({
 			page,
-			renderer,
 		}) => {
+			await page.getByTestId("nf-tab-1").focus();
+			await page.keyboard.press("Tab");
+			await expect(page.getByTestId("nf-button-1")).toBeFocused();
+
 			await page.getByTestId("nf-tab-2").click();
 			await page.getByTestId("nf-tab-2").focus();
 			await page.keyboard.press("Tab");
@@ -796,53 +487,40 @@ test.describe("Tabs", () => {
 	});
 });
 
-test.describe("Click Handler", () => {
+test.describe("Click handler", () => {
 	test.beforeEach(async ({ page, renderer }) => {
 		await page.goto(`/${renderer}/tabs/horizontal`);
 	});
 
-	test("should fire click handler on tab click", async ({ page, renderer }) => {
-		await page.getByTestId("tab-2").click();
-		await expect(page.getByTestId("output")).toHaveText("tab-2-clicked");
-	});
-
-	test("should fire click handler on tab `Enter`", async ({
-		page,
-		renderer,
-	}) => {
-		await page.getByTestId("tab-2").focus();
-		await page.keyboard.press("Enter");
-		await expect(page.getByTestId("output")).toHaveText("tab-2-clicked");
-	});
-
-	test("should fire click handler on tab `Space`", async ({
-		page,
-		renderer,
-	}) => {
-		await page.getByTestId("tab-2").focus();
-		await page.keyboard.press("Space");
-		await expect(page.getByTestId("output")).toHaveText("tab-2-clicked");
-	});
+	for (const trigger of ["click", "Enter", "Space"] as const) {
+		test(`fires on tab ${trigger}`, async ({ page }) => {
+			const target = page.getByTestId("tab-2");
+			if (trigger === "click") {
+				await target.click();
+			} else {
+				await target.focus();
+				await page.keyboard.press(trigger);
+			}
+			await expect(page.getByTestId("output")).toHaveText("tab-2-clicked");
+		});
+	}
 });
 
 test.describe("Dynamic", () => {
-	test("should handle dynamic add/remove, orientation, disabled, multi-instance, props passthrough", async ({
+	test("handles dynamic add/remove, orientation, disabled, multi-instance, and props passthrough", async ({
 		page,
 		renderer,
 	}) => {
 		await page.goto(`/${renderer}/tabs/dynamic`);
 
-		// Props passthrough: className on Root reaches DOM
 		await expect(page.getByTestId("tabs-root")).toHaveClass(/tabs-root/);
 
-		// First tab selected by default
 		await expect(page.getByTestId("tab-1")).toHaveAttribute(
 			"aria-selected",
 			"true",
 		);
 		await expect(page.getByTestId("panel-1")).toBeVisible();
 
-		// onClick fires alongside core selection
 		await page.getByTestId("tab-2").click();
 		await expect(page.getByTestId("output")).toHaveText("tab-2-clicked");
 		await expect(page.getByTestId("tab-2")).toHaveAttribute(
@@ -850,7 +528,6 @@ test.describe("Dynamic", () => {
 			"true",
 		);
 
-		// Add tab via state → navigable and has correct ARIA
 		await page.getByTestId("add-tab").click();
 		await expect(page.getByTestId("tab-4")).toHaveAttribute("role", "tab");
 		await expect(page.getByTestId("panel-4")).toHaveAttribute(
@@ -870,7 +547,6 @@ test.describe("Dynamic", () => {
 		await page.getByTestId("tab-4").click();
 		await expect(page.getByTestId("panel-4")).toBeVisible();
 
-		// Remove tab via state → navigation wraps correctly
 		await page.getByTestId("remove-tab").click();
 		await page.getByTestId("remove-tab").click();
 		await page.getByTestId("tab-1").focus();
@@ -879,7 +555,6 @@ test.describe("Dynamic", () => {
 		await page.keyboard.press("ArrowRight");
 		await expect(page.getByTestId("tab-1")).toBeFocused();
 
-		// Toggle to vertical → ArrowDown/Up navigates, ArrowLeft/Right don't
 		await page.getByTestId("toggle-orientation").click();
 		await expect(page.getByTestId("tablist")).toHaveAttribute(
 			"aria-orientation",
@@ -888,20 +563,11 @@ test.describe("Dynamic", () => {
 		await page.getByTestId("tab-1").focus();
 		await page.keyboard.press("ArrowDown");
 		await expect(page.getByTestId("tab-2")).toBeFocused();
-		await page.keyboard.press("ArrowUp");
-		await expect(page.getByTestId("tab-1")).toBeFocused();
-		// ArrowRight should not navigate in vertical mode
 		await page.keyboard.press("ArrowRight");
-		await expect(page.getByTestId("tab-1")).toBeFocused();
-		// Switch back to horizontal
+		await expect(page.getByTestId("tab-2")).toBeFocused();
 		await page.getByTestId("toggle-orientation").click();
 
-		// Toggle disabled → aria-disabled, skipped in nav, click doesn't activate
 		await page.getByTestId("tab-1").click();
-		await expect(page.getByTestId("tab-1")).toHaveAttribute(
-			"aria-selected",
-			"true",
-		);
 		await page.getByTestId("toggle-disabled").click();
 		await expect(page.getByTestId("tab-2")).toHaveAttribute(
 			"aria-disabled",
@@ -909,7 +575,6 @@ test.describe("Dynamic", () => {
 		);
 		await page.getByTestId("tab-1").focus();
 		await page.keyboard.press("ArrowRight");
-		// Should skip tab-2 and wrap back to tab-1
 		await expect(page.getByTestId("tab-2")).not.toBeFocused();
 		await page.getByTestId("tab-2").click({ force: true });
 		await expect(page.getByTestId("tab-2")).not.toHaveAttribute(
@@ -917,7 +582,6 @@ test.describe("Dynamic", () => {
 			"true",
 		);
 
-		// Second Tabs instance works independently
 		await expect(page.getByTestId("tabs2-tab-1")).toHaveAttribute(
 			"aria-selected",
 			"true",
@@ -928,7 +592,6 @@ test.describe("Dynamic", () => {
 			"true",
 		);
 		await expect(page.getByTestId("tabs2-panel-2")).toBeVisible();
-		// First instance unaffected
 		await expect(page.getByTestId("tab-1")).toHaveAttribute(
 			"aria-selected",
 			"true",

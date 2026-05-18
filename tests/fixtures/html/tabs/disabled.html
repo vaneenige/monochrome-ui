@@ -1,5 +1,5 @@
 <button type="button" data-testid="focus-before">Focus before</button>
-<div data-testid="tabs-container" id="mcr:tabs:1">
+<div id="mcr:tabs:1">
   <div data-testid="tablist" role="tablist" aria-orientation="horizontal">
     <button data-testid="dtab-1" type="button" role="tab" id="mct:tabs:1:tab1" aria-selected="true" aria-controls="mcc:tabs:1:tab1" tabindex="0">Tab 1</button>
     <button data-testid="dtab-2" type="button" role="tab" id="mct:tabs:1:tab2" aria-selected="false" aria-controls="mcc:tabs:1:tab2" tabindex="-1" aria-disabled="true">Tab 2 (Disabled)</button>
@@ -11,7 +11,7 @@
   <div data-testid="dpanel-2" role="tabpanel" id="mcc:tabs:1:tab2" aria-labelledby="mct:tabs:1:tab2" aria-hidden="true" hidden tabindex="-1">
     <p>Content for Tab 2</p>
   </div>
-  <div data-testid="dpanel-3" role="tabpanel" id="mcc:tabs:1:tab3" aria-labelledby="mct:tabs:1:tab3" aria-hidden="true" hidden tabindex="-1">
+  <div role="tabpanel" id="mcc:tabs:1:tab3" aria-labelledby="mct:tabs:1:tab3" aria-hidden="true" hidden tabindex="-1">
     <p>Content for Tab 3</p>
   </div>
 </div>

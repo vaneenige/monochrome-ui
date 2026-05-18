@@ -1,23 +1,8 @@
-<style>.popover {
-  position: relative;
-  display: inline-block;
-}
-[popover] {
-  position: fixed;
-  inset: auto;
-  margin: 0;
-  top: var(--bottom);
-  left: var(--left);
-}
-.scrollable-content {
-  width: 200px;
-  height: 80px;
-  overflow: auto;
-}
-.scrollable-content > div {
-  height: 400px;
-}</style>
 <div id="output" data-testid="output"></div>
+<style>
+  .scrollable-content { width: 200px; height: 80px; overflow: auto; }
+  .scrollable-content > div { height: 400px; }
+</style>
 <button type="button" data-testid="focus-before">Focus before</button>
 <div class="popover">
   <button
@@ -119,12 +104,12 @@
     tabindex="-1"
   >
     <p id="mcc:popover-description:5" data-testid="described-desc">A short description for AT.</p>
-    <button type="button" data-testid="described-action">Action</button>
+    <button type="button">Action</button>
   </div>
 </div>
 <div class="popover">
   <button
-    data-testid="dialog-popover-trigger"
+   
     type="button"
     id="mct:popover:6"
     aria-controls="mcc:popover:6"
@@ -140,14 +125,14 @@
     popover="manual"
     tabindex="-1"
   >
-    <h2 data-testid="dialog-popover-title">Filter results</h2>
-    <p id="mcc:popover-description:6" data-testid="dialog-popover-desc">Pick a date range.</p>
-    <button type="button" data-testid="dialog-popover-apply">Apply</button>
+    <h2>Filter results</h2>
+    <p id="mcc:popover-description:6">Pick a date range.</p>
+    <button type="button">Apply</button>
   </div>
 </div>
 <div class="popover">
   <button
-    data-testid="aria-label-trigger"
+   
     type="button"
     id="mct:popover:7"
     aria-controls="mcc:popover:7"
@@ -167,6 +152,6 @@
 <button data-testid="menu-trigger" type="button" id="mct:menu:1" aria-controls="mcc:menu:1" aria-expanded="false" aria-haspopup="menu" tabindex="0" role="button">Menu</button>
 <ul data-testid="menu-list" role="menu" id="mcc:menu:1" aria-labelledby="mct:menu:1" aria-hidden="true" popover="manual">
   <li role="none">
-    <button data-testid="menu-item-1" type="button" role="menuitem" tabindex="-1">Menu Item 1</button>
+    <button type="button" role="menuitem" tabindex="-1">Menu Item 1</button>
   </li>
 </ul>

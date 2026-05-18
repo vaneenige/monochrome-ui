@@ -2,12 +2,6 @@ import { Menu, Popover, Tooltip } from "monochrome/react";
 
 export default () => (
 	<>
-		<style>{`
-      .tooltip { position: relative; display: inline-block; }
-      .popover { position: relative; display: inline-block; }
-      [popover] { position: fixed; inset: auto; margin: 0; top: var(--bottom); left: var(--left); }
-      [role="tooltip"] { pointer-events: none; }
-    `}</style>
 		<div id="output" data-testid="output" />
 		<button type="button" data-testid="focus-before">
 			Focus before
@@ -49,7 +43,7 @@ export default () => (
 		<Menu.Root>
 			<Menu.Trigger data-testid="menu-trigger">Menu</Menu.Trigger>
 			<Menu.Popover data-testid="menu-list">
-				<Menu.Item data-testid="menu-item-1">Menu Item 1</Menu.Item>
+				<Menu.Item>Menu Item 1</Menu.Item>
 			</Menu.Popover>
 		</Menu.Root>
 	</>

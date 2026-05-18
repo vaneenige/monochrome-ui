@@ -95,9 +95,9 @@ function toggleMode() {
     </Accordion.Root>
     <Accordion.Root
       type="single"
-      data-testid="accordion2-root"
+     
     >
-      <Accordion.Item data-testid="accordion2-item-1">
+      <Accordion.Item>
         <Accordion.Header>
           <Accordion.Trigger data-testid="accordion2-trigger-1">
             A2 Section 1
@@ -107,7 +107,7 @@ function toggleMode() {
           <p>A2 Content 1</p>
         </Accordion.Panel>
       </Accordion.Item>
-      <Accordion.Item data-testid="accordion2-item-2">
+      <Accordion.Item>
         <Accordion.Header>
           <Accordion.Trigger data-testid="accordion2-trigger-2">
             A2 Section 2

@@ -3,8 +3,6 @@ import { Menu, Popover } from "monochrome/react";
 export default () => (
 	<>
 		<style>{`
-      .popover { position: relative; display: inline-block; }
-      [popover] { position: fixed; inset: auto; margin: 0; top: var(--bottom); left: var(--left); }
       .scrollable-content { width: 200px; height: 80px; overflow: auto; }
       .scrollable-content > div { height: 400px; }
     `}</style>
@@ -63,33 +61,23 @@ export default () => (
 				<Popover.Description data-testid="described-desc">
 					A short description for AT.
 				</Popover.Description>
-				<button type="button" data-testid="described-action">
-					Action
-				</button>
+				<button type="button">Action</button>
 			</Popover.Content>
 		</Popover.Root>
 		<Popover.Root className="popover">
-			<Popover.Trigger data-testid="dialog-popover-trigger">
-				Open dialog popover
-			</Popover.Trigger>
+			<Popover.Trigger>Open dialog popover</Popover.Trigger>
 			<Popover.Content
 				data-testid="dialog-popover-content"
 				role="dialog"
 				aria-label="Filter results"
 			>
-				<Popover.Title data-testid="dialog-popover-title">
-					Filter results
-				</Popover.Title>
-				<Popover.Description data-testid="dialog-popover-desc">
-					Pick a date range.
-				</Popover.Description>
-				<button type="button" data-testid="dialog-popover-apply">
-					Apply
-				</button>
+				<Popover.Title>Filter results</Popover.Title>
+				<Popover.Description>Pick a date range.</Popover.Description>
+				<button type="button">Apply</button>
 			</Popover.Content>
 		</Popover.Root>
 		<Popover.Root className="popover">
-			<Popover.Trigger data-testid="aria-label-trigger">Plain</Popover.Trigger>
+			<Popover.Trigger>Plain</Popover.Trigger>
 			<Popover.Content data-testid="aria-label-content" aria-label="Quick info">
 				<p>Just a label.</p>
 			</Popover.Content>
@@ -97,7 +85,7 @@ export default () => (
 		<Menu.Root>
 			<Menu.Trigger data-testid="menu-trigger">Menu</Menu.Trigger>
 			<Menu.Popover data-testid="menu-list">
-				<Menu.Item data-testid="menu-item-1">Menu Item 1</Menu.Item>
+				<Menu.Item>Menu Item 1</Menu.Item>
 			</Menu.Popover>
 		</Menu.Root>
 	</>

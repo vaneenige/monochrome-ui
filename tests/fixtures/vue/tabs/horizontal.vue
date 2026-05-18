@@ -16,7 +16,7 @@ import { Tabs } from "monochrome/vue"
     </button>
     <Tabs.Root
       default-value="tab1"
-      data-testid="tabs-container"
+     
     >
       <Tabs.List data-testid="tablist">
         <Tabs.Tab
@@ -67,12 +67,12 @@ import { Tabs } from "monochrome/vue"
     </button>
     <Tabs.Root
       default-value="svgtab1"
-      data-testid="svg-tabs-container"
+     
     >
-      <Tabs.List data-testid="svg-tablist">
+      <Tabs.List>
         <Tabs.Tab
           value="svgtab1"
-          data-testid="svg-tab-1"
+         
         >
           <svg
             data-testid="svg-icon-1"
@@ -87,7 +87,7 @@ import { Tabs } from "monochrome/vue"
         </Tabs.Tab>
         <Tabs.Tab
           value="svgtab2"
-          data-testid="svg-tab-2"
+         
         >
           <svg
             data-testid="svg-icon-2"

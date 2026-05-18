@@ -92,8 +92,8 @@ function App() {
 				))}
 			</Tabs.Root>
 
-			<Tabs.Root defaultValue="t1" data-testid="tabs2-root">
-				<Tabs.List data-testid="tabs2-tablist">
+			<Tabs.Root defaultValue="t1">
+				<Tabs.List>
 					<Tabs.Tab value="t1" data-testid="tabs2-tab-1">
 						T1
 					</Tabs.Tab>
@@ -101,7 +101,7 @@ function App() {
 						T2
 					</Tabs.Tab>
 				</Tabs.List>
-				<Tabs.Panel value="t1" data-testid="tabs2-panel-1">
+				<Tabs.Panel value="t1">
 					<p>Panel T1</p>
 				</Tabs.Panel>
 				<Tabs.Panel value="t2" data-testid="tabs2-panel-2">

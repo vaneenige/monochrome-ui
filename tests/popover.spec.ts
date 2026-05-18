@@ -5,110 +5,69 @@ test.describe("Popover", () => {
 		await page.goto(`/${renderer}/popover/basic`);
 	});
 
-	test.describe("ARIA Attributes", () => {
-		test("should have `aria-expanded='false'` on trigger when closed", async ({
+	test.describe("ARIA", () => {
+		test("declares trigger / content roles and links them via `aria-controls`/`aria-labelledby`", async ({
 			page,
 		}) => {
-			await expect(page.getByTestId("click-trigger")).toHaveAttribute(
-				"aria-expanded",
-				"false",
+			const trigger = page.getByTestId("click-trigger");
+			const content = page.getByTestId("click-content");
+			const triggerId = await trigger.getAttribute("id");
+			const contentId = await content.getAttribute("id");
+
+			await expect(trigger).toHaveAttribute("type", "button");
+			await expect(trigger).toHaveAttribute(
+				"aria-controls",
+				contentId as string,
 			);
-		});
-
-		test("should have `aria-expanded='true'` on trigger when open", async ({
-			page,
-		}) => {
-			await page.getByTestId("click-trigger").click();
-			await expect(page.getByTestId("click-trigger")).toHaveAttribute(
-				"aria-expanded",
-				"true",
-			);
-		});
-
-		test("should have `aria-controls` on trigger matching content id", async ({
-			page,
-		}) => {
-			const ariaControls = await page
-				.getByTestId("click-trigger")
-				.getAttribute("aria-controls");
-			const contentId = await page
-				.getByTestId("click-content")
-				.getAttribute("id");
-			expect(ariaControls).toBe(contentId);
-		});
-
-		test("should have `aria-labelledby` on content matching trigger id", async ({
-			page,
-		}) => {
-			const triggerId = await page
-				.getByTestId("click-trigger")
-				.getAttribute("id");
-			await expect(page.getByTestId("click-content")).toHaveAttribute(
+			await expect(content).toHaveAttribute(
 				"aria-labelledby",
 				triggerId as string,
 			);
+			await expect(content).toHaveAttribute("popover", "manual");
 		});
 
-		test("should have `aria-hidden='true'` on content when closed", async ({
+		test("toggles `aria-expanded` / `aria-hidden` across the open and close cycle", async ({
 			page,
 		}) => {
-			await expect(page.getByTestId("click-content")).toHaveAttribute(
-				"aria-hidden",
-				"true",
-			);
+			const trigger = page.getByTestId("click-trigger");
+			const content = page.getByTestId("click-content");
+
+			await expect(trigger).toHaveAttribute("aria-expanded", "false");
+			await expect(content).toHaveAttribute("aria-hidden", "true");
+
+			await trigger.click();
+			await expect(trigger).toHaveAttribute("aria-expanded", "true");
+			await expect(content).toHaveAttribute("aria-hidden", "false");
 		});
 
-		test("should have `aria-hidden='false'` on content when open", async ({
+		test("auto-wires `aria-describedby` from Popover.Description while keeping the trigger as the label", async ({
 			page,
 		}) => {
-			await page.getByTestId("click-trigger").click();
-			await expect(page.getByTestId("click-content")).toHaveAttribute(
-				"aria-hidden",
-				"false",
-			);
-		});
-
-		test("should have `popover='manual'` on content", async ({ page }) => {
-			await expect(page.getByTestId("click-content")).toHaveAttribute(
-				"popover",
-				"manual",
-			);
-		});
-
-		test("should have `type='button'` on trigger", async ({ page }) => {
-			await expect(page.getByTestId("click-trigger")).toHaveAttribute(
-				"type",
-				"button",
-			);
-		});
-	});
-
-	test.describe("Labelling and Description", () => {
-		test("aria-describedby on Content auto-wires to Popover.Description's id", async ({
-			page,
-		}) => {
-			const describedby = await page
-				.getByTestId("described-content")
-				.getAttribute("aria-describedby");
+			const trigger = page.getByTestId("described-trigger");
+			const content = page.getByTestId("described-content");
+			const triggerId = await trigger.getAttribute("id");
 			const descId = await page
 				.getByTestId("described-desc")
 				.getAttribute("id");
-			expect(describedby).toBe(descId);
-		});
-
-		test("default aria-labelledby still points at the trigger when Description is used", async ({
-			page,
-		}) => {
-			const triggerId = await page
-				.getByTestId("described-trigger")
-				.getAttribute("id");
-			await expect(page.getByTestId("described-content")).toHaveAttribute(
+			await expect(content).toHaveAttribute(
 				"aria-labelledby",
 				triggerId as string,
 			);
+			await expect(content).toHaveAttribute(
+				"aria-describedby",
+				descId as string,
+			);
 		});
 
-		test("non-modal dialog popover passes through role='dialog' and uses aria-label as the name", async ({
+		test("a user-supplied `aria-label` suppresses the default `aria-labelledby`", async ({
+			page,
+		}) => {
+			const content = page.getByTestId("aria-label-content");
+			await expect(content).toHaveAttribute("aria-label", "Quick info");
+			await expect(content).not.toHaveAttribute("aria-labelledby", /.*/);
+		});
+
+		test("passes through `role='dialog'` on a non-modal dialog popover", async ({
 			page,
 		}) => {
 			const content = page.getByTestId("dialog-popover-content");
@@ -116,35 +75,52 @@ test.describe("Popover", () => {
 			await expect(content).toHaveAttribute("aria-label", "Filter results");
 			await expect(content).not.toHaveAttribute("aria-labelledby", /.*/);
 		});
-
-		test("aria-label on Content suppresses the default aria-labelledby", async ({
-			page,
-		}) => {
-			const content = page.getByTestId("aria-label-content");
-			await expect(content).toHaveAttribute("aria-label", "Quick info");
-			await expect(content).not.toHaveAttribute("aria-labelledby", /.*/);
-		});
 	});
 
-	test.describe("Click Behavior", () => {
-		test("should open on click", async ({ page }) => {
+	test.describe("Activation", () => {
+		test("opens on click, closes on second click of the trigger", async ({
+			page,
+		}) => {
 			await page.getByTestId("click-trigger").click();
 			await expect(page.getByTestId("click-content")).toBeVisible();
-		});
-
-		test("should close on second click of trigger", async ({ page }) => {
-			await page.getByTestId("click-trigger").click();
 			await page.getByTestId("click-trigger").click();
 			await expect(page.getByTestId("click-content")).not.toBeVisible();
 		});
 
-		test("should stay open when clicking inside content", async ({ page }) => {
+		for (const key of ["Enter", "Space"] as const) {
+			test(`opens via ${key} on the trigger`, async ({ page }) => {
+				await page.getByTestId("click-trigger").focus();
+				await page.keyboard.press(key);
+				await expect(page.getByTestId("click-content")).toBeVisible();
+			});
+		}
+
+		test("Escape closes and returns focus to the trigger", async ({ page }) => {
+			await page.getByTestId("click-trigger").click();
+			await page.keyboard.press("Escape");
+			await expect(page.getByTestId("click-content")).not.toBeVisible();
+			await expect(page.getByTestId("click-trigger")).toBeFocused();
+		});
+
+		test("ignores `aria-disabled` triggers via mouse and keyboard", async ({
+			page,
+		}) => {
+			await page.getByTestId("disabled-trigger").click({ force: true });
+			await expect(page.getByTestId("disabled-content")).not.toBeVisible();
+			await page.getByTestId("disabled-trigger").focus();
+			await page.keyboard.press("Enter");
+			await expect(page.getByTestId("disabled-content")).not.toBeVisible();
+		});
+	});
+
+	test.describe("Content interaction", () => {
+		test("clicks inside content do not close the popover", async ({ page }) => {
 			await page.getByTestId("click-trigger").click();
 			await page.getByTestId("click-text").click();
 			await expect(page.getByTestId("click-content")).toBeVisible();
 		});
 
-		test("should allow interactive children to fire their own handlers", async ({
+		test("interactive children fire their own click handlers", async ({
 			page,
 		}) => {
 			await page.getByTestId("click-trigger").click();
@@ -153,69 +129,32 @@ test.describe("Popover", () => {
 			await expect(page.getByTestId("click-content")).toBeVisible();
 		});
 
-		test("should close on click outside", async ({ page }) => {
+		test("outside click closes the popover", async ({ page }) => {
 			await page.getByTestId("click-trigger").click();
 			await page.getByTestId("focus-before").click();
 			await expect(page.getByTestId("click-content")).not.toBeVisible();
 		});
-
-		test("should close other popover when opening a new one", async ({
-			page,
-		}) => {
-			await page.getByTestId("click-trigger").click();
-			await page.getByTestId("second-trigger").click();
-			await expect(page.getByTestId("click-content")).not.toBeVisible();
-			await expect(page.getByTestId("second-content")).toBeVisible();
-		});
 	});
 
-	test.describe("Keyboard", () => {
-		test("should open on Enter", async ({ page }) => {
-			await page.getByTestId("click-trigger").focus();
-			await page.keyboard.press("Enter");
-			await expect(page.getByTestId("click-content")).toBeVisible();
-		});
-
-		test("should open on Space", async ({ page }) => {
-			await page.getByTestId("click-trigger").focus();
-			await page.keyboard.press("Space");
-			await expect(page.getByTestId("click-content")).toBeVisible();
-		});
-
-		test("should close on Escape and return focus to trigger", async ({
+	test.describe("Focus management", () => {
+		test("opening with the mouse moves focus into content; trigger Tab walks into focusable children", async ({
 			page,
 		}) => {
-			await page.getByTestId("click-trigger").click();
-			await expect(page.getByTestId("click-content")).toBeVisible();
-			await page.keyboard.press("Escape");
-			await expect(page.getByTestId("click-content")).not.toBeVisible();
-			await expect(page.getByTestId("click-trigger")).toBeFocused();
-		});
-	});
-
-	test.describe("Focus Management", () => {
-		test("should move focus to content on click-open", async ({ page }) => {
 			await page.getByTestId("click-trigger").click();
 			await expect(page.getByTestId("click-content")).toBeFocused();
-		});
-
-		test("should return focus to trigger when closed by trigger click", async ({
-			page,
-		}) => {
-			await page.getByTestId("click-trigger").click();
-			await page.getByTestId("click-trigger").click();
-			await expect(page.getByTestId("click-trigger")).toBeFocused();
-		});
-
-		test("should tab from content into focusable children", async ({
-			page,
-		}) => {
-			await page.getByTestId("click-trigger").click();
 			await page.keyboard.press("Tab");
 			await expect(page.getByTestId("copy-button")).toBeFocused();
 		});
 
-		test("should return focus to trigger via Escape from a focused child", async ({
+		test("closing via trigger click returns focus to the trigger", async ({
+			page,
+		}) => {
+			await page.getByTestId("click-trigger").click();
+			await page.getByTestId("click-trigger").click();
+			await expect(page.getByTestId("click-trigger")).toBeFocused();
+		});
+
+		test("Escape from a focused child returns focus to the trigger", async ({
 			page,
 		}) => {
 			await page.getByTestId("click-trigger").click();
@@ -225,7 +164,7 @@ test.describe("Popover", () => {
 			await expect(page.getByTestId("click-trigger")).toBeFocused();
 		});
 
-		test("should close when focus leaves the popover via Tab past last focusable", async ({
+		test("Tab past the last focusable child closes the popover", async ({
 			page,
 		}) => {
 			await page.getByTestId("click-trigger").click();
@@ -234,38 +173,16 @@ test.describe("Popover", () => {
 			await expect(page.getByTestId("click-content")).not.toBeVisible();
 		});
 
-		test("should close when focus leaves the popover via Shift+Tab back to the trigger's previous sibling", async ({
-			page,
-		}) => {
+		test("Shift+Tab off the trigger closes the popover", async ({ page }) => {
 			await page.getByTestId("click-trigger").click();
-			await expect(page.getByTestId("click-content")).toBeVisible();
 			await page.getByTestId("click-trigger").focus();
 			await page.keyboard.press("Shift+Tab");
 			await expect(page.getByTestId("click-content")).not.toBeVisible();
 		});
 	});
 
-	test.describe("Disabled", () => {
-		test("should not open when trigger has `aria-disabled='true'`", async ({
-			page,
-		}) => {
-			await page.getByTestId("disabled-trigger").click({ force: true });
-			await expect(page.getByTestId("disabled-content")).not.toBeVisible();
-		});
-
-		test("should not open when disabled trigger is activated via keyboard", async ({
-			page,
-		}) => {
-			await page.getByTestId("disabled-trigger").focus();
-			await page.keyboard.press("Enter");
-			await expect(page.getByTestId("disabled-content")).not.toBeVisible();
-		});
-	});
-
-	test.describe("Mutual Exclusion", () => {
-		test("should close when page is scrolled outside popover", async ({
-			page,
-		}) => {
+	test.describe("Dismissal", () => {
+		test("dismisses on page scroll", async ({ page }) => {
 			await page.setViewportSize({ width: 800, height: 300 });
 			await page.evaluate(() => {
 				const div = document.createElement("div");
@@ -273,33 +190,60 @@ test.describe("Popover", () => {
 				document.body.appendChild(div);
 			});
 			await page.getByTestId("click-trigger").click();
-			await expect(page.getByTestId("click-content")).toBeVisible();
 			await page.evaluate(() => window.scrollTo(0, 200));
 			await expect(page.getByTestId("click-content")).not.toBeVisible();
 		});
 
-		test("should stay open when scrolling a scrollable child inside content", async ({
+		test("stays open when a scrollable child inside content scrolls", async ({
 			page,
 		}) => {
 			await page.getByTestId("scroll-trigger").click();
-			await expect(page.getByTestId("scroll-content")).toBeVisible();
 			await page.getByTestId("scroll-inner").evaluate((el) => {
 				el.scrollTop = 50;
 			});
 			await expect(page.getByTestId("scroll-content")).toBeVisible();
 		});
 
-		test("should close popover when opening a menu", async ({ page }) => {
+		test("viewport resize closes the popover", async ({ page }) => {
 			await page.getByTestId("click-trigger").click();
 			await expect(page.getByTestId("click-content")).toBeVisible();
+			await page.setViewportSize({ width: 800, height: 400 });
+			await expect(page.getByTestId("click-content")).not.toBeVisible();
+		});
+	});
+
+	test.describe("Structure independence", () => {
+		test("opens, focuses content, and dismisses on outside click when trigger and content live in different containers", async ({
+			page,
+			renderer,
+		}) => {
+			await page.goto(`/${renderer}/popover/structure-independence`);
+			await page.getByTestId("trigger").click();
+			await expect(page.getByTestId("content")).toBeVisible();
+			await expect(page.getByTestId("content")).toBeFocused();
+			await page.keyboard.press("Tab");
+			await expect(page.getByTestId("inside")).toBeFocused();
+			// Clicking unrelated chrome that sits between trigger and content
+			// in DOM order is just an outside click.
+			await page.getByTestId("main").click();
+			await expect(page.getByTestId("content")).not.toBeVisible();
+		});
+	});
+
+	test.describe("Mutual exclusion", () => {
+		test("opening another popover closes the first", async ({ page }) => {
+			await page.getByTestId("click-trigger").click();
+			await page.getByTestId("second-trigger").click();
+			await expect(page.getByTestId("click-content")).not.toBeVisible();
+			await expect(page.getByTestId("second-content")).toBeVisible();
+		});
+
+		test("popover and menu close each other on open", async ({ page }) => {
+			await page.getByTestId("click-trigger").click();
 			await page.getByTestId("menu-trigger").click();
 			await expect(page.getByTestId("click-content")).not.toBeVisible();
 			await expect(page.getByTestId("menu-list")).toBeVisible();
-		});
 
-		test("should close menu when opening a popover", async ({ page }) => {
-			await page.getByTestId("menu-trigger").click();
-			await expect(page.getByTestId("menu-list")).toBeVisible();
 			await page.getByTestId("click-trigger").click();
 			await expect(page.getByTestId("menu-list")).not.toBeVisible();
 			await expect(page.getByTestId("click-content")).toBeVisible();

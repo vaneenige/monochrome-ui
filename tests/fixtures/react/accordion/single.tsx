@@ -3,22 +3,11 @@ import { Accordion } from "monochrome/react";
 export default () => (
 	<>
 		<div id="output" data-testid="output" />
-		<script
-			// biome-ignore lint/security/noDangerouslySetInnerHtml: test fixture click tracking
-			dangerouslySetInnerHTML={{
-				__html: `
-          document.addEventListener('click', (e) => {
-            const item = e.target.closest('[data-action]')
-            if (item) document.getElementById('output').textContent = item.dataset.action
-          })
-        `,
-			}}
-		/>
 		<button type="button" data-testid="focus-before">
 			Focus before
 		</button>
-		<Accordion.Root type="single" data-testid="single-accordion">
-			<Accordion.Item data-testid="single-item-1">
+		<Accordion.Root type="single">
+			<Accordion.Item>
 				<Accordion.Header>
 					<Accordion.Trigger
 						data-testid="single-trigger-1"
@@ -43,7 +32,7 @@ export default () => (
 					</p>
 				</Accordion.Panel>
 			</Accordion.Item>
-			<Accordion.Item data-testid="single-item-2">
+			<Accordion.Item>
 				<Accordion.Header>
 					<Accordion.Trigger data-testid="single-trigger-2">
 						Section 2
@@ -53,8 +42,8 @@ export default () => (
 					<p>Content for section 2. Only one section can be open at a time.</p>
 				</Accordion.Panel>
 			</Accordion.Item>
-			<Accordion.Item data-testid="single-item-3">
-				<Accordion.Header>
+			<Accordion.Item>
+				<Accordion.Header as="h2">
 					<Accordion.Trigger data-testid="single-trigger-3">
 						Section 3
 					</Accordion.Trigger>

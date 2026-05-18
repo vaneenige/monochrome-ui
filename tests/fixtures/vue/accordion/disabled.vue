@@ -12,9 +12,9 @@ import { Accordion } from "monochrome/vue"
     </button>
     <Accordion.Root
       type="single"
-      data-testid="disabled-accordion"
+     
     >
-      <Accordion.Item data-testid="disabled-item-1">
+      <Accordion.Item>
         <Accordion.Header>
           <Accordion.Trigger data-testid="disabled-trigger-1">
             Section 1
@@ -26,7 +26,7 @@ import { Accordion } from "monochrome/vue"
       </Accordion.Item>
       <Accordion.Item
         :disabled="true"
-        data-testid="disabled-item-2"
+       
       >
         <Accordion.Header>
           <Accordion.Trigger data-testid="disabled-trigger-2">
@@ -37,7 +37,7 @@ import { Accordion } from "monochrome/vue"
           <p>Content for section 2 (disabled)</p>
         </Accordion.Panel>
       </Accordion.Item>
-      <Accordion.Item data-testid="disabled-item-3">
+      <Accordion.Item>
         <Accordion.Header>
           <Accordion.Trigger data-testid="disabled-trigger-3">
             Section 3
