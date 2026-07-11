@@ -44,7 +44,7 @@ tracking who owns what becomes a maintenance tax. With DOM-as-state
 there is exactly one truth and we never have to reconcile.
 
 **Global delegated listeners.** Per-component listeners scale with
-component count and require teardown on unmount. Eight global
+component count and require teardown on unmount. Seven global
 listeners are constant cost, require zero teardown, and automatically
 cover dynamically-inserted DOM without re-wiring.
 
@@ -127,7 +127,8 @@ past the start". On an all-disabled list the naive walker loops
 forever. `rovingBoundary` remembers the first candidate the walker
 rejected; if we ever see it again we give up. One pointer, zero
 counters, zero extra passes. Cleared at the top of every `keydown`
-so each keypress starts with a fresh boundary.
+and `click` (both listeners drive walks) so each interaction
+starts with a fresh boundary.
 
 **Radio sweep reuses the navigation walker.** Activating a
 `menuitemradio` must clear `aria-checked` on every adjacent radio
@@ -219,10 +220,9 @@ Rules only. Rationale lives in "Why the core looks weird" and
   lookup where no sibling relationship exists.)
 - No `closest()`. Use `findAncestor(el, prefix)`.
 - ARIA IDL accessors (`ariaExpanded`, `ariaChecked`, `ariaHidden`,
-  `ariaDisabled`, `ariaSelected`, `role`) over
+  `ariaDisabled`, `ariaSelected`, `role`, `hidden`) over
   `getAttribute`/`setAttribute`. String API only where there's no
-  IDL counterpart (`data-*`, `aria-labelledby`, `aria-controls`,
-  `hidden`).
+  IDL counterpart (`data-*`, `aria-labelledby`, `aria-controls`).
 - Compare ARIA strings with `!== "true"` when the "not truthy"
   case is the one you care about.
 
