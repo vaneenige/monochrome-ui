@@ -299,6 +299,22 @@ The build step strips every comment before `Bun.build` sees it
 (`build.ts › stripComments`). Comments are free in source; they
 never reach `dist/`.
 
+## Build pipeline
+
+`bun run build` lints, type-checks, bundles to `dist/`, and
+rewrites `package.json`'s `versionMeta` (gzip sizes and Playwright
+test counts) from the current source. The numbers are generated,
+never hand-edited.
+
+**Every commit runs the full gate.** The pre-commit hook runs
+lint, typecheck, build, and the complete test suite, then stages
+the restamped `package.json`. Never bypass it with `--no-verify`,
+and never defer the `versionMeta` rewrite to a later commit: every
+commit must carry the sizes and test counts produced by its own
+tree, so any checkout of any commit reports honest numbers. This
+applies to multi-commit series too; run the gate once per commit,
+not once at the end.
+
 ## Test naming
 
 The describe block already names the subject; the test name should
