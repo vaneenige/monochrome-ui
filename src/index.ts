@@ -170,6 +170,14 @@ if (typeof document !== "undefined") {
 	/** Trigger that opened the current dialog; focus returns here on close. */
 	let dialogTrigger: HTMLElement | null = null;
 
+	/**
+	 * Last `pointermove` target. Consecutive moves inside one element
+	 * are the overwhelmingly common case; when nothing menu-related is
+	 * open they carry no new information, so the listener bails before
+	 * doing any ancestor walks.
+	 */
+	let pointerTarget: EventTarget | null = null;
+
 	/** Tooltip trigger currently under the pointer. */
 	let tooltipHovered: HTMLElement | null = null;
 	/** Tooltip trigger currently holding DOM focus. */
@@ -893,6 +901,11 @@ if (typeof document !== "undefined") {
 	 */
 	addEventListener("pointermove", (event: PointerEvent) => {
 		if (event.pointerType === "touch") return;
+		// Repeat moves inside one element are the hot path; with no
+		// menu open they can't change any state, so skip the walks.
+		// With a menu open every move matters (safety triangle).
+		if (event.target === pointerTarget && !menuPopovers[0]) return;
+		pointerTarget = event.target;
 		if (
 			isElement(event.target) &&
 			!findAncestor(event.target, Prefix.ContentTooltip)
@@ -1248,6 +1261,10 @@ if (typeof document !== "undefined") {
 				tooltipFocused = null;
 				tooltipSync();
 			}
+			// A tooltip hidden here should re-show on the next pointer
+			// move even when the pointer stays on the same element; drop
+			// the early-exit memo so that move gets processed.
+			pointerTarget = null;
 		},
 		true,
 	);
@@ -1265,6 +1282,7 @@ if (typeof document !== "undefined") {
 			tooltipFocused = null;
 			tooltipSync();
 		}
+		pointerTarget = null;
 	});
 
 	/**

@@ -99,7 +99,7 @@
     "vue": "3.5.32"
   },
   "versionMeta": {
-    "gzipSize": 2721,
+    "gzipSize": 2744,
     "routerGzipSize": 1057,
     "wrappersGzipSize": {
       "react": 2209,
