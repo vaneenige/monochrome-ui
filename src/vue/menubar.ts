@@ -1,4 +1,13 @@
-import { defineComponent, h, onBeforeUpdate, provide, ref, useId } from "vue";
+import {
+	defineComponent,
+	h,
+	onUnmounted,
+	provide,
+	reactive,
+	ref,
+	useId,
+	watchEffect,
+} from "vue";
 import { Menu } from "./menu.js";
 import { MenubarClaimKey, MenubarSlotKey, requireInject } from "./shared.js";
 
@@ -6,19 +15,24 @@ import { MenubarClaimKey, MenubarSlotKey, requireInject } from "./shared.js";
 // every other trigger gets `-1` and is reached via arrow keys. Put any
 // bare `Menubar.Item`s after the first `Menubar.Menu`, otherwise the
 // initial tab focus lands past the visually-first item.
+//
+// The claim is a ref holding the claimer's id. Claiming is idempotent
+// per id, unmounting releases, and each Menu tracks the ref through a
+// `watchEffect`, so when the claimer leaves the earliest surviving
+// Menu re-claims and its trigger becomes the tab stop reactively.
 const Root = defineComponent({
 	setup(_, { slots }) {
-		const claimed = ref(false);
-		onBeforeUpdate(() => {
-			claimed.value = false;
-		});
+		const claimed = ref<string | null>(null);
 		provide(MenubarClaimKey, {
-			claimFirst: () => {
-				if (!claimed.value) {
-					claimed.value = true;
+			claimFirst: (id: string) => {
+				if (claimed.value === null || claimed.value === id) {
+					claimed.value = id;
 					return true;
 				}
 				return false;
+			},
+			release: (id: string) => {
+				if (claimed.value === id) claimed.value = null;
 			},
 		});
 		return () => h("ul", { role: "menubar" }, slots.default?.());
@@ -28,10 +42,14 @@ const Root = defineComponent({
 const MenubarMenu = defineComponent({
 	setup(_, { slots }) {
 		const claim = requireInject(MenubarClaimKey, "Menubar.Menu");
-		const isFirst = claim.claimFirst();
 		// biome-ignore lint/correctness/useHookAtTopLevel: Vue useId, not React
 		const id = useId();
-		provide(MenubarSlotKey, { id, first: isFirst });
+		const first = ref(false);
+		watchEffect(() => {
+			first.value = claim.claimFirst(id);
+		});
+		onUnmounted(() => claim.release(id));
+		provide(MenubarSlotKey, reactive({ id, first }));
 		return () => h("li", { role: "none" }, slots.default?.());
 	},
 });

@@ -44,7 +44,10 @@ export type MenubarSlotContext = {
 export const MenubarSlotKey: InjectionKey<MenubarSlotContext> =
 	Symbol("MenubarSlotContext");
 
-export type MenubarClaimContext = { claimFirst: () => boolean };
+export type MenubarClaimContext = {
+	claimFirst: (id: string) => boolean;
+	release: (id: string) => void;
+};
 export const MenubarClaimKey: InjectionKey<MenubarClaimContext> = Symbol(
 	"MenubarClaimContext",
 );

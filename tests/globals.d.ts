@@ -5,6 +5,7 @@
 interface Window {
 	__sentinel?: number;
 	__navCount?: number;
+	__bumpFirstMenu?: () => void;
 }
 
 declare module "*.vue" {

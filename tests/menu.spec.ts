@@ -1455,3 +1455,61 @@ test.describe("Disabled trigger", () => {
 		}
 	});
 });
+
+test.describe("Menubar dynamic", () => {
+	test("keeps exactly one menubar tab stop across partial re-renders", async ({
+		page,
+		renderer,
+	}) => {
+		test.skip(renderer !== "react", "Exercises React render semantics");
+		await page.goto("/react/menu/menubar-dynamic");
+		await expect(page.getByTestId("trigger-1")).toHaveAttribute(
+			"tabindex",
+			"0",
+		);
+		await expect(page.getByTestId("trigger-2")).toHaveAttribute(
+			"tabindex",
+			"-1",
+		);
+		await page.evaluate(() => window.__bumpFirstMenu?.());
+		await expect(page.getByTestId("trigger-1")).toHaveText("File v1");
+		await expect(page.getByTestId("trigger-1")).toHaveAttribute(
+			"tabindex",
+			"0",
+		);
+		await expect(page.getByTestId("trigger-2")).toHaveAttribute(
+			"tabindex",
+			"-1",
+		);
+	});
+
+	test("moves the tab stop on unmount and rejects late claimers", async ({
+		page,
+		renderer,
+	}) => {
+		test.skip(renderer !== "vue", "Exercises Vue reactivity semantics");
+		await page.goto("/vue/menu/menubar-dynamic");
+		await expect(page.getByTestId("trigger-1")).toHaveAttribute(
+			"tabindex",
+			"0",
+		);
+		await page.getByTestId("add-extra").click();
+		await expect(page.getByTestId("trigger-3")).toHaveAttribute(
+			"tabindex",
+			"-1",
+		);
+		await expect(page.getByTestId("trigger-1")).toHaveAttribute(
+			"tabindex",
+			"0",
+		);
+		await page.getByTestId("remove-first").click();
+		await expect(page.getByTestId("trigger-2")).toHaveAttribute(
+			"tabindex",
+			"0",
+		);
+		await expect(page.getByTestId("trigger-3")).toHaveAttribute(
+			"tabindex",
+			"-1",
+		);
+	});
+});

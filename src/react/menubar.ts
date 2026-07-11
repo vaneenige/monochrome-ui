@@ -13,7 +13,7 @@ type MenubarSlotContextValue = {
 	id: string;
 	first: boolean;
 };
-type MenubarClaimContextValue = { claimFirst: () => boolean };
+type MenubarClaimContextValue = { claimFirst: (id: string) => boolean };
 
 const MenubarSlotContext = createContext<MenubarSlotContextValue | null>(null);
 const MenubarClaimContext = createContext<MenubarClaimContextValue | null>(
@@ -39,16 +39,23 @@ function useMenubarClaim() {
 // every other trigger gets `-1` and is reached via arrow keys. Put any
 // bare `Menubar.Item`s after the first `Menubar.Menu`, otherwise the
 // initial tab focus lands past the visually-first item.
+//
+// The claim is keyed by the claimer's own id, which makes it
+// idempotent: a Menu that re-renders alone (Root untouched) re-claims
+// its slot instead of losing it, and StrictMode's double render
+// resolves to the same answer both times. Root resets the claim in
+// its render because a children change always re-renders Root, so the
+// next pass re-claims in document order.
 function Root({ children, ...props }: BaseProps): ReactElement {
-	const claimed = useRef(false);
-	claimed.current = false;
+	const claimed = useRef<string | null>(null);
+	claimed.current = null;
 	return createElement(
 		MenubarClaimContext.Provider,
 		{
 			value: {
-				claimFirst: () => {
-					if (!claimed.current) {
-						claimed.current = true;
+				claimFirst: (id: string) => {
+					if (claimed.current === null || claimed.current === id) {
+						claimed.current = id;
 						return true;
 					}
 					return false;
@@ -61,8 +68,8 @@ function Root({ children, ...props }: BaseProps): ReactElement {
 
 function MenubarMenu({ children, ...props }: BaseProps): ReactElement {
 	const claim = useMenubarClaim();
-	const isFirst = claim.claimFirst();
 	const id = useId();
+	const isFirst = claim.claimFirst(id);
 	return createElement(
 		MenubarSlotContext.Provider,
 		{ value: { id, first: isFirst } },
