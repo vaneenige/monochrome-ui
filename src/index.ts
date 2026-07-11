@@ -1190,10 +1190,15 @@ if (typeof document !== "undefined") {
 	addEventListener(
 		"scroll",
 		(event) => {
+			// Ancestor walk, matching the popover check below: a scroll
+			// inside any descendant of the popover (a nested scrollable
+			// region, not just the list itself) must not dismiss.
 			if (
 				menuPopovers[0] &&
-				(!isElement(event.target) ||
-					!event.target.id.startsWith(Prefix.ContentMenu))
+				!(
+					isElement(event.target) &&
+					findAncestor(event.target, Prefix.ContentMenu)
+				)
 			) {
 				menuHideAll();
 			}

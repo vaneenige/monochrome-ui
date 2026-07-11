@@ -438,6 +438,27 @@ test.describe("Menu", () => {
 			await expect(page.getByTestId("root-list")).toBeVisible();
 		});
 
+		test("scroll inside a scrollable region nested in the popover does not close the menu", async ({
+			page,
+			renderer,
+		}) => {
+			test.skip(
+				renderer !== "html",
+				"Core-only dismissal path; fixture is plain HTML",
+			);
+			await page.goto("/html/menu/scrollable");
+			await page.getByTestId("trigger").click();
+			await expect(page.getByTestId("list")).toBeVisible();
+			await page.getByTestId("scroll-region").evaluate(
+				(el) =>
+					new Promise<void>((resolve) => {
+						el.addEventListener("scroll", () => resolve(), { once: true });
+						el.scrollTop = 100;
+					}),
+			);
+			await expect(page.getByTestId("list")).toBeVisible();
+		});
+
 		test("document scroll closes the menu", async ({ page }) => {
 			await page.evaluate(() => {
 				document.body.style.height = "3000px";
