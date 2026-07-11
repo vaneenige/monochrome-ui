@@ -81,6 +81,9 @@ const vueGz = await gzip("dist/vue/index.js");
 // Counts actual runtime tests (so table-driven loops are counted by
 // iterations, not by source occurrences). Lists every spec under the
 // `html` project, which excludes only the router skips in react/vue.
+// This is the number of UNIQUE tests; the react and vue projects run
+// (almost) the same suite again, so CI executes roughly three times
+// this figure. Marketing copy quotes the unique count on purpose.
 const listing = await $`bunx playwright test --list --project=html --reporter=line`
 	.quiet()
 	.text();
