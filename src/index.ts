@@ -679,9 +679,15 @@ if (typeof document !== "undefined") {
 	 *
 	 * The triggering button is remembered so `dialogClose` returns
 	 * focus to it.
+	 *
+	 * The guard checks `.open`, not just the reference: a dialog can
+	 * close behind our back (a `form method="dialog"` submit, user
+	 * code calling `close()`), and per the DOM-as-state rule the
+	 * element, never the module variable, is the truth. Stale state
+	 * is simply overwritten by the next open.
 	 */
 	const dialogOpenFor = (trigger: HTMLElement) => {
-		if (dialogContent) return;
+		if (dialogContent?.open) return;
 		const content = getContent(trigger, "aria-controls");
 		if (!isDialog(content)) return;
 		dialogContent = content;
@@ -693,11 +699,12 @@ if (typeof document !== "undefined") {
 	 * Close the open dialog and return focus to its trigger. State is
 	 * cleared *before* `close()` so anything observing module state
 	 * sees consistent values regardless of when the (queued) `close`
-	 * event fires. `close()` on an already-closed `<dialog>` is a
-	 * spec no-op.
+	 * event fires. The `.open` guard keeps a natively-closed dialog
+	 * (see `dialogOpenFor`) from stealing focus back to a stale
+	 * trigger.
 	 */
 	const dialogClose = () => {
-		if (!dialogContent || !dialogTrigger) return;
+		if (!dialogContent?.open || !dialogTrigger) return;
 		const content = dialogContent;
 		const trigger = dialogTrigger;
 		dialogContent = null;

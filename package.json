@@ -99,17 +99,17 @@
     "vue": "3.5.32"
   },
   "versionMeta": {
-    "gzipSize": 2697,
+    "gzipSize": 2703,
     "routerGzipSize": 1057,
     "wrappersGzipSize": {
       "react": 2165,
       "vue": 2326
     },
     "tests": {
-      "total": 296,
+      "total": 297,
       "accordion": 33,
       "collapsible": 22,
-      "dialog": 17,
+      "dialog": 18,
       "menu": 118,
       "popover": 24,
       "router": 28,

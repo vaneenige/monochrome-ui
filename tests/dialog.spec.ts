@@ -248,3 +248,23 @@ test.describe("Dialog", () => {
 		});
 	});
 });
+
+test.describe("Edge cases", () => {
+	test.beforeEach(async ({ page, renderer }) => {
+		test.skip(renderer !== "html", "Core-only path; fixture is plain HTML");
+		await page.goto("/html/dialog/form");
+	});
+
+	test('reopens after a `form method="dialog"` submit closes it natively', async ({
+		page,
+	}) => {
+		await page.getByTestId("trigger").click();
+		await expect(page.getByTestId("content")).toBeVisible();
+		await page.getByTestId("submit").click();
+		await expect(page.getByTestId("content")).not.toBeVisible();
+		await page.getByTestId("trigger").click();
+		await expect(page.getByTestId("content")).toBeVisible();
+		await page.keyboard.press("Escape");
+		await expect(page.getByTestId("content")).not.toBeVisible();
+	});
+});
