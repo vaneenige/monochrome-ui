@@ -48,6 +48,12 @@ if (typeof document !== "undefined") {
 	/** Shared parser: creating a new `DOMParser` each call is wasteful. */
 	const parser = new DOMParser();
 
+	// The router owns scroll positions (saved into `history.state`,
+	// restored in `commit`). Left on "auto", the browser would also
+	// restore scroll on popstate, against the outgoing DOM and racing
+	// the swap.
+	history.scrollRestoration = "manual";
+
 	/**
 	 * Monotonic token to discard stale navigations. Incremented on
 	 * every `navigateTo`; only the call whose token still matches
@@ -75,12 +81,15 @@ if (typeof document !== "undefined") {
 	 * scroll to top. For pop navigations we just restore whatever
 	 * scroll was saved on the entry we're returning to.
 	 */
+	const stampScroll = () =>
+		history.replaceState({ ...history.state, scrollY: scrollY }, "");
+
 	const commit = (url: string, pop: boolean) => {
 		if (pop) {
 			const y = history.state?.scrollY;
 			scrollTo(0, typeof y === "number" ? y : 0);
 		} else {
-			history.replaceState({ ...history.state, scrollY: scrollY }, "");
+			stampScroll();
 			history.pushState({ scrollY: 0 }, "", url);
 			scrollTo(0, 0);
 		}
@@ -261,6 +270,22 @@ if (typeof document !== "undefined") {
 						location.href = href;
 					}
 				}
+			} else if (pop) {
+				// Same-page traversal: `#hash` entries the browser created
+				// natively. With manual scroll restoration nobody scrolls
+				// unless we do; restore the position stamped at click time,
+				// falling back to the entry's fragment target.
+				const y = history.state?.scrollY;
+				if (typeof y === "number") {
+					scrollTo(0, y);
+				} else if (location.hash) {
+					document.getElementById(location.hash.slice(1))?.scrollIntoView();
+				}
+			} else {
+				// Same page, different URL: a hash-less link clicked while
+				// the address bar still carries a fragment. Nothing to
+				// fetch or swap; just record the new URL and scroll up.
+				commit(href, false);
 			}
 		}
 	};
@@ -284,7 +309,20 @@ if (typeof document !== "undefined") {
 				event.target instanceof Element
 			) {
 				const anchor = event.target.closest("a");
-				if (canHandle(anchor)) {
+				if (
+					anchor &&
+					anchor.origin === location.origin &&
+					anchor.pathname === location.pathname &&
+					anchor.search === location.search &&
+					anchor.hash !== ""
+				) {
+					// Same-page fragment link: `canHandle` excludes these, so
+					// the browser is about to do a native fragment jump that
+					// moves the viewport away from this entry's position.
+					// Stamp it first so Back can restore it (with manual
+					// scroll restoration the browser won't).
+					stampScroll();
+				} else if (canHandle(anchor)) {
 					event.preventDefault();
 					void navigateTo(anchor.href, false);
 				}

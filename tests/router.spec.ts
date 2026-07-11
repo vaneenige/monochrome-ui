@@ -222,9 +222,30 @@ test.describe("Router", () => {
 			const sentinel = await page.evaluate(() => window.__sentinel);
 			expect(sentinel).toBe(1);
 		});
+
+		test("a hash-less link to the current page clears the hash without reloading", async ({
+			page,
+		}) => {
+			await page.goto("/html/router/ignored");
+			await page.getByTestId("hash-link").click();
+			await expect(page).toHaveURL("/html/router/ignored#anchor");
+			await page.evaluate(() => {
+				window.__sentinel = 1;
+			});
+			await page.getByTestId("self-link").click();
+			await expect(page).toHaveURL("/html/router/ignored");
+			const sentinel = await page.evaluate(() => window.__sentinel);
+			expect(sentinel).toBe(1);
+		});
 	});
 
 	test.describe("History", () => {
+		test("takes ownership of scroll restoration", async ({ page }) => {
+			await page.goto("/html/router/index");
+			const mode = await page.evaluate(() => history.scrollRestoration);
+			expect(mode).toBe("manual");
+		});
+
 		test("handles back navigation via `popstate`", async ({ page }) => {
 			await page.goto("/html/router/index");
 			await page.getByTestId("nav-about").click();
@@ -237,6 +258,47 @@ test.describe("Router", () => {
 			await expect(page.getByTestId("page-title")).toHaveText("Home");
 			const sentinel = await page.evaluate(() => window.__sentinel);
 			expect(sentinel).toBe(99);
+		});
+
+		test("restores scroll across native hash navigations", async ({ page }) => {
+			await page.goto("/html/router/hash");
+			await page.evaluate(() => window.scrollTo(0, 400));
+			await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(400);
+			await page.evaluate(() => {
+				document
+					.querySelector<HTMLAnchorElement>("[data-testid='hash-link']")
+					?.click();
+			});
+			await expect(page).toHaveURL("/html/router/hash#section");
+			await page.goBack();
+			await expect(page).toHaveURL("/html/router/hash");
+			await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(400);
+		});
+
+		test("forward to a hash entry lands on the fragment target", async ({
+			page,
+		}) => {
+			await page.goto("/html/router/hash");
+			await page.evaluate(() => {
+				document
+					.querySelector<HTMLAnchorElement>("[data-testid='hash-link']")
+					?.click();
+			});
+			await expect(page).toHaveURL("/html/router/hash#section");
+			await page.goBack();
+			await expect(page).toHaveURL("/html/router/hash");
+			await page.goForward();
+			await expect(page).toHaveURL("/html/router/hash#section");
+			await expect
+				.poll(() =>
+					page.evaluate(() => {
+						const section = document.getElementById("section");
+						return section
+							? Math.abs(window.scrollY - section.offsetTop) < 100
+							: false;
+					}),
+				)
+				.toBe(true);
 		});
 
 		test("restores scroll position on back navigation", async ({ page }) => {

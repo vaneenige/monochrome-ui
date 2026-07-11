@@ -100,19 +100,19 @@
   },
   "versionMeta": {
     "gzipSize": 2718,
-    "routerGzipSize": 1057,
+    "routerGzipSize": 1164,
     "wrappersGzipSize": {
       "react": 2209,
       "vue": 2407
     },
     "tests": {
-      "total": 308,
+      "total": 312,
       "accordion": 33,
       "collapsible": 22,
       "dialog": 18,
       "menu": 128,
       "popover": 24,
-      "router": 28,
+      "router": 32,
       "tabs": 38,
       "tooltip": 17
     }
