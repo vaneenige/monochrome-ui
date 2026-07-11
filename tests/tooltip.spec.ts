@@ -213,3 +213,25 @@ test.describe("Tooltip", () => {
 		});
 	});
 });
+
+test.describe("Positioning", () => {
+	test("publishes the trigger rect and tooltip size as CSS variables on the content", async ({
+		page,
+		renderer,
+	}) => {
+		await page.goto(`/${renderer}/tooltip/basic`);
+		await page.getByTestId("tooltip-trigger").hover();
+		await expect(page.getByTestId("tooltip-content")).toBeVisible();
+		const vars = await page
+			.getByTestId("tooltip-content")
+			.evaluate((el) => [
+				el.style.getPropertyValue("--top"),
+				el.style.getPropertyValue("--right"),
+				el.style.getPropertyValue("--bottom"),
+				el.style.getPropertyValue("--left"),
+				el.style.getPropertyValue("--pw"),
+				el.style.getPropertyValue("--ph"),
+			]);
+		for (const value of vars) expect(value).toMatch(/^-?\d+(\.\d+)?px$/);
+	});
+});

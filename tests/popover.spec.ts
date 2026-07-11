@@ -250,3 +250,25 @@ test.describe("Popover", () => {
 		});
 	});
 });
+
+test.describe("Positioning", () => {
+	test("publishes the trigger rect and panel size as CSS variables on the content", async ({
+		page,
+		renderer,
+	}) => {
+		await page.goto(`/${renderer}/popover/basic`);
+		await page.getByTestId("click-trigger").click();
+		await expect(page.getByTestId("click-content")).toBeVisible();
+		const vars = await page
+			.getByTestId("click-content")
+			.evaluate((el) => [
+				el.style.getPropertyValue("--top"),
+				el.style.getPropertyValue("--right"),
+				el.style.getPropertyValue("--bottom"),
+				el.style.getPropertyValue("--left"),
+				el.style.getPropertyValue("--pw"),
+				el.style.getPropertyValue("--ph"),
+			]);
+		for (const value of vars) expect(value).toMatch(/^-?\d+(\.\d+)?px$/);
+	});
+});

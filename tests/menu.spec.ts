@@ -1513,3 +1513,24 @@ test.describe("Menubar dynamic", () => {
 		);
 	});
 });
+
+test.describe("Positioning", () => {
+	test("publishes the trigger rect and popover size as CSS variables on the popover", async ({
+		page,
+		renderer,
+	}) => {
+		await page.goto(`/${renderer}/menu/basic`);
+		await openRoot(page);
+		const vars = await page
+			.getByTestId("root-list")
+			.evaluate((el) => [
+				el.style.getPropertyValue("--top"),
+				el.style.getPropertyValue("--right"),
+				el.style.getPropertyValue("--bottom"),
+				el.style.getPropertyValue("--left"),
+				el.style.getPropertyValue("--pw"),
+				el.style.getPropertyValue("--ph"),
+			]);
+		for (const value of vars) expect(value).toMatch(/^-?\d+(\.\d+)?px$/);
+	});
+});
