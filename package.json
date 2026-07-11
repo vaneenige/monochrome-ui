@@ -71,8 +71,8 @@
     "prepublishOnly": "bun run typecheck && bun run build && bun run test"
   },
   "peerDependencies": {
-    "react": ">=18",
-    "react-dom": ">=18",
+    "react": ">=19",
+    "react-dom": ">=19",
     "vue": ">=3.5"
   },
   "peerDependenciesMeta": {
