@@ -1182,21 +1182,31 @@ if (typeof document !== "undefined") {
 			}
 		}
 
-		// Global Escape. Closes the topmost menu (returning focus to its
-		// trigger), closes any open popover (returning focus to its
-		// trigger), closes any open dialog, and suppresses the visible
-		// tooltip.
+		// Global Escape. One layer per keypress, most transient first:
+		// suppress the visible tooltip, then close the topmost menu
+		// (returning focus to its trigger), then the open popover
+		// (returning focus to its trigger), then the dialog. Menus and
+		// popovers are mutually exclusive in practice, but a tooltip
+		// can sit on top of any of them.
 		if (event.key === "Escape") {
-			if (menuPopovers[0]) menu(menuPopovers.pop(), Focus.Trigger);
-			if (popoverOpen) {
-				const trigger = popoverOpen;
-				popover(trigger, false);
-				trigger.focus();
-			}
-			if (dialogContent) dialogClose();
 			if (tooltipShown) {
 				tooltipSuppressed = tooltipShown;
 				tooltipSync();
+				// Consume the press: the browser's own Escape handling
+				// (a dialog's cancel) is a second layer, and it would
+				// otherwise fire alongside the one dismissed here. Same
+				// in the two branches below.
+				shouldPreventDefault = true;
+			} else if (menuPopovers[0]) {
+				menu(menuPopovers.pop(), Focus.Trigger);
+				shouldPreventDefault = true;
+			} else if (popoverOpen) {
+				const trigger = popoverOpen;
+				popover(trigger, false);
+				trigger.focus();
+				shouldPreventDefault = true;
+			} else if (dialogContent) {
+				dialogClose();
 			}
 		}
 

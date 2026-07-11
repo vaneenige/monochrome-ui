@@ -151,6 +151,23 @@ test.describe("Tooltip", () => {
 			await page.evaluate(() => window.scrollTo(0, 200));
 			await expect(page.getByTestId("tooltip-content")).not.toBeVisible();
 		});
+
+		test("Escape dismisses the tooltip first and the open menu second", async ({
+			page,
+			renderer,
+		}) => {
+			test.skip(renderer !== "html", "Cross-component fixture is plain HTML");
+			await page.goto("/html/tooltip/with-menu");
+			await page.getByTestId("menu-trigger").click();
+			await expect(page.getByTestId("menu-list")).toBeVisible();
+			await page.getByTestId("tooltip-trigger").hover();
+			await expect(page.getByTestId("tooltip-content")).toBeVisible();
+			await page.keyboard.press("Escape");
+			await expect(page.getByTestId("tooltip-content")).not.toBeVisible();
+			await expect(page.getByTestId("menu-list")).toBeVisible();
+			await page.keyboard.press("Escape");
+			await expect(page.getByTestId("menu-list")).not.toBeVisible();
+		});
 	});
 
 	test.describe("Disabled", () => {
