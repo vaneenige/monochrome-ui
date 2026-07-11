@@ -1144,6 +1144,59 @@ test.describe("Checkbox and radio items", () => {
 		);
 	});
 
+	test("selecting an earlier radio clears a later checked sibling", async ({
+		page,
+	}) => {
+		await page.getByTestId("radio-a2").click();
+		await page.getByTestId("radio-a1").click();
+		await expect(page.getByTestId("radio-a1")).toHaveAttribute(
+			"aria-checked",
+			"true",
+		);
+		await expect(page.getByTestId("radio-a2")).toHaveAttribute(
+			"aria-checked",
+			"false",
+		);
+	});
+
+	test("radio sweep survives a boundary left behind by arrow navigation", async ({
+		page,
+	}) => {
+		// ArrowDown past the disabled checkbox and separator records a
+		// roving boundary; the subsequent mouse-click sweep must start
+		// with a fresh one or it bails before clearing `radio-a1`.
+		await page.getByTestId("checkbox-2").focus();
+		await page.keyboard.press("ArrowDown");
+		await expect(page.getByTestId("radio-a1")).toBeFocused();
+		await page.getByTestId("radio-a2").click();
+		await expect(page.getByTestId("radio-a2")).toHaveAttribute(
+			"aria-checked",
+			"true",
+		);
+		await expect(page.getByTestId("radio-a1")).toHaveAttribute(
+			"aria-checked",
+			"false",
+		);
+	});
+
+	test("a radio whose button is not the first child of its `li` still checks", async ({
+		page,
+		renderer,
+	}) => {
+		test.skip(
+			renderer !== "html",
+			"Structure edge case; wrappers emit the canonical shape",
+		);
+		await page.goto("/html/menu/radio-wrapped");
+		await page.getByTestId("trigger").click();
+		await page.getByTestId("radio-2").click();
+		await expect(page.getByTestId("radio-2")).toHaveAttribute(
+			"aria-checked",
+			"true",
+		);
+		await expect(page.getByTestId("list")).toBeVisible();
+	});
+
 	test("arrow navigation skips disabled items and separators", async ({
 		page,
 	}) => {

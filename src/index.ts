@@ -333,6 +333,15 @@ if (typeof document !== "undefined") {
 		if (isElement(element)) {
 			const menuitem = element.firstElementChild;
 			if (shouldResetRadio) {
+				// Sweep-mode revolution guard. The sweep normally stops at
+				// the activated item, but markup that hides the radio
+				// behind another first child would never match it; the
+				// boundary sentinel turns that infinite walk into a bail.
+				if (rovingBoundary === element) {
+					rovingBoundary = null;
+					return null;
+				}
+				if (!rovingBoundary) rovingBoundary = element;
 				if (isElement(menuitem)) {
 					// Reached the activated item: flush the buffered tail and
 					// stop sweeping.
@@ -734,6 +743,10 @@ if (typeof document !== "undefined") {
 	 */
 	addEventListener("click", (event: MouseEvent) => {
 		shouldPreventDefault = null;
+		// Clicks walk the roving engine too (keyboard-open focuses the
+		// first item; radio activation sweeps), so the revolution
+		// sentinel must start fresh here just like in `keydown`.
+		rovingBoundary = null;
 		const keyboard = event.detail === 0;
 
 		// Event target may be a text node or SVGElement; normalise to
