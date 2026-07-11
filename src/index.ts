@@ -361,7 +361,12 @@ if (typeof document !== "undefined") {
 			if (
 				isMenuItem(menuitem) &&
 				(!shouldMatchLetter ||
-					menuitem.textContent?.toLowerCase().startsWith(shouldMatchLetter))
+					// Trimmed: hand-authored markup often indents the label,
+					// and `textContent` keeps that leading whitespace.
+					menuitem.textContent
+						?.trim()
+						.toLowerCase()
+						.startsWith(shouldMatchLetter))
 			) {
 				menuitem.focus();
 				shouldPreventDefault = true;

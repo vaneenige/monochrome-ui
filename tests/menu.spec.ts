@@ -553,6 +553,22 @@ test.describe("Typeahead", () => {
 		await page.keyboard.press("ArrowDown");
 		await expect(page.getByTestId("typeahead-item-3")).toBeFocused();
 	});
+
+	test("matches items whose markup indents the label text", async ({
+		page,
+		renderer,
+	}) => {
+		test.skip(
+			renderer !== "html",
+			"Wrapper output carries no whitespace; hand-written HTML does",
+		);
+		await page.goto("/html/menu/formatted");
+		await page.getByTestId("trigger").focus();
+		await page.getByTestId("trigger").press("Enter");
+		await expect(page.getByTestId("item-profile")).toBeFocused();
+		await page.keyboard.press("s");
+		await expect(page.getByTestId("item-settings")).toBeFocused();
+	});
 });
 
 test.describe("Edge cases", () => {
