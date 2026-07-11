@@ -11,7 +11,10 @@ const Root = defineComponent({
 });
 
 const Trigger = defineComponent({
-	setup(_, { slots }) {
+	props: {
+		disabled: Boolean,
+	},
+	setup(props, { slots }) {
 		const ctx = requireInject(MenuKey, "Menu.Trigger");
 		return () =>
 			h(
@@ -24,6 +27,7 @@ const Trigger = defineComponent({
 					"aria-haspopup": "menu",
 					tabindex: ctx.root ? 0 : -1,
 					role: ctx.submenu ? "menuitem" : "button",
+					"aria-disabled": props.disabled || undefined,
 				},
 				slots.default?.(),
 			);

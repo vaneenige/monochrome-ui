@@ -46,7 +46,10 @@ const Group = defineComponent({
 });
 
 const Trigger = defineComponent({
-	setup(_, { slots }) {
+	props: {
+		disabled: Boolean,
+	},
+	setup(props, { slots }) {
 		const slot = requireInject(MenubarSlotKey, "Menubar.Trigger");
 		return () =>
 			h(
@@ -59,6 +62,7 @@ const Trigger = defineComponent({
 					"aria-haspopup": "menu",
 					tabindex: slot.first ? 0 : -1,
 					role: "menuitem",
+					"aria-disabled": props.disabled || undefined,
 				},
 				slots.default?.(),
 			);

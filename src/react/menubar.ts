@@ -79,7 +79,11 @@ function Group({ children, ...props }: BaseProps): ReactElement {
 	);
 }
 
-function Trigger({ children, ...props }: BaseProps): ReactElement {
+function Trigger({
+	children,
+	disabled,
+	...props
+}: BaseProps & { disabled?: boolean }): ReactElement {
 	const slot = useMenubarSlot();
 	return createElement(
 		"button",
@@ -92,6 +96,7 @@ function Trigger({ children, ...props }: BaseProps): ReactElement {
 			"aria-haspopup": "menu",
 			tabIndex: slot.first ? 0 : -1,
 			role: "menuitem",
+			...(disabled ? { "aria-disabled": "true" } : {}),
 		},
 		children,
 	);

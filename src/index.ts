@@ -528,6 +528,10 @@ if (typeof document !== "undefined") {
 	 *
 	 * When closing, `Focus.None` also suppresses the usual
 	 * "return focus to trigger" behaviour.
+	 *
+	 * A trigger with `aria-disabled="true"` never opens (click,
+	 * keyboard, and hover all route through here), but a menu whose
+	 * trigger became disabled while open can still close.
 	 */
 	const menu = (trigger: HTMLElement | undefined, mode = Focus.Trigger) => {
 		if (trigger?.id.startsWith(Prefix.TriggerMenu)) {
@@ -544,7 +548,7 @@ if (typeof document !== "undefined") {
 					content.hidePopover();
 					trigger.ariaExpanded = "false";
 					content.ariaHidden = "true";
-				} else {
+				} else if (trigger.ariaDisabled !== "true") {
 					// Opening. Push onto the stack and publish position.
 					menuPopovers.push(trigger);
 					content.showPopover();

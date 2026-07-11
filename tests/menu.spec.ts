@@ -1423,3 +1423,35 @@ test.describe("Structure independence", () => {
 		await expect(page.getByTestId("c-list")).not.toBeVisible();
 	});
 });
+
+test.describe("Disabled trigger", () => {
+	test.beforeEach(async ({ page, renderer }) => {
+		await page.goto(`/${renderer}/menu/disabled-trigger`);
+	});
+
+	test("declares `aria-disabled` on the trigger", async ({ page }) => {
+		await expect(page.getByTestId("trigger")).toHaveAttribute(
+			"aria-disabled",
+			"true",
+		);
+	});
+
+	test("mouse click does not open the menu", async ({ page }) => {
+		await page.getByTestId("trigger").click({ force: true });
+		await expect(page.getByTestId("list")).not.toBeVisible();
+		await expect(page.getByTestId("trigger")).toHaveAttribute(
+			"aria-expanded",
+			"false",
+		);
+	});
+
+	test("Enter, ArrowDown, and ArrowUp do not open the menu", async ({
+		page,
+	}) => {
+		await page.getByTestId("trigger").focus();
+		for (const key of ["Enter", "ArrowDown", "ArrowUp"]) {
+			await page.keyboard.press(key);
+			await expect(page.getByTestId("list")).not.toBeVisible();
+		}
+	});
+});

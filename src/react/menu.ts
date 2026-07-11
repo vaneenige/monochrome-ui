@@ -32,7 +32,11 @@ function Root({ children }: { children: ReactNode }): ReactElement {
 	);
 }
 
-function Trigger({ children, ...props }: BaseProps): ReactElement {
+function Trigger({
+	children,
+	disabled,
+	...props
+}: BaseProps & { disabled?: boolean }): ReactElement {
 	const context = useMenuContext();
 	return createElement(
 		"button",
@@ -45,6 +49,7 @@ function Trigger({ children, ...props }: BaseProps): ReactElement {
 			"aria-haspopup": "menu",
 			tabIndex: context.root ? 0 : -1,
 			role: context.submenu ? "menuitem" : "button",
+			...(disabled ? { "aria-disabled": "true" } : {}),
 		},
 		children,
 	);
