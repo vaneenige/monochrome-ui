@@ -452,9 +452,7 @@ if (typeof document !== "undefined") {
 			const isOpen = trigger.ariaExpanded !== "true";
 			trigger.ariaExpanded = isOpen ? "true" : "false";
 			content.ariaHidden = isOpen ? "false" : "true";
-			isOpen
-				? content.removeAttribute("hidden")
-				: content.setAttribute("hidden", "");
+			content.hidden = !isOpen;
 		}
 	};
 
@@ -503,8 +501,14 @@ if (typeof document !== "undefined") {
 	const tabs = (trigger: HTMLElement) => {
 		if (trigger.ariaDisabled !== "true" && trigger.ariaSelected !== "true") {
 			let tab = trigger.parentElement?.firstElementChild;
-			while (isElement(tab)) {
-				if (tab === trigger || tab.ariaSelected === "true") {
+			while (tab) {
+				// Guard inside the loop (not the condition) so a non-HTML
+				// sibling, like a decorative SVG, is stepped over instead
+				// of truncating the walk.
+				if (
+					isElement(tab) &&
+					(tab === trigger || tab.ariaSelected === "true")
+				) {
 					const content = getContent(tab, "aria-controls");
 					if (content) {
 						const isSelected = tab.ariaSelected !== "true";
@@ -513,9 +517,7 @@ if (typeof document !== "undefined") {
 						content.ariaHidden = isSelected ? "false" : "true";
 						if (content.hasAttribute("tabindex"))
 							content.tabIndex = isSelected ? 0 : -1;
-						isSelected
-							? content.removeAttribute("hidden")
-							: content.setAttribute("hidden", "");
+						content.hidden = !isSelected;
 					}
 				}
 				tab = tab.nextElementSibling;
