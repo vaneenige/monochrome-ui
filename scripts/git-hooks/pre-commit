@@ -11,14 +11,16 @@ if ! git diff --quiet -- package.json; then
 fi
 
 # Lint first so formatting / lint drift fails before the slower
-# typecheck + build steps. `biome check` covers both lint and format.
+# build + typecheck steps. `biome check` covers both lint and format.
 bun run lint
 
-bun run typecheck
-
-# Build produces dist/ and rewrites package.json's versionMeta to
-# match the current source. See AGENTS.md › Build pipeline.
+# Build before typecheck: fixtures and tests resolve the package's
+# own exports, so tsc checks against dist/*.d.ts and needs them
+# regenerated from the current source first. Build also rewrites
+# package.json's versionMeta. See AGENTS.md › Build pipeline.
 bun run build
+
+bun run typecheck
 
 # Run the full Playwright suite. ~22s but catches regressions before
 # they reach the branch; the library's accessibility guarantees are
