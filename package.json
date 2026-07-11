@@ -100,7 +100,7 @@
   },
   "versionMeta": {
     "gzipSize": 2718,
-    "routerGzipSize": 1164,
+    "routerGzipSize": 1193,
     "wrappersGzipSize": {
       "react": 2209,
       "vue": 2407

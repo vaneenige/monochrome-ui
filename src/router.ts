@@ -108,6 +108,13 @@ if (typeof document !== "undefined") {
 	const fetchPage = (key: string): Promise<Fetched | null> => {
 		const hit = cache.get(key);
 		if (hit) return hit;
+		// Bound the cache: full pages add up, and hover-prefetching can
+		// touch a lot of them. Insertion order approximates oldest-first
+		// eviction, which is enough at this size.
+		if (cache.size >= 32) {
+			const oldest = cache.keys().next().value;
+			if (oldest) cache.delete(oldest);
+		}
 		const promise = (async () => {
 			try {
 				const response = await fetch(key);
