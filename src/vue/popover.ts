@@ -11,7 +11,10 @@ const Root = defineComponent({
 });
 
 const Trigger = defineComponent({
-	setup(_, { slots }) {
+	props: {
+		disabled: Boolean,
+	},
+	setup(props, { slots }) {
 		const ctx = requireInject(PopoverKey, "Popover.Trigger");
 		return () =>
 			h(
@@ -21,6 +24,7 @@ const Trigger = defineComponent({
 					id: `mct:popover:${ctx.id}`,
 					"aria-controls": `mcc:popover:${ctx.id}`,
 					"aria-expanded": "false",
+					"aria-disabled": props.disabled || undefined,
 				},
 				slots.default?.(),
 			);

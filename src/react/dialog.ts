@@ -26,7 +26,11 @@ function Root({ children, ...props }: BaseProps): ReactElement {
 	);
 }
 
-function Trigger({ children, ...props }: BaseProps): ReactElement {
+function Trigger({
+	children,
+	disabled,
+	...props
+}: BaseProps & { disabled?: boolean }): ReactElement {
 	const context = useDialogContext();
 	return createElement(
 		"button",
@@ -36,6 +40,7 @@ function Trigger({ children, ...props }: BaseProps): ReactElement {
 			id: `mct:dialog-open:${context.id}`,
 			"aria-haspopup": "dialog",
 			"aria-controls": `mcc:dialog:${context.id}`,
+			...(disabled ? { "aria-disabled": "true" } : {}),
 		},
 		children,
 	);

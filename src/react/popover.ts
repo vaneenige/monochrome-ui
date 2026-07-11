@@ -26,7 +26,11 @@ function Root({ children, ...props }: BaseProps): ReactElement {
 	);
 }
 
-function Trigger({ children, ...props }: BaseProps): ReactElement {
+function Trigger({
+	children,
+	disabled,
+	...props
+}: BaseProps & { disabled?: boolean }): ReactElement {
 	const context = usePopoverContext();
 	return createElement(
 		"button",
@@ -36,6 +40,7 @@ function Trigger({ children, ...props }: BaseProps): ReactElement {
 			id: `mct:popover:${context.id}`,
 			"aria-controls": `mcc:popover:${context.id}`,
 			"aria-expanded": "false",
+			...(disabled ? { "aria-disabled": "true" } : {}),
 		},
 		children,
 	);

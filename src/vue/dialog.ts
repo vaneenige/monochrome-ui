@@ -11,7 +11,10 @@ const Root = defineComponent({
 });
 
 const Trigger = defineComponent({
-	setup(_, { slots }) {
+	props: {
+		disabled: Boolean,
+	},
+	setup(props, { slots }) {
 		const ctx = requireInject(DialogKey, "Dialog.Trigger");
 		return () =>
 			h(
@@ -21,6 +24,7 @@ const Trigger = defineComponent({
 					id: `mct:dialog-open:${ctx.id}`,
 					"aria-haspopup": "dialog",
 					"aria-controls": `mcc:dialog:${ctx.id}`,
+					"aria-disabled": props.disabled || undefined,
 				},
 				slots.default?.(),
 			);
