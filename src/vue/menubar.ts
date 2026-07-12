@@ -1,13 +1,4 @@
-import {
-	defineComponent,
-	h,
-	onUnmounted,
-	provide,
-	reactive,
-	ref,
-	useId,
-	watchEffect,
-} from "vue";
+import { defineComponent, h, onUnmounted, provide, reactive, ref, useId, watchEffect } from "vue";
 import { Menu } from "./menu.js";
 import { MenubarClaimKey, MenubarSlotKey, requireInject } from "./shared.js";
 
@@ -21,99 +12,97 @@ import { MenubarClaimKey, MenubarSlotKey, requireInject } from "./shared.js";
 // `watchEffect`, so when the claimer leaves the earliest surviving
 // Menu re-claims and its trigger becomes the tab stop reactively.
 const Root = defineComponent({
-	setup(_, { slots }) {
-		const claimed = ref<string | null>(null);
-		provide(MenubarClaimKey, {
-			claimFirst: (id: string) => {
-				if (claimed.value === null || claimed.value === id) {
-					claimed.value = id;
-					return true;
-				}
-				return false;
-			},
-			release: (id: string) => {
-				if (claimed.value === id) claimed.value = null;
-			},
-		});
-		return () => h("ul", { role: "menubar" }, slots.default?.());
-	},
+  setup(_, { slots }) {
+    const claimed = ref<string | null>(null);
+    provide(MenubarClaimKey, {
+      claimFirst: (id: string) => {
+        if (claimed.value === null || claimed.value === id) {
+          claimed.value = id;
+          return true;
+        }
+        return false;
+      },
+      release: (id: string) => {
+        if (claimed.value === id) claimed.value = null;
+      },
+    });
+    return () => h("ul", { role: "menubar" }, slots.default?.());
+  },
 });
 
 const MenubarMenu = defineComponent({
-	setup(_, { slots }) {
-		const claim = requireInject(MenubarClaimKey, "Menubar.Menu");
-		// biome-ignore lint/correctness/useHookAtTopLevel: Vue useId, not React
-		const id = useId();
-		const first = ref(false);
-		watchEffect(() => {
-			first.value = claim.claimFirst(id);
-		});
-		onUnmounted(() => claim.release(id));
-		provide(MenubarSlotKey, reactive({ id, first }));
-		return () => h("li", { role: "none" }, slots.default?.());
-	},
+  setup(_, { slots }) {
+    const claim = requireInject(MenubarClaimKey, "Menubar.Menu");
+    const id = useId();
+    const first = ref(false);
+    watchEffect(() => {
+      first.value = claim.claimFirst(id);
+    });
+    onUnmounted(() => claim.release(id));
+    provide(MenubarSlotKey, reactive({ id, first }));
+    return () => h("li", { role: "none" }, slots.default?.());
+  },
 });
 
 const Group = defineComponent({
-	setup(_, { slots }) {
-		// biome-ignore lint/correctness/useHookAtTopLevel: Vue useId, not React
-		const id = useId();
-		provide(MenubarSlotKey, { id, first: false });
-		return () => h("li", { role: "none" }, slots.default?.());
-	},
+  setup(_, { slots }) {
+    const id = useId();
+    provide(MenubarSlotKey, { id, first: false });
+    return () => h("li", { role: "none" }, slots.default?.());
+  },
 });
 
 const Trigger = defineComponent({
-	props: {
-		disabled: Boolean,
-	},
-	setup(props, { slots }) {
-		const slot = requireInject(MenubarSlotKey, "Menubar.Trigger");
-		return () =>
-			h(
-				"button",
-				{
-					type: "button",
-					id: `mct:menu:${slot.id}`,
-					"aria-controls": `mcc:menu:${slot.id}`,
-					"aria-expanded": "false",
-					"aria-haspopup": "menu",
-					tabindex: slot.first ? 0 : -1,
-					role: "menuitem",
-					"aria-disabled": props.disabled || undefined,
-				},
-				slots.default?.(),
-			);
-	},
+  props: {
+    disabled: Boolean,
+  },
+  setup(props, { slots }) {
+    const slot = requireInject(MenubarSlotKey, "Menubar.Trigger");
+    return () =>
+      h(
+        "button",
+        {
+          type: "button",
+          id: `mct:menu:${slot.id}`,
+          "aria-controls": `mcc:menu:${slot.id}`,
+          "aria-expanded": "false",
+          "aria-haspopup": "menu",
+          tabindex: slot.first ? 0 : -1,
+          role: "menuitem",
+          "aria-disabled": props.disabled || undefined,
+        },
+        slots.default?.(),
+      );
+  },
 });
 
 const Popover = defineComponent({
-	setup(_, { slots }) {
-		const slot = requireInject(MenubarSlotKey, "Menubar.Popover");
-		return () =>
-			h(
-				"ul",
-				{
-					role: "menu",
-					id: `mcc:menu:${slot.id}`,
-					"aria-labelledby": `mct:menu:${slot.id}`,
-					"aria-hidden": "true",
-					popover: "manual",
-				},
-				slots.default?.(),
-			);
-	},
+  setup(_, { slots }) {
+    const slot = requireInject(MenubarSlotKey, "Menubar.Popover");
+    return () =>
+      h(
+        "ul",
+        {
+          role: "menu",
+          id: `mcc:menu:${slot.id}`,
+          "aria-labelledby": `mct:menu:${slot.id}`,
+          "aria-hidden": "true",
+          popover: "manual",
+        },
+        slots.default?.(),
+      );
+  },
 });
 
 export const Menubar = {
-	Root,
-	Menu: MenubarMenu,
-	Group,
-	Trigger,
-	Popover,
-	Item: Menu.Item,
-	CheckboxItem: Menu.CheckboxItem,
-	RadioItem: Menu.RadioItem,
-	Label: Menu.Label,
-	Separator: Menu.Separator,
+  Root,
+  Menu: MenubarMenu,
+  Group,
+  Trigger,
+  Popover,
+  Item: Menu.Item,
+  CheckboxItem: Menu.CheckboxItem,
+  RadioItem: Menu.RadioItem,
+  Label: Menu.Label,
+  Separator: Menu.Separator,
 };

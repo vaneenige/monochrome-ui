@@ -11,21 +11,22 @@ if ! git diff --quiet -- package.json; then
 fi
 
 # Lint first so formatting / lint drift fails before the slower
-# build + typecheck steps. `biome check` covers both lint and format.
-bun run lint
+# build + typecheck steps. `npm run lint` runs oxlint then
+# `oxfmt --check`, covering both lint and format.
+npm run lint
 
 # Build before typecheck: fixtures and tests resolve the package's
 # own exports, so tsc checks against dist/*.d.ts and needs them
 # regenerated from the current source first. Build also rewrites
 # package.json's versionMeta. See AGENTS.md › Build pipeline.
-bun run build
+npm run build
 
-bun run typecheck
+npm run typecheck
 
 # Run the full Playwright suite. ~22s but catches regressions before
 # they reach the branch; the library's accessibility guarantees are
 # only as good as the tests that pin them.
-bun run test
+npm run test
 
 # Stage the build-touched package.json only after every gate has
 # passed. If lint / typecheck / build / test had failed earlier, the

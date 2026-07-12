@@ -1,5 +1,6 @@
 node_modules/
 dist/
+.ssr/
 test-results/
 playwright-report/
 .DS_Store

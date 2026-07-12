@@ -183,10 +183,12 @@ Rules only. Rationale lives in "Why the core looks weird" and
 
 ### Formatting
 
-- Biome defaults: tab indent, semicolons, double quotes, 80-char
-  line width. No custom overrides in `biome.json`; `biome check`
-  enforces both lint and format and runs first in the pre-commit
-  hook.
+- oxfmt defaults (`.oxfmtrc.json`, no overrides beyond ignoring
+  `.html`/`.vue`/`.css`): 2-space indent, semicolons, double quotes,
+  80-char line width. oxlint (`.oxlintrc.json`) runs its default
+  `correctness` rules with the default plugins. `npm run lint` runs
+  `oxlint` then `oxfmt --check`, covering both lint and format, and
+  runs first in the pre-commit hook.
 - `.js` extensions on value imports (NodeNext resolution).
 
 ### Functions
@@ -208,8 +210,9 @@ Rules only. Rationale lives in "Why the core looks weird" and
 - `for...of` over `.forEach` for arrays. `.forEach` is fine on a
   `NodeListOf`.
 - `switch` for keyboard dispatch.
-- Ternary as a statement when both branches are a single
-  side-effect call.
+- Ternary for values, not statements: `x = c ? a : b` is fine, but
+  an expression-statement ternary (`c ? f() : g()`) trips oxlint's
+  `no-unused-expressions`. Use `if`/`else` for side-effect branches.
 - `array[0]` over `array.length > 0`.
 
 ### DOM access
@@ -275,7 +278,7 @@ Applies to all prose in the repo: code comments, TSDoc, README,
 AGENTS.md, commit messages, PR descriptions.
 
 - **No em dashes (`—`).** Use a period, colon, semicolon, or
-  parentheses instead. Biome doesn't lint prose, so this is on the
+  parentheses instead. oxlint doesn't lint prose, so this is on the
   author. The rule applies everywhere, including stripped-at-build
   comments (the source is still what humans read).
 - **Hard-wrap around 66-70 characters.** Purely an authoring
@@ -290,21 +293,28 @@ AGENTS.md, commit messages, PR descriptions.
   (`/** */`) for every declared symbol. Inline `//` for non-obvious
   decisions. File-top `@file` header explaining architecture,
   invariants, and file layout. This is the convention; keep it.
-- `src/react/*`, `src/vue/*`: **no comments** except `// biome-ignore`
-  pragmas where required. Each file is small and self-evident.
+- `src/react/*`, `src/vue/*`: **no comments** except
+  `// oxlint-disable-next-line` pragmas where required. Each file is
+  small and self-evident.
 - Tests: no comments except when the *why* of a setup step would
   surprise the next reader (race conditions, sentinel globals, etc.).
 
-The build step strips every comment before `Bun.build` sees it
-(`build.ts › stripComments`). Comments are free in source; they
-never reach `dist/`.
+Rolldown's minifier drops all comments from `dist/`, so comments are
+free in source and never reach the published bundles.
 
 ## Build pipeline
 
-`bun run build` lints, type-checks, bundles to `dist/`, and
-rewrites `package.json`'s `versionMeta` (gzip sizes and Playwright
-test counts) from the current source. The numbers are generated,
-never hand-edited.
+`npm run build` (`node build.ts`) lints, bundles to `dist/` with
+rolldown, emits `.d.ts` via `tsc`, and rewrites `package.json`'s
+`versionMeta` (gzip sizes and Playwright test counts) from the
+current source. The numbers are generated, never hand-edited.
+
+**Requires Node >= 24.** `build.ts` and the SSR test server
+(`tests/server.ts`) are run directly as TypeScript via Node's native
+type stripping, so an older Node fails to start them. CI pins
+`24.18.0`; the published package itself has no runtime Node
+requirement (it ships browser ESM), which is why there is no
+`engines` field constraining consumers.
 
 **Every commit runs the full gate.** The pre-commit hook runs
 lint, typecheck, build, and the complete test suite, then stages

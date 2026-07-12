@@ -5,17 +5,17 @@ import { expect, test } from "./fixtures";
 // IS the assertion. The SSR guard in both entry points must make the
 // import a silent no-op instead of a crash.
 test.describe("SSR", () => {
-	test.beforeEach(({ renderer }) => {
-		test.skip(renderer !== "html", "Node-side import; renderer-independent");
-	});
+  test.beforeEach(({ renderer }) => {
+    test.skip(renderer !== "html", "Node-side import; renderer-independent");
+  });
 
-	test("core imports without a DOM", async () => {
-		expect(typeof document).toBe("undefined");
-		await expect(import("../dist/index.js")).resolves.toBeDefined();
-	});
+  test("core imports without a DOM", async () => {
+    expect(typeof document).toBe("undefined");
+    await expect(import("../dist/index.js")).resolves.toBeDefined();
+  });
 
-	test("router imports without a DOM", async () => {
-		expect(typeof document).toBe("undefined");
-		await expect(import("../dist/router.js")).resolves.toBeDefined();
-	});
+  test("router imports without a DOM", async () => {
+    expect(typeof document).toBe("undefined");
+    await expect(import("../dist/router.js")).resolves.toBeDefined();
+  });
 });

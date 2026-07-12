@@ -10,16 +10,21 @@ jobs:
   check:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: oven-sh/setup-bun@v2
+      - uses: actions/setup-node@v6
         with:
-          bun-version: latest
+          node-version: 24.18.0
+          cache: npm
 
-      - run: bun install
+      - run: npm ci
 
-      - run: bun run lint
+      - run: npm run lint
 
-      - run: bunx playwright install chromium
+      - run: npm run build
 
-      - run: bun run test
+      - run: npm run typecheck
+
+      - run: npx playwright install chromium
+
+      - run: npm run test

@@ -16,7 +16,7 @@ export default defineConfig<Options>({
 		{ name: "vue", use: { renderer: "vue" } },
 	],
 	webServer: {
-		command: "bun run build && bun tests/server.tsx",
+		command: "npm run build && node tests/server.ts",
 		port: 4000,
 		reuseExistingServer: !process.env.CI,
 	},
