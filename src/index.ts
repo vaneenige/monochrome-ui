@@ -34,10 +34,9 @@ if (typeof document !== "undefined") {
   const menuPopovers: HTMLElement[] = [];
   let rovingBoundary: Element | null = null;
 
-  let safeGroup: HTMLElement | null = null;
-  let safeRect: DOMRect | null = null;
+  let safeX: number | null = null;
+  let safeY = 0;
   let safeContent: HTMLElement | null = null;
-  let safePopoverRect: DOMRect | null = null;
 
   let popoverOpen: HTMLElement | null = null;
   let dialogContent: HTMLDialogElement | null = null;
@@ -235,10 +234,6 @@ if (typeof document !== "undefined") {
       const content = getContent(trigger, "aria-controls");
       if (content) {
         if (trigger.ariaExpanded === "true") {
-          if (safeGroup) safeGroup.removeAttribute("data-safe");
-          safeGroup = null;
-          safeContent = null;
-          safePopoverRect = null;
           if (mode !== Focus.None) trigger.focus();
           content.hidePopover();
           trigger.ariaExpanded = "false";
@@ -248,14 +243,9 @@ if (typeof document !== "undefined") {
           content.showPopover();
           trigger.ariaExpanded = "true";
           content.ariaHidden = "false";
-          const rect = position(trigger, content);
-          const group = trigger.parentElement;
-          if (group) {
-            safeGroup = group;
-            safeRect = rect;
-            safeContent = content;
-            safePopoverRect = null;
-          }
+          position(trigger, content);
+          safeContent = content;
+          safeX = null;
           if (mode === Focus.Trigger) {
             trigger.focus();
           } else if (mode === Focus.First) {
@@ -480,34 +470,37 @@ if (typeof document !== "undefined") {
       }
     }
     if (menuPopovers[0]) {
-      if (menuPopovers[1] && safeGroup && safeRect && safeContent) {
+      let safe = false;
+      const sub = menuPopovers[1];
+      if (sub) {
+        const rect = sub.getBoundingClientRect();
         if (
-          event.clientX >= safeRect.left &&
-          event.clientX <= safeRect.right &&
-          event.clientY >= safeRect.top &&
-          event.clientY <= safeRect.bottom
+          event.clientX >= rect.left &&
+          event.clientX <= rect.right &&
+          event.clientY >= rect.top &&
+          event.clientY <= rect.bottom
         ) {
-          safePopoverRect = safeContent.getBoundingClientRect();
-          safeGroup.style.setProperty("--left", `${safePopoverRect.left}px`);
-          safeGroup.style.setProperty("--right", `${safePopoverRect.right}px`);
-          safeGroup.style.setProperty("--top", `${safePopoverRect.top}px`);
-          safeGroup.style.setProperty("--bottom", `${safePopoverRect.bottom}px`);
-          safeGroup.style.setProperty("--x", `${event.clientX}px`);
-          safeGroup.style.setProperty("--y", `${event.clientY}px`);
-          if (!safeGroup.hasAttribute("data-safe")) safeGroup.setAttribute("data-safe", "");
-        } else if (
-          safeGroup.hasAttribute("data-safe") &&
-          safePopoverRect &&
-          (event.target !== safeGroup ||
-            (safePopoverRect.left - safeRect.right) * event.movementX < 0)
-        ) {
-          safeGroup.removeAttribute("data-safe");
+          safeX = event.clientX;
+          safeY = event.clientY;
+        } else if (safeX !== null) {
+          const p = safeContent?.getBoundingClientRect();
+          if (p) {
+            const d = (safeX < p.left ? p.left : safeX > p.right ? p.right : safeX) - safeX;
+            const t = d && (event.clientX - safeX) / d;
+            safe =
+              t > 0 &&
+              t <= 1 &&
+              (event.clientY - (safeY + t * (p.top - safeY))) *
+                (event.clientY - (safeY + t * (p.bottom - safeY))) <=
+                0 &&
+              (p.left - rect.right) * event.movementX >= 0;
+          }
+          if (!safe) safeX = null;
         }
       }
-      const el = event.target;
-      if (isElement(el)) {
+      if (!safe && isElement(event.target)) {
         const popoverTriggers: HTMLButtonElement[] = [];
-        let target: HTMLElement | null = el;
+        let target: HTMLElement | null = event.target;
         let bail = false;
         let foundItem = false;
         while (target) {

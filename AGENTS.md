@@ -166,24 +166,28 @@ the trigger rect as CSS custom properties (`--top`, `--bottom`,
 positioning happens in CSS. No JS layout math, no `z-index`
 management (top layer handles that).
 
-**Safety triangle via `clip-path`.** When a submenu opens, the core
-publishes the submenu rect and cursor position as more CSS vars, and
-a `clip-path` polygon in CSS paints a direction-agnostic triangle
-using `clamp(var(--left), var(--x), var(--right))`. Zero JS during
-mouse-move beyond setting vars.
+**Safety triangle in JS.** When a submenu is open, pointermove
+records the last cursor point inside the submenu trigger (the
+apex). Later moves skip hover activation while the cursor is
+inside the triangle from that apex to the submenu's near
+vertical edge (`clamp(left, apexX, right)` as the base) and
+still moving toward the submenu. A failed test (left the
+path, or arrived in the submenu where `t > 1`) clears the
+apex; hover the trigger again to re-arm. CSS `:hover` still
+paints items under the path; they just do not open or close
+menus. No overlay, no CSS vars, no timers.
 
-**Signed movement for triangle direction; lazy rect measurement.**
-Two tricks inside the safety triangle. First, the "is the cursor
-moving toward the submenu?" check is
-`(safePopoverRect.left - safeRect.right) * event.movementX < 0`.
-Submenu to the right: `left - right` is negative, so the product
-is only negative when `movementX > 0` (moving right). Submenu to
-the left: inverted, same expression. One signed multiplication
-covers both sides without a branch. Second, `safePopoverRect` is
-measured on the first pointermove *into* the trigger cell, not at
-open time, because `@starting-style` transforms leave the rect
-wrong until the animation settles. Measuring lazily is also free
-when the user never enters the triangle.
+**Signed movement for triangle direction.** "Is the cursor
+moving toward the submenu?" is
+`(submenuLeft - triggerRight) * event.movementX >= 0`.
+Submenu to the right: `left - right` is positive, so the
+product stays non-negative while `movementX >= 0` (moving
+right). Submenu to the left: inverted, same expression. One
+signed multiplication covers both sides without a branch.
+The submenu popover is stored as `safeContent` on open.
+Its rect is measured live while testing the triangle, not
+at open time, because `@starting-style` transforms leave
+the rect wrong until the animation settles.
 
 **Monotonic token for async cancellation.** The router uses a
 counter that increments on every `navigateTo`; callbacks check if
@@ -264,7 +268,7 @@ Rules only. Rationale lives in "Why the core looks weird" and
   pass the narrowed value down.
 - No `as`, `any`, or non-null `!` assertions in the core or
   router. Narrow with runtime checks. (Vue wrappers may use `as
-  PropType<...>` where Vue's prop typing requires it.)
+PropType<...>` where Vue's prop typing requires it.)
 
 ### Events
 
@@ -311,7 +315,7 @@ AGENTS.md, commit messages, PR descriptions.
 - `src/react/*`, `src/vue/*`: **no comments** except
   `// oxlint-disable-next-line` pragmas where required. Each file is
   small and self-evident.
-- Tests: no comments except when the *why* of a setup step would
+- Tests: no comments except when the _why_ of a setup step would
   surprise the next reader (race conditions, sentinel globals, etc.).
 
 Rolldown's minifier drops all comments from `dist/`, so comments are
@@ -351,12 +355,12 @@ state the behaviour, nothing else.
 - **Subject is the protagonist of the assertion.** Use the SUT when
   the test is about a property (`declares aria-haspopup="menu"`).
   Use the input when the test is action-driven (`Enter opens the
-  menu`).
+menu`).
 - **No filler.** Drop `test that`, `ensure`, `verify`, `make sure`,
   `correctly`, `properly`, `as expected`. If the assertion exists,
   the behaviour IS the expected one.
 - **Backticks for kebab-case attributes and ambiguous tokens.**
-  ``aria-expanded``, ``data-mode``, ``role="menu"``, ``Tab`` (the
+  `aria-expanded`, `data-mode`, `role="menu"`, `Tab` (the
   key, to disambiguate from the noun) always quoted with backticks.
   PascalCase key names (`Enter`, `ArrowDown`, `Home`, `End`) are
   visually distinct enough that backticks are optional, but be
@@ -369,4 +373,4 @@ state the behaviour, nothing else.
   `Focus management`, `Disabled`, `Edge cases`,
   `Structure independence`, `Click handler`, `Dynamic`. Per-component
   refinements (`Trigger keyboard`, `Item keyboard`, `Keyboard
-  (horizontal)`) are fine when the structure genuinely splits.
+(horizontal)`) are fine when the structure genuinely splits.

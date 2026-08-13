@@ -953,6 +953,18 @@ test.describe("Safety triangle", () => {
         );
     }, opts);
 
+  const arm = async (page: Page) => {
+    const rect = await page.getByTestId("submenu-trigger").boundingBox();
+    if (!rect) throw new Error("submenu-trigger not visible");
+    await pointer(page, {
+      testId: "submenu-trigger",
+      x: rect.x + rect.width / 2,
+      y: rect.y + rect.height / 2,
+      movementX: 1,
+    });
+    return rect;
+  };
+
   test.beforeEach(async ({ page, renderer }) => {
     await page.goto(`/${renderer}/menu/triangle`);
     await page.getByTestId("trigger").click();
@@ -960,88 +972,74 @@ test.describe("Safety triangle", () => {
     await expect(page.getByTestId("submenu-list")).toBeVisible();
   });
 
-  test("cursor inside trigger rect sets `data-safe` and updates CSS vars", async ({ page }) => {
-    const rect = await page.getByTestId("submenu-trigger").boundingBox();
-    if (!rect) throw new Error("submenu-trigger not visible");
-    const cx = rect.x + rect.width / 2;
-    const cy = rect.y + rect.height / 2;
-    await pointer(page, {
-      testId: "submenu-trigger",
-      x: cx,
-      y: cy,
-      movementX: 1,
-    });
-    await expect(page.getByTestId("group")).toHaveAttribute("data-safe", "");
-    const y = await page.getByTestId("group").evaluate((el) => el.style.getPropertyValue("--y"));
-    expect(y).toBe(`${cy}px`);
-  });
-
-  test("sustained velocity away from the submenu clears `data-safe`", async ({ page }) => {
-    const rect = await page.getByTestId("submenu-trigger").boundingBox();
-    if (!rect) throw new Error("submenu-trigger not visible");
-    await pointer(page, {
-      testId: "submenu-trigger",
-      x: rect.x + rect.width / 2,
-      y: rect.y + rect.height / 2,
-    });
-    for (let i = 0; i < 5; i++) {
-      await pointer(page, {
-        testId: "group",
-        x: rect.x - 10,
-        y: rect.y + rect.height / 2,
-        movementX: -5,
-      });
-    }
-    await expect(page.getByTestId("group")).not.toHaveAttribute("data-safe");
-  });
-
-  test("cursor leaving the triangle area (different element) clears `data-safe`", async ({
-    page,
-  }) => {
-    const rect = await page.getByTestId("submenu-trigger").boundingBox();
-    if (!rect) throw new Error("submenu-trigger not visible");
-    await pointer(page, {
-      testId: "submenu-trigger",
-      x: rect.x + rect.width / 2,
-      y: rect.y + rect.height / 2,
-    });
+  test("diagonal travel toward the submenu does not close it", async ({ page }) => {
+    const trigger = await arm(page);
+    const submenu = await page.getByTestId("submenu-list").boundingBox();
+    if (!submenu) throw new Error("submenu not visible");
     await pointer(page, {
       testId: "item-1",
-      x: rect.x - 50,
-      y: rect.y - 30,
+      x: trigger.x + trigger.width + 8,
+      y: trigger.y + trigger.height / 2,
+      movementX: 1,
     });
-    await expect(page.getByTestId("group")).not.toHaveAttribute("data-safe");
+    await expect(page.getByTestId("submenu-list")).toBeVisible();
+    await page.mouse.move(trigger.x + trigger.width / 2, trigger.y + trigger.height / 2);
+    await page.mouse.move(submenu.x + 8, submenu.y + submenu.height / 2, { steps: 12 });
+    await expect(page.getByTestId("submenu-list")).toBeVisible();
+  });
+
+  test("hovering a sibling item closes the submenu", async ({ page }) => {
+    await arm(page);
+    await page.getByTestId("item-1").hover();
+    await expect(page.getByTestId("submenu-list")).not.toBeVisible();
+  });
+
+  test("moving away from the submenu closes it", async ({ page }) => {
+    const trigger = await arm(page);
+    await pointer(page, {
+      testId: "item-1",
+      x: trigger.x + trigger.width + 8,
+      y: trigger.y + trigger.height / 2,
+      movementX: -5,
+    });
+    await expect(page.getByTestId("submenu-list")).not.toBeVisible();
   });
 
   test("touch pointer events are ignored", async ({ page }) => {
-    const rect = await page.getByTestId("submenu-trigger").boundingBox();
-    if (!rect) throw new Error("submenu-trigger not visible");
+    const trigger = await arm(page);
     await pointer(page, {
-      testId: "submenu-trigger",
-      x: rect.x + rect.width / 2,
-      y: rect.y + rect.height / 2,
+      testId: "item-1",
+      x: trigger.x + trigger.width / 2,
+      y: trigger.y - 30,
       movementX: 1,
       pointerType: "touch",
     });
-    await expect(page.getByTestId("group")).not.toHaveAttribute("data-safe");
+    await expect(page.getByTestId("submenu-list")).toBeVisible();
   });
 
-  test("reopens cleanly: closing the submenu and re-opening still tracks the cursor", async ({
-    page,
-  }) => {
-    const rect = await page.getByTestId("submenu-trigger").boundingBox();
-    if (!rect) throw new Error("submenu-trigger not visible");
+  test("entering the submenu disarms the triangle", async ({ page }) => {
+    await arm(page);
+    const submenu = await page.getByTestId("submenu-list").boundingBox();
+    if (!submenu) throw new Error("submenu not visible");
+    await page.mouse.move(submenu.x + 8, submenu.y + submenu.height / 2, { steps: 12 });
+    await expect(page.getByTestId("submenu-list")).toBeVisible();
+    await page.getByTestId("item-1").hover();
+    await expect(page.getByTestId("submenu-list")).not.toBeVisible();
+  });
+
+  test("reopens cleanly after a sibling hover", async ({ page }) => {
     await page.getByTestId("item-1").hover();
     await expect(page.getByTestId("submenu-list")).not.toBeVisible();
     await page.getByTestId("submenu-trigger").hover();
     await expect(page.getByTestId("submenu-list")).toBeVisible();
+    const trigger = await arm(page);
     await pointer(page, {
-      testId: "submenu-trigger",
-      x: rect.x + rect.width / 2,
-      y: rect.y + rect.height / 2,
-      movementX: -1,
+      testId: "item-1",
+      x: trigger.x + trigger.width + 8,
+      y: trigger.y + trigger.height / 2,
+      movementX: 1,
     });
-    await expect(page.getByTestId("group")).toHaveAttribute("data-safe", "");
+    await expect(page.getByTestId("submenu-list")).toBeVisible();
   });
 });
 
