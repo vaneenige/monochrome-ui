@@ -1,9 +1,14 @@
 import type { Page } from "@playwright/test";
 import { expect, test } from "./fixtures";
-import { scrollAndSettle } from "./helpers";
+import { pointerDown, pointerUp, scrollAndSettle } from "./helpers";
 
 const openRoot = async (page: Page) => {
   await page.getByTestId("root-trigger").click();
+  await expect(page.getByTestId("root-list")).toBeVisible();
+};
+
+const openRootViaPointer = async (page: Page) => {
+  await pointerDown(page.getByTestId("root-trigger"));
   await expect(page.getByTestId("root-list")).toBeVisible();
 };
 
@@ -265,6 +270,123 @@ test.describe("Menu", () => {
     });
   });
 
+  test.describe("Pointer session", () => {
+    test("pointerdown on trigger opens the menu without moving focus to the first item", async ({
+      page,
+    }) => {
+      await openRootViaPointer(page);
+      await expect(page.getByTestId("root-item-1")).not.toBeFocused();
+    });
+
+    test("pointerdown on an open trigger toggles the menu closed", async ({ page }) => {
+      await openRootViaPointer(page);
+      await pointerDown(page.getByTestId("root-trigger"));
+      await expect(page.getByTestId("root-list")).not.toBeVisible();
+    });
+
+    test("pointerdown outside dismisses the menu, including any open submenu", async ({ page }) => {
+      await openRoot(page);
+      await openSubmenuViaHover(page);
+      await pointerDown(page.getByTestId("scroll-container"));
+      await expect(page.getByTestId("root-list")).not.toBeVisible();
+      await expect(page.getByTestId("root-submenu-list")).not.toBeVisible();
+    });
+
+    test("pointerdown on a different root trigger closes the first menu and opens the second", async ({
+      page,
+    }) => {
+      await openRootViaPointer(page);
+      await pointerDown(page.getByTestId("second-trigger"));
+      await expect(page.getByTestId("root-list")).not.toBeVisible();
+      await expect(page.getByTestId("second-list")).toBeVisible();
+    });
+
+    test("click-only dispatch on a trigger does not open the menu", async ({ page }) => {
+      await page.getByTestId("root-trigger").dispatchEvent("click");
+      await expect(page.getByTestId("root-list")).not.toBeVisible();
+    });
+
+    test("non-primary pointerdown on a trigger does not open the menu", async ({ page }) => {
+      await pointerDown(page.getByTestId("root-trigger"), { button: 2 });
+      await expect(page.getByTestId("root-list")).not.toBeVisible();
+    });
+
+    test("non-primary pointerdown outside does not dismiss an open menu", async ({ page }) => {
+      await openRootViaPointer(page);
+      await pointerDown(page.getByTestId("scroll-container"), { button: 2 });
+      await expect(page.getByTestId("root-list")).toBeVisible();
+    });
+
+    test("non-primary pointerup on a menuitem does not activate it", async ({ page }) => {
+      await openRootViaPointer(page);
+      await pointerUp(page.getByTestId("root-item-1"), { button: 2 });
+      await expect(page.getByTestId("root-list")).toBeVisible();
+    });
+
+    test("pointerup on a plain menuitem activates and closes all menus", async ({ page }) => {
+      await openRootViaPointer(page);
+      await pointerDown(page.getByTestId("root-item-1"));
+      await expect(page.getByTestId("root-list")).toBeVisible();
+      await pointerUp(page.getByTestId("root-item-1"));
+      await expect(page.getByTestId("root-list")).not.toBeVisible();
+    });
+
+    test("pointerup on a submenu trigger does not close the menu as an item action", async ({
+      page,
+    }) => {
+      await openRootViaPointer(page);
+      await pointerUp(page.getByTestId("root-submenu-trigger"));
+      await expect(page.getByTestId("root-list")).toBeVisible();
+    });
+
+    test("pointerdown on trigger, drag to item, pointerup activates (sticky)", async ({ page }) => {
+      const trigger = page.getByTestId("root-trigger");
+      const item = page.getByTestId("root-item-1");
+      await trigger.hover();
+      await page.mouse.down();
+      await expect(page.getByTestId("root-list")).toBeVisible();
+      await item.hover();
+      await page.mouse.up();
+      await expect(page.getByTestId("root-list")).not.toBeVisible();
+    });
+
+    test("pointerup outside after opening leaves the menu open (sticky miss)", async ({ page }) => {
+      await openRootViaPointer(page);
+      await pointerUp(page.getByTestId("scroll-container"));
+      await expect(page.getByTestId("root-list")).toBeVisible();
+    });
+  });
+
+  test.describe("Pointer session with disclosure", () => {
+    test.beforeEach(async ({ page, renderer }) => {
+      await page.goto(`/${renderer}/menu/with-disclosure`);
+    });
+
+    test("outside pointerdown onto a closed disclosure closes the menu; click opens the disclosure", async ({
+      page,
+    }) => {
+      await pointerDown(page.getByTestId("menu-trigger"));
+      await expect(page.getByTestId("menu-list")).toBeVisible();
+      await pointerDown(page.getByTestId("disclosure-trigger"));
+      await expect(page.getByTestId("menu-list")).not.toBeVisible();
+      await page.getByTestId("disclosure-trigger").click();
+      await expect(page.getByTestId("disclosure-content")).toBeVisible();
+      await expect(page.getByTestId("disclosure-trigger")).toHaveAttribute("aria-expanded", "true");
+    });
+
+    test("menu-owned pointerdown suppresses monochrome click on a disclosure", async ({ page }) => {
+      await pointerDown(page.getByTestId("menu-trigger"));
+      await expect(page.getByTestId("menu-list")).toBeVisible();
+      await page.getByTestId("disclosure-trigger").dispatchEvent("click");
+      await expect(page.getByTestId("disclosure-content")).not.toBeVisible();
+      await expect(page.getByTestId("disclosure-trigger")).toHaveAttribute(
+        "aria-expanded",
+        "false",
+      );
+      await expect(page.getByTestId("menu-list")).toBeVisible();
+    });
+  });
+
   test.describe("Mouse", () => {
     test("trigger click opens the menu without moving focus to the first item", async ({
       page,
@@ -290,7 +412,7 @@ test.describe("Menu", () => {
       page,
     }) => {
       await openRoot(page);
-      await page.getByTestId("second-trigger").dispatchEvent("click");
+      await pointerDown(page.getByTestId("second-trigger"));
       await expect(page.getByTestId("root-list")).not.toBeVisible();
       await expect(page.getByTestId("second-list")).toBeVisible();
     });
@@ -367,7 +489,7 @@ test.describe("Menu", () => {
     }) => {
       await openRoot(page);
       await page.getByTestId("root-item-1").evaluate((el) => {
-        el.addEventListener("click", (e) => e.stopPropagation());
+        el.addEventListener("pointerup", (e) => e.stopPropagation());
       });
       await page.getByTestId("root-item-1").click();
       await expect(page.getByTestId("root-list")).toBeVisible();
@@ -744,7 +866,7 @@ test.describe("Separate and mixed menus", () => {
     await expect(page.getByTestId("menu-b-list")).not.toBeVisible();
     await expect(page.getByTestId("menu-a-list")).toBeVisible();
 
-    await page.getByTestId("menu-b-trigger").dispatchEvent("click");
+    await pointerDown(page.getByTestId("menu-b-trigger"));
     await expect(page.getByTestId("menu-a-list")).not.toBeVisible();
     await expect(page.getByTestId("menu-b-list")).toBeVisible();
 
@@ -1047,17 +1169,18 @@ test.describe("Click handler", () => {
   });
 
   for (const target of ["trigger", "item", "checkbox", "radio-2"] as const) {
-    for (const activation of ["click", "Enter", "Space"] as const) {
-      test(`${target} fires on ${activation}`, async ({ page }) => {
+    test(`${target} fires on click`, async ({ page }) => {
+      if (target !== "trigger") await page.getByTestId("trigger").click();
+      await page.getByTestId(target).click();
+      await expect(page.getByTestId("output")).toHaveText(`${target}-clicked`);
+    });
+
+    for (const key of ["Enter", "Space"] as const) {
+      test(`${target} ${key} activates without a synthesized click`, async ({ page }) => {
         if (target !== "trigger") await page.getByTestId("trigger").click();
-        const el = page.getByTestId(target);
-        if (activation === "click") {
-          await el.click();
-        } else {
-          await el.focus();
-          await page.keyboard.press(activation);
-        }
-        await expect(page.getByTestId("output")).toHaveText(`${target}-clicked`);
+        await page.getByTestId(target).focus();
+        await page.keyboard.press(key);
+        await expect(page.getByTestId("output")).not.toHaveText(`${target}-clicked`);
       });
     }
   }

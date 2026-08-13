@@ -1,4 +1,4 @@
-import type { Page } from "@playwright/test";
+import type { Locator, Page } from "@playwright/test";
 
 /**
  * Programmatically scroll the page and wait for the resulting scroll
@@ -23,3 +23,8 @@ export const scrollAndSettle = (page: Page, x: number, y: number) =>
       }),
     { x, y },
   );
+
+export const pointerDown = (locator: Locator, init: PointerEventInit = {}) =>
+  locator.dispatchEvent("pointerdown", init);
+export const pointerUp = (locator: Locator, init: PointerEventInit = {}) =>
+  locator.dispatchEvent("pointerup", init);

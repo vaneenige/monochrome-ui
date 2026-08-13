@@ -17,9 +17,10 @@ any more:
    `aria-expanded`, `aria-selected`, `aria-checked`, `aria-hidden`,
    `aria-disabled`. There is no internal state object mirroring the
    DOM anywhere in the library.
-2. **Event delegation only.** Seven global listeners in the core:
-   `click`, `pointermove`, `keydown`, `scroll`, `resize`, `focusin`,
-   `focusout`. Zero per-element listeners.
+2. **Event delegation only.** Nine global listeners in the core:
+   `pointerdown`, `pointerup`, `click`, `pointermove`, `keydown`,
+   `scroll`, `resize`, `focusin`, `focusout`. Zero per-element
+   listeners.
 3. **Zero timers.** No `setTimeout`, `requestAnimationFrame`,
    `queueMicrotask`, debounce, or throttle. Every action is
    synchronous within its event.
@@ -44,7 +45,7 @@ tracking who owns what becomes a maintenance tax. With DOM-as-state
 there is exactly one truth and we never have to reconcile.
 
 **Global delegated listeners.** Per-component listeners scale with
-component count and require teardown on unmount. Seven global
+component count and require teardown on unmount. Nine global
 listeners are constant cost, require zero teardown, and automatically
 cover dynamically-inserted DOM without re-wiring.
 
@@ -101,12 +102,12 @@ split in two.
 
 **Walk-up then walk-down for click dispatch.** The click listener
 walks UP from the event target (`target = target.parentElement`)
-until it finds a recognised ID prefix. When it lands inside a menu
-popover, a *second* walk runs from the original event target back
-UP to the popover, looking for a menuitem. Two loops, no `closest`,
-no selectors. The fall-through case (walk reached the document root
-without matching) is the outside-click detector: component routing
-and outside-click collapse into the same traversal.
+until it finds a recognised ID prefix. Menu open/dismiss lives on
+`pointerdown` and item activation on `pointerup`; click still
+dispatches the other components and is skipped entirely when
+`shouldSuppressClick` is set (a menu pointer session owns that
+gesture). The fall-through case (walk reached the document root
+without matching) is the outside-click detector for popovers.
 
 **`findAncestor` over `closest()`.** `findAncestor(el, prefix)`
 walks `parentElement` up checking `id.startsWith(prefix)`.
@@ -126,9 +127,9 @@ distinguish "walked past the end and wrapped" from "kept going
 past the start". On an all-disabled list the naive walker loops
 forever. `rovingBoundary` remembers the first candidate the walker
 rejected; if we ever see it again we give up. One pointer, zero
-counters, zero extra passes. Cleared at the top of every `keydown`
-and `click` (both listeners drive walks) so each interaction
-starts with a fresh boundary.
+counters, zero extra passes. Cleared at the top of every
+`keydown`, `click`, and `pointerup` (all three listeners drive
+walks) so each interaction starts with a fresh boundary.
 
 **Radio sweep reuses the navigation walker.** Activating a
 `menuitemradio` must clear `aria-checked` on every adjacent radio
@@ -141,10 +142,23 @@ buffer them past the wrap, flush the tail once the activated item
 is reached. One engine, three behaviours (plain roving, typeahead,
 radio sweep), selected by which module-scope flag is non-null.
 
-**Never handle Enter/Space in `keydown`.** The browser synthesises a
-`click` on Enter/Space for `<button>`. We only listen for `click`
-and distinguish keyboard (`event.detail === 0`) from mouse
-(`event.detail >= 1`). This halves the activation code path.
+**Menu Enter/Space in `keydown`.** Accordion, Tabs, and the other
+triggers still rely on the browser's synthesized `click` for
+Enter/Space. Menu cannot: `pointerdown` already opened or
+dismissed the menu, and the following click is suppressed via
+`shouldSuppressClick`. Keyboard activation therefore lives in
+`keydown` (`menuOpen` / `menuItemAction`) with `preventDefault`
+so Space does not scroll.
+
+**Pointer session and `shouldSuppressClick`.** A menu gesture is
+a pointer session, not a click. `pointerdown` on a trigger opens
+or toggles; `pointerdown` outside dismisses; `pointerup` on a
+plain menuitem activates. Non-primary buttons (`button !== 0`)
+are ignored. After a menu `pointerdown`, `shouldSuppressClick`
+makes the trailing `click` a no-op so a press that started on
+the menu cannot also toggle a disclosure (or anything else)
+underneath. Playwright `.click()` still works: it fires
+`pointerdown`.
 
 **Popover API with CSS-variable positioning.** The core publishes
 the trigger rect as CSS custom properties (`--top`, `--bottom`,
@@ -258,8 +272,9 @@ Rules only. Rationale lives in "Why the core looks weird" and
 - Custom events (`mc:navigate`) for cross-boundary signals the
   wrappers need. No callback props or event-emitter exports from
   the core.
-- `event.detail === 0` distinguishes keyboard-synthesised clicks
-  from real mouse clicks.
+- Menu open/dismiss/activate on `pointerdown` / `pointerup`;
+  `shouldSuppressClick` skips the trailing click. Enter/Space for
+  menu are handled in `keydown` with `preventDefault`.
 - `void` on fire-and-forget promise expressions.
 
 ### Naming

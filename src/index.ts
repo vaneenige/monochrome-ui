@@ -25,6 +25,7 @@ enum Prefix {
 
 if (typeof document !== "undefined") {
   let shouldPreventDefault: boolean | null = null;
+  let shouldSuppressClick = false;
   let shouldMatchLetter: string | null = null;
   let shouldResetRadio: HTMLElement | null = null;
   let radioHeadDone: boolean | null = null;
@@ -354,70 +355,99 @@ if (typeof document !== "undefined") {
     trigger.focus();
   };
 
-  addEventListener("click", (event: MouseEvent) => {
-    shouldPreventDefault = null;
-    rovingBoundary = null;
-    const keyboard = event.detail === 0;
-    const start: HTMLElement | null = isElement(event.target)
+  const eventElement = (event: Event): HTMLElement | null =>
+    isElement(event.target)
       ? event.target
       : event.target instanceof Element
         ? event.target.parentElement
         : null;
+
+  const menuOpen = (trigger: HTMLElement, mode: Focus) => {
+    if (popoverOpen) popover(popoverOpen, false);
+    const inPopover = findAncestor(trigger.parentElement, Prefix.ContentMenu);
+    if (inPopover) {
+      if (!menuPopovers.includes(trigger)) menu(trigger, mode);
+    } else if (menuPopovers[0]) {
+      const openTarget = trigger !== menuPopovers[0];
+      menuHideAll();
+      if (openTarget) menu(trigger, mode);
+    } else {
+      menu(trigger, mode);
+    }
+  };
+
+  addEventListener("pointerdown", (event: PointerEvent) => {
+    shouldSuppressClick = false;
+    if (event.button !== 0) return;
+    const start = eventElement(event);
+    if (!start) return;
+    let target: HTMLElement | null = start;
+    while (target) {
+      const id = target.id;
+      if (id.startsWith(Prefix.TriggerMenu)) {
+        shouldSuppressClick = true;
+        menuOpen(target, Focus.None);
+        return;
+      }
+      if (id.startsWith(Prefix.ContentMenu) && menuPopovers[0]) {
+        shouldSuppressClick = true;
+        return;
+      }
+      target = target.parentElement;
+    }
+    if (menuPopovers[0]) menuHideAll();
+  });
+
+  addEventListener("pointerup", (event: PointerEvent) => {
+    rovingBoundary = null;
+    if (event.button !== 0 || !menuPopovers[0]) return;
+    let el = eventElement(event);
+    while (el) {
+      if (isMenuItem(el) && !isTrigger(el, Prefix.TriggerMenu)) {
+        menuItemAction(el);
+        return;
+      }
+      if (el.id.startsWith(Prefix.ContentMenu)) return;
+      el = el.parentElement;
+    }
+  });
+
+  addEventListener("click", (event: MouseEvent) => {
+    if (shouldSuppressClick) {
+      shouldSuppressClick = false;
+      return;
+    }
+    shouldPreventDefault = null;
+    rovingBoundary = null;
+    const start = eventElement(event);
     if (start) {
       let target: HTMLElement | null = start;
       while (target) {
         const id = target.id;
         if (id.startsWith(Prefix.Trigger)) {
-          if (id.startsWith(Prefix.TriggerMenu)) {
+          if (id.startsWith(Prefix.TriggerMenu)) break;
+          if (id.startsWith(Prefix.TriggerAccordion)) accordion(target);
+          else if (id.startsWith(Prefix.TriggerCollapsible)) collapsible(target);
+          else if (id.startsWith(Prefix.TriggerTabs)) tabs(target);
+          else if (id.startsWith(Prefix.TriggerDialogClose)) dialogClose();
+          else if (id.startsWith(Prefix.TriggerDialog) && target.ariaDisabled !== "true") {
             if (popoverOpen) popover(popoverOpen, false);
-            const focusMode = keyboard ? Focus.First : Focus.None;
-            const inPopover = findAncestor(target.parentElement, Prefix.ContentMenu);
-            if (inPopover) {
-              if (!menuPopovers.includes(target)) menu(target, focusMode);
-            } else {
-              if (menuPopovers[0]) {
-                const openTarget = target !== menuPopovers[0];
-                menuHideAll();
-                if (openTarget) menu(target, focusMode);
-              } else {
-                menu(target, focusMode);
-              }
-            }
-          } else {
-            if (menuPopovers[0]) menuHideAll();
-            if (id.startsWith(Prefix.TriggerAccordion)) accordion(target);
-            else if (id.startsWith(Prefix.TriggerCollapsible)) collapsible(target);
-            else if (id.startsWith(Prefix.TriggerTabs)) tabs(target);
-            else if (id.startsWith(Prefix.TriggerDialogClose)) dialogClose();
-            else if (id.startsWith(Prefix.TriggerDialog) && target.ariaDisabled !== "true") {
-              if (popoverOpen) popover(popoverOpen, false);
-              if (tooltipShown) {
-                tooltipSuppressed = tooltipShown;
-                tooltipSync();
-              }
-              dialogOpenFor(target);
-            } else if (id.startsWith(Prefix.TriggerPopover) && target.ariaDisabled !== "true") {
-              const isOpen = target.ariaExpanded === "true";
-              popover(target, !isOpen);
-              if (isOpen) {
-                target.focus();
-              } else {
-                getContent(target, "aria-controls")?.focus();
-              }
-            } else if (id.startsWith(Prefix.TriggerTooltip) && tooltipShown) {
+            if (tooltipShown) {
               tooltipSuppressed = tooltipShown;
               tooltipSync();
             }
-          }
-          break;
-        } else if (id.startsWith(Prefix.ContentMenu) && menuPopovers[0]) {
-          let el: HTMLElement | null = start;
-          while (el && el !== target) {
-            if (isMenuItem(el) && !isTrigger(el, Prefix.TriggerMenu)) {
-              menuItemAction(el);
-              break;
+            dialogOpenFor(target);
+          } else if (id.startsWith(Prefix.TriggerPopover) && target.ariaDisabled !== "true") {
+            const isOpen = target.ariaExpanded === "true";
+            popover(target, !isOpen);
+            if (isOpen) {
+              target.focus();
+            } else {
+              getContent(target, "aria-controls")?.focus();
             }
-            el = el.parentElement;
+          } else if (id.startsWith(Prefix.TriggerTooltip) && tooltipShown) {
+            tooltipSuppressed = tooltipShown;
+            tooltipSync();
           }
           break;
         } else if (id.startsWith(Prefix.ContentPopover)) {
@@ -426,11 +456,12 @@ if (typeof document !== "undefined") {
           break;
         } else if (id.startsWith(Prefix.ContentDialog)) {
           break;
+        } else if (id.startsWith(Prefix.ContentMenu)) {
+          break;
         }
         target = target.parentElement;
       }
       if (!target) {
-        if (menuPopovers[0]) menuHideAll();
         if (popoverOpen) popover(popoverOpen, false);
       }
     }
@@ -567,6 +598,11 @@ if (typeof document !== "undefined") {
       if (isTrigger(target, Prefix.TriggerMenu)) {
         const isRootTrigger = findAncestor(target, Prefix.ContentMenu) === null;
         switch (event.key) {
+          case "Enter":
+          case " ":
+            menuOpen(target, Focus.First);
+            shouldPreventDefault = true;
+            break;
           case "ArrowDown":
             if (isRootTrigger) {
               if (target.ariaExpanded !== "true") {
@@ -602,6 +638,13 @@ if (typeof document !== "undefined") {
         const menubarRoot = menuPopovers[0]?.parentElement || parent;
         const inPopover = findAncestor(target.parentElement, Prefix.ContentMenu);
         switch (event.key) {
+          case "Enter":
+          case " ":
+            if (!isTrigger(target, Prefix.TriggerMenu)) {
+              menuItemAction(target);
+              shouldPreventDefault = true;
+            }
+            break;
           case "Tab":
             if (menuPopovers[0]) menuPopovers[0].focus();
             menuHideAll();
