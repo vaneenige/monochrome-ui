@@ -112,13 +112,13 @@
       "vue": 1939
     },
     "tests": {
-      "total": 348,
+      "total": 349,
       "a11y": 11,
       "accordion": 33,
       "architecture": 5,
       "collapsible": 22,
       "dialog": 18,
-      "menu": 144,
+      "menu": 145,
       "popover": 25,
       "router": 32,
       "ssr": 2,

@@ -220,6 +220,20 @@ test.describe("Menu", () => {
       });
     }
 
+    test("ArrowRight on an open submenu trigger focuses the first item", async ({ page }) => {
+      await page.getByTestId("root-submenu-trigger").focus();
+      await page.getByTestId("root-submenu-trigger").press("ArrowRight");
+      await expect(page.getByTestId("root-submenu-list")).toBeVisible();
+      await page.getByTestId("root-submenu-trigger").focus();
+      await page.getByTestId("root-submenu-trigger").press("ArrowRight");
+      await expect(page.getByTestId("root-submenu-list")).toBeVisible();
+      await expect(page.getByTestId("root-submenu-item-1")).toBeFocused();
+      await page.keyboard.press("Escape");
+      await expect(page.getByTestId("root-submenu-list")).not.toBeVisible();
+      await expect(page.getByTestId("root-list")).toBeVisible();
+      await expect(page.getByTestId("root-submenu-trigger")).toBeFocused();
+    });
+
     for (const key of ["ArrowLeft", "Escape"] as const) {
       test(`${key} inside the submenu closes it and focuses the submenu trigger`, async ({
         page,

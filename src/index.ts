@@ -617,7 +617,14 @@ if (typeof document !== "undefined") {
             }
             break;
           case "ArrowRight":
-            if (!isRootTrigger) menu(target, Focus.First);
+            if (!isRootTrigger) {
+              if (target.ariaExpanded !== "true") {
+                menu(target, Focus.First);
+              } else {
+                const content = getContent(target, "aria-controls");
+                if (content) menuRoving(content.firstElementChild, menuNext);
+              }
+            }
             break;
         }
       }
