@@ -19,6 +19,11 @@ export default () => (
           <Menu.Item data-testid="root-item-1">MenuItem 1</Menu.Item>
           <Menu.Item data-testid="root-item-2">MenuItem 2</Menu.Item>
           <Menu.Item data-testid="root-item-3">MenuItem 3</Menu.Item>
+          <Menu.Item data-testid="root-item-disabled" disabled>
+            Disabled
+          </Menu.Item>
+          <Menu.Separator data-testid="root-separator" style={{ height: 8 }} />
+          <Menu.Label data-testid="root-label">Section</Menu.Label>
           <Menu.Group>
             <Menu.Trigger data-testid="root-submenu-trigger">Submenu Trigger</Menu.Trigger>
             <Menu.Popover data-testid="root-submenu-list">

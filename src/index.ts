@@ -504,7 +504,11 @@ if (typeof document !== "undefined") {
         let bail = false;
         let foundItem = false;
         while (target) {
-          if (isMenuItem(target)) {
+          if (
+            target.role?.startsWith("menuitem") === true ||
+            target.role === "separator" ||
+            target.role === "presentation"
+          ) {
             foundItem = true;
           }
           if (!foundItem && target.id.startsWith(Prefix.Content)) {

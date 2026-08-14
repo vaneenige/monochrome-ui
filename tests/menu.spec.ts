@@ -188,6 +188,12 @@ test.describe("Menu", () => {
       await expect(page.getByTestId("root-item-1")).toBeFocused();
     });
 
+    test("ArrowDown skips disabled items, labels, and separators", async ({ page }) => {
+      await page.getByTestId("root-item-3").focus();
+      await page.keyboard.press("ArrowDown");
+      await expect(page.getByTestId("root-submenu-trigger")).toBeFocused();
+    });
+
     test("ArrowLeft / ArrowRight on a regular item are inert (no submenu)", async ({ page }) => {
       await page.getByTestId("root-item-1").press("ArrowLeft");
       await expect(page.getByTestId("root-item-1")).toBeFocused();
@@ -449,6 +455,20 @@ test.describe("Menu", () => {
       await page.getByTestId("root-item-1").hover();
       await expect(page.getByTestId("root-submenu-list")).not.toBeVisible();
     });
+
+    for (const [id, label] of [
+      ["root-item-disabled", "a disabled item"],
+      ["root-label", "a label"],
+      ["root-separator", "a separator"],
+    ] as const) {
+      test(`hovering ${label} closes an open submenu`, async ({ page }) => {
+        await openRoot(page);
+        await openSubmenuViaHover(page);
+        await page.getByTestId(id).hover();
+        await expect(page.getByTestId("root-submenu-list")).not.toBeVisible();
+        await expect(page.getByTestId("root-list")).toBeVisible();
+      });
+    }
 
     test("clicking the submenu trigger opens the submenu", async ({ page }) => {
       await openRoot(page);
