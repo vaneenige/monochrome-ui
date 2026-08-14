@@ -1198,6 +1198,27 @@ test.describe("Click handler", () => {
   }
 });
 
+test.describe("Link items", () => {
+  test.beforeEach(async ({ page, renderer }) => {
+    await page.goto(`/${renderer}/menu/basic`);
+    await page.getByTestId("trigger").click();
+  });
+
+  test("Enter on an href menuitem navigates", async ({ page }) => {
+    await page.getByTestId("item-link").focus();
+    await page.keyboard.press("Enter");
+    await expect(page).toHaveURL(/#menu-link-nav/);
+    await expect(page.getByTestId("list")).not.toBeVisible();
+  });
+
+  test("Space on an href menuitem closes without navigating", async ({ page }) => {
+    await page.getByTestId("item-link").focus();
+    await page.keyboard.press("Space");
+    await expect(page).not.toHaveURL(/#menu-link-nav/);
+    await expect(page.getByTestId("list")).not.toBeVisible();
+  });
+});
+
 test.describe("Dynamic", () => {
   test("handles dynamic items, submenu, checkbox, radio, disabled, href, label, separator, and multi-instance", async ({
     page,

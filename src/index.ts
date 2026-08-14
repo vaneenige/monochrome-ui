@@ -642,7 +642,7 @@ if (typeof document !== "undefined") {
           case " ":
             if (!isTrigger(target, Prefix.TriggerMenu)) {
               menuItemAction(target);
-              shouldPreventDefault = true;
+              shouldPreventDefault = event.key === " " || target.tagName !== "A";
             }
             break;
           case "Tab":

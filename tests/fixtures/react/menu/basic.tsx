@@ -69,6 +69,9 @@ export default () => (
         <Menu.RadioItem data-testid="radio-2" data-action="radio-2-clicked" checked={false}>
           Dark
         </Menu.RadioItem>
+        <Menu.Item data-testid="item-link" href="#menu-link-nav">
+          Link item
+        </Menu.Item>
       </Menu.Popover>
     </Menu.Root>
   </>

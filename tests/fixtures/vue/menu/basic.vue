@@ -130,6 +130,12 @@ import { Menu } from "monochrome/vue"
         >
           Dark
         </Menu.RadioItem>
+        <Menu.Item
+          data-testid="item-link"
+          href="#menu-link-nav"
+        >
+          Link item
+        </Menu.Item>
       </Menu.Popover>
     </Menu.Root>
   </div>
