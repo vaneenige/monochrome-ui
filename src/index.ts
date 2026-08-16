@@ -6,45 +6,47 @@ enum Focus {
 }
 
 enum Prefix {
-  Trigger = "mct:",
-  TriggerAccordion = "mct:a",
-  TriggerCollapsible = "mct:c",
-  TriggerDialog = "mct:dialog-o",
-  TriggerDialogClose = "mct:dialog-c",
-  TriggerMenu = "mct:m",
-  TriggerPopover = "mct:p",
-  TriggerTabs = "mct:ta",
-  TriggerTooltip = "mct:to",
   Content = "mcc:",
-  ContentDialog = "mcc:d",
-  ContentMenu = "mcc:m",
-  ContentPopover = "mcc:p",
-  ContentTooltip = "mcc:to",
-  RootAccordion = "mcr:a",
+  ContentDialog = "mcc:dialog:",
+  ContentMenu = "mcc:menu:",
+  ContentPopover = "mcc:popover:",
+  ContentTooltip = "mcc:tooltip:",
+  RootAccordion = "mcr:accordion:",
+  Trigger = "mct:",
+  TriggerAccordion = "mct:accordion:",
+  TriggerCollapsible = "mct:collapsible:",
+  TriggerDialogClose = "mct:dialog-close:",
+  TriggerDialogOpen = "mct:dialog-open:",
+  TriggerMenu = "mct:menu:",
+  TriggerPopover = "mct:popover:",
+  TriggerTabs = "mct:tabs:",
+  TriggerTooltip = "mct:tooltip:",
 }
 
 if (typeof document !== "undefined") {
-  let shouldPreventDefault: boolean | null = null;
-  let shouldSuppressClick = false;
-  let shouldMatchLetter: string | null = null;
-  let shouldResetRadio: HTMLElement | null = null;
-  let radioHeadDone: boolean | null = null;
+  let radioHeadDone = false;
   let radioTailChain: HTMLElement[] = [];
+  let shouldMatchLetter: string | null = null;
+  let shouldPreventDefault = false;
+  let shouldResetRadio: HTMLElement | null = null;
+  let shouldSuppressClick = false;
 
-  const menuPopovers: HTMLElement[] = [];
+  let pointerTarget: EventTarget | null = null;
   let rovingBoundary: Element | null = null;
 
-  let safeX: number | null = null;
-  let safeY = 0;
-  let safeContent: HTMLElement | null = null;
-
-  let popoverOpen: HTMLElement | null = null;
   let dialogContent: HTMLDialogElement | null = null;
   let dialogTrigger: HTMLElement | null = null;
 
-  let pointerTarget: EventTarget | null = null;
-  let tooltipHovered: HTMLElement | null = null;
+  const menuStack: HTMLElement[] = [];
+
+  let safeContent: HTMLElement | null = null;
+  let safeX: number | null = null;
+  let safeY = 0;
+
+  let popoverShown: HTMLElement | null = null;
+
   let tooltipFocused: HTMLElement | null = null;
+  let tooltipHovered: HTMLElement | null = null;
   let tooltipShown: HTMLElement | null = null;
   let tooltipSuppressed: HTMLElement | null = null;
 
@@ -55,17 +57,12 @@ if (typeof document !== "undefined") {
   ) => HTMLElement | null;
   type Roving = (focus: RovingFocusCallback) => [RovingNavigator, RovingNavigator];
 
-  const isElement = (el: unknown): el is HTMLElement => el instanceof HTMLElement;
-  const isTrigger = (el: unknown, prefix?: string): el is HTMLButtonElement =>
-    el instanceof HTMLButtonElement && (!prefix || el.id.startsWith(prefix));
   const isDialog = (el: unknown): el is HTMLDialogElement => el instanceof HTMLDialogElement;
+  const isElement = (el: unknown): el is HTMLElement => el instanceof HTMLElement;
   const isMenuItem = (el: unknown): el is HTMLElement =>
     isElement(el) && el.role?.startsWith("menuitem") === true && el.ariaDisabled !== "true";
-
-  const getContent = (el: HTMLElement, attr: string) => {
-    const id = el.getAttribute(attr);
-    return id ? document.getElementById(id) : null;
-  };
+  const isTrigger = (el: unknown, prefix: string): el is HTMLButtonElement =>
+    el instanceof HTMLButtonElement && el.id.startsWith(prefix);
 
   const findAncestor = (el: HTMLElement | null, prefix: string): HTMLElement | null => {
     while (el) {
@@ -75,15 +72,26 @@ if (typeof document !== "undefined") {
     return null;
   };
 
+  const getLinked = (el: HTMLElement, attr: string) => {
+    const id = el.getAttribute(attr);
+    return id ? document.getElementById(id) : null;
+  };
+
+  const getTarget = (event: Event): HTMLElement | null =>
+    isElement(event.target)
+      ? event.target
+      : event.target instanceof Element
+        ? event.target.parentElement
+        : null;
+
   const position = (trigger: HTMLElement, content: HTMLElement) => {
     const rect = trigger.getBoundingClientRect();
     content.style.setProperty("--top", `${rect.top}px`);
     content.style.setProperty("--right", `${rect.right}px`);
     content.style.setProperty("--bottom", `${rect.bottom}px`);
     content.style.setProperty("--left", `${rect.left}px`);
-    content.style.setProperty("--pw", `${content.offsetWidth}px`);
-    content.style.setProperty("--ph", `${content.offsetHeight}px`);
-    return rect;
+    content.style.setProperty("--width", `${content.offsetWidth}px`);
+    content.style.setProperty("--height", `${content.offsetHeight}px`);
   };
 
   const roving: Roving = (focus) => {
@@ -98,15 +106,30 @@ if (typeof document !== "undefined") {
     return [next, previous];
   };
 
-  const menuRoving: RovingFocusCallback = (element, fallback) => {
-    if (isElement(element)) {
-      const menuitem = element.firstElementChild;
+  const accordionRoving: RovingFocusCallback = (node, fallback) => {
+    if (isElement(node)) {
+      if (rovingBoundary === node) return null;
+      if (!rovingBoundary) rovingBoundary = node;
+      const trigger = node.firstElementChild?.firstElementChild;
+      if (isTrigger(trigger, Prefix.TriggerAccordion) && trigger.ariaDisabled !== "true") {
+        shouldPreventDefault = true;
+        trigger.focus();
+        return trigger;
+      }
+    }
+    return fallback(node);
+  };
+  const [accordionNext, accordionPrevious] = roving(accordionRoving);
+
+  const menuRoving: RovingFocusCallback = (node, fallback) => {
+    if (isElement(node)) {
+      if (rovingBoundary === node) {
+        rovingBoundary = null;
+        return null;
+      }
+      if (!rovingBoundary) rovingBoundary = node;
+      const menuitem = node.firstElementChild;
       if (shouldResetRadio) {
-        if (rovingBoundary === element) {
-          rovingBoundary = null;
-          return null;
-        }
-        if (!rovingBoundary) rovingBoundary = element;
         if (isElement(menuitem)) {
           if (menuitem === shouldResetRadio) {
             for (const item of radioTailChain) item.ariaChecked = "false";
@@ -118,72 +141,41 @@ if (typeof document !== "undefined") {
             } else {
               radioTailChain.push(menuitem);
             }
-            return fallback(element);
+            return fallback(node);
           }
         }
         radioHeadDone = true;
         radioTailChain = [];
-        return fallback(element);
+        return fallback(node);
       }
       if (
         isMenuItem(menuitem) &&
         (!shouldMatchLetter ||
           menuitem.textContent?.trim().toLowerCase().startsWith(shouldMatchLetter))
       ) {
-        menuitem.focus();
         shouldPreventDefault = true;
+        menuitem.focus();
         return menuitem;
-      } else if (rovingBoundary !== element) {
-        if (!rovingBoundary) rovingBoundary = element;
-        return fallback(element);
-      } else {
-        rovingBoundary = null;
       }
+      return fallback(node);
     }
     return null;
   };
+  const [menuNext, menuPrevious] = roving(menuRoving);
 
-  const accordionRoving: RovingFocusCallback = (node, fallback) => {
+  const tabsRoving: RovingFocusCallback = (node, fallback) => {
     if (isElement(node)) {
       if (rovingBoundary === node) return null;
       if (!rovingBoundary) rovingBoundary = node;
-      const trigger = node.firstElementChild?.firstElementChild;
-      if (isTrigger(trigger, Prefix.TriggerAccordion)) {
-        if (trigger.ariaDisabled === "true") return fallback(node);
+      if (isTrigger(node, Prefix.TriggerTabs) && node.ariaDisabled !== "true") {
         shouldPreventDefault = true;
-        trigger.focus();
-        return trigger;
+        node.focus();
+        return node;
       }
     }
     return fallback(node);
   };
-
-  const tabsRoving: RovingFocusCallback = (node, fallback) => {
-    if (isTrigger(node, Prefix.TriggerTabs)) {
-      if (rovingBoundary === node) return null;
-      if (!rovingBoundary) rovingBoundary = node;
-      if (node.ariaDisabled === "true") return fallback(node);
-      shouldPreventDefault = true;
-      node.focus();
-      return node;
-    } else {
-      return fallback(node);
-    }
-  };
-
-  const [menuNext, menuPrevious] = roving(menuRoving);
-  const [accordionNext, accordionPrevious] = roving(accordionRoving);
-  const [tabNext, tabPrevious] = roving(tabsRoving);
-
-  const collapsible = (trigger: HTMLElement) => {
-    const content = getContent(trigger, "aria-controls");
-    if (content) {
-      const isOpen = trigger.ariaExpanded !== "true";
-      trigger.ariaExpanded = isOpen ? "true" : "false";
-      content.ariaHidden = isOpen ? "false" : "true";
-      content.hidden = !isOpen;
-    }
-  };
+  const [tabsNext, tabsPrevious] = roving(tabsRoving);
 
   const accordion = (trigger: HTMLElement) => {
     if (trigger.ariaDisabled === "true") return;
@@ -209,29 +201,38 @@ if (typeof document !== "undefined") {
     }
   };
 
-  const tabs = (trigger: HTMLElement) => {
-    if (trigger.ariaDisabled !== "true" && trigger.ariaSelected !== "true") {
-      let tab = trigger.parentElement?.firstElementChild;
-      while (tab) {
-        if (isElement(tab) && (tab === trigger || tab.ariaSelected === "true")) {
-          const content = getContent(tab, "aria-controls");
-          if (content) {
-            const isSelected = tab.ariaSelected !== "true";
-            tab.ariaSelected = isSelected ? "true" : "false";
-            tab.tabIndex = isSelected ? 0 : -1;
-            content.ariaHidden = isSelected ? "false" : "true";
-            if (content.hasAttribute("tabindex")) content.tabIndex = isSelected ? 0 : -1;
-            content.hidden = !isSelected;
-          }
-        }
-        tab = tab.nextElementSibling;
-      }
+  const collapsible = (trigger: HTMLElement) => {
+    const content = getLinked(trigger, "aria-controls");
+    if (content) {
+      const willOpen = trigger.ariaExpanded !== "true";
+      trigger.ariaExpanded = willOpen ? "true" : "false";
+      content.ariaHidden = willOpen ? "false" : "true";
+      content.hidden = !willOpen;
+    }
+  };
+
+  const dialogClose = () => {
+    if (!dialogContent?.open || !dialogTrigger) return;
+    const content = dialogContent;
+    const trigger = dialogTrigger;
+    dialogContent = null;
+    dialogTrigger = null;
+    content.close();
+    trigger.focus();
+  };
+
+  const dialogOpen = (trigger: HTMLElement) => {
+    const content = getLinked(trigger, "aria-controls");
+    if (!dialogContent?.open && isDialog(content)) {
+      dialogContent = content;
+      dialogTrigger = trigger;
+      content.showModal();
     }
   };
 
   const menu = (trigger: HTMLElement | undefined, mode = Focus.Trigger) => {
     if (trigger?.id.startsWith(Prefix.TriggerMenu)) {
-      const content = getContent(trigger, "aria-controls");
+      const content = getLinked(trigger, "aria-controls");
       if (content) {
         if (trigger.ariaExpanded === "true") {
           if (mode !== Focus.None) trigger.focus();
@@ -239,7 +240,7 @@ if (typeof document !== "undefined") {
           trigger.ariaExpanded = "false";
           content.ariaHidden = "true";
         } else if (trigger.ariaDisabled !== "true") {
-          menuPopovers.push(trigger);
+          menuStack.push(trigger);
           content.showPopover();
           trigger.ariaExpanded = "true";
           content.ariaHidden = "false";
@@ -258,47 +259,104 @@ if (typeof document !== "undefined") {
     }
   };
 
-  const menuHideAll = (keep = 0) => {
-    while (menuPopovers[keep]) menu(menuPopovers.pop(), Focus.None);
-  };
-
-  const menuItemAction = (el: HTMLElement) => {
+  const menuActivate = (el: HTMLElement) => {
     if (el.role === "menuitemcheckbox") {
       el.ariaChecked = el.ariaChecked === "true" ? "false" : "true";
     } else if (el.role === "menuitemradio") {
       shouldResetRadio = el;
-      radioHeadDone = null;
+      radioHeadDone = false;
       radioTailChain = [];
       menuNext(el.parentElement);
       shouldResetRadio = null;
       el.ariaChecked = "true";
     } else {
-      menuHideAll();
+      menuCloseAll();
+    }
+  };
+
+  const menubarStep = (trigger: HTMLElement | null) => {
+    if (trigger) {
+      const wasOpen = !!menuStack[0];
+      menuCloseAll();
+      if (wasOpen && isTrigger(trigger, Prefix.TriggerMenu)) menu(trigger, Focus.None);
+    }
+  };
+
+  const menuCloseAll = (keep = 0) => {
+    while (menuStack[keep]) menu(menuStack.pop(), Focus.None);
+  };
+
+  const menuOpen = (trigger: HTMLElement, mode: Focus) => {
+    if (popoverShown) popover(popoverShown, false);
+    const inPopover = findAncestor(trigger.parentElement, Prefix.ContentMenu);
+    if (inPopover) {
+      if (!menuStack.includes(trigger)) menu(trigger, mode);
+    } else if (menuStack[0]) {
+      const reopen = trigger !== menuStack[0];
+      menuCloseAll();
+      if (reopen) menu(trigger, mode);
+    } else {
+      menu(trigger, mode);
+    }
+  };
+
+  const menuRoveIn = (trigger: HTMLElement, mode: Focus) => {
+    if (trigger.ariaExpanded !== "true") {
+      menu(trigger, mode);
+    } else {
+      const content = getLinked(trigger, "aria-controls");
+      if (content) {
+        if (mode === Focus.First) {
+          menuRoving(content.firstElementChild, menuNext);
+        } else {
+          menuRoving(content.lastElementChild, menuPrevious);
+        }
+      }
     }
   };
 
   const popover = (trigger: HTMLElement, show: boolean) => {
     if ((trigger.ariaExpanded === "true") === show) return;
-    const content = getContent(trigger, "aria-controls");
+    const content = getLinked(trigger, "aria-controls");
     if (content) {
       if (show) {
-        if (popoverOpen && popoverOpen !== trigger) popover(popoverOpen, false);
+        if (popoverShown && popoverShown !== trigger) popover(popoverShown, false);
         content.showPopover();
         trigger.ariaExpanded = "true";
         content.ariaHidden = "false";
         position(trigger, content);
-        popoverOpen = trigger;
+        popoverShown = trigger;
       } else {
         content.hidePopover();
         trigger.ariaExpanded = "false";
         content.ariaHidden = "true";
-        if (popoverOpen === trigger) popoverOpen = null;
+        if (popoverShown === trigger) popoverShown = null;
+      }
+    }
+  };
+
+  const tabs = (trigger: HTMLElement) => {
+    if (trigger.ariaDisabled !== "true" && trigger.ariaSelected !== "true") {
+      let tab = trigger.parentElement?.firstElementChild;
+      while (tab) {
+        if (isElement(tab) && (tab === trigger || tab.ariaSelected === "true")) {
+          const content = getLinked(tab, "aria-controls");
+          if (content) {
+            const willSelect = tab.ariaSelected !== "true";
+            tab.ariaSelected = willSelect ? "true" : "false";
+            tab.tabIndex = willSelect ? 0 : -1;
+            content.ariaHidden = willSelect ? "false" : "true";
+            if (content.hasAttribute("tabindex")) content.tabIndex = willSelect ? 0 : -1;
+            content.hidden = !willSelect;
+          }
+        }
+        tab = tab.nextElementSibling;
       }
     }
   };
 
   const tooltip = (trigger: HTMLElement, show: boolean) => {
-    const content = getContent(trigger, "aria-describedby");
+    const content = getLinked(trigger, "aria-describedby");
     if (content) {
       if (show) {
         content.showPopover();
@@ -306,6 +364,19 @@ if (typeof document !== "undefined") {
       } else {
         content.hidePopover();
       }
+    }
+  };
+
+  const tooltipReset = () => {
+    tooltipFocused = null;
+    tooltipHovered = null;
+    tooltipSync();
+  };
+
+  const tooltipSuppress = () => {
+    if (tooltipShown) {
+      tooltipSuppressed = tooltipShown;
+      tooltipSync();
     }
   };
 
@@ -317,7 +388,7 @@ if (typeof document !== "undefined") {
     ) {
       tooltipSuppressed = null;
     }
-    const active = tooltipHovered ?? tooltipFocused;
+    const active = tooltipHovered || tooltipFocused;
     const next = active && active !== tooltipSuppressed ? active : null;
     if (next !== tooltipShown) {
       if (tooltipShown) tooltip(tooltipShown, false);
@@ -326,75 +397,34 @@ if (typeof document !== "undefined") {
     }
   };
 
-  const dialogOpenFor = (trigger: HTMLElement) => {
-    if (dialogContent?.open) return;
-    const content = getContent(trigger, "aria-controls");
-    if (!isDialog(content)) return;
-    dialogContent = content;
-    dialogTrigger = trigger;
-    content.showModal();
-  };
-
-  const dialogClose = () => {
-    if (!dialogContent?.open || !dialogTrigger) return;
-    const content = dialogContent;
-    const trigger = dialogTrigger;
-    dialogContent = null;
-    dialogTrigger = null;
-    content.close();
-    trigger.focus();
-  };
-
-  const eventElement = (event: Event): HTMLElement | null =>
-    isElement(event.target)
-      ? event.target
-      : event.target instanceof Element
-        ? event.target.parentElement
-        : null;
-
-  const menuOpen = (trigger: HTMLElement, mode: Focus) => {
-    if (popoverOpen) popover(popoverOpen, false);
-    const inPopover = findAncestor(trigger.parentElement, Prefix.ContentMenu);
-    if (inPopover) {
-      if (!menuPopovers.includes(trigger)) menu(trigger, mode);
-    } else if (menuPopovers[0]) {
-      const openTarget = trigger !== menuPopovers[0];
-      menuHideAll();
-      if (openTarget) menu(trigger, mode);
-    } else {
-      menu(trigger, mode);
-    }
-  };
-
   addEventListener("pointerdown", (event: PointerEvent) => {
     shouldSuppressClick = false;
     if (event.button !== 0) return;
-    const start = eventElement(event);
-    if (!start) return;
-    let target: HTMLElement | null = start;
-    while (target) {
-      const id = target.id;
+    let el = getTarget(event);
+    if (!el) return;
+    while (el) {
+      const id = el.id;
       if (id.startsWith(Prefix.TriggerMenu)) {
         shouldSuppressClick = true;
-        menuOpen(target, Focus.None);
+        menuOpen(el, Focus.None);
         return;
       }
-      if (id.startsWith(Prefix.ContentMenu) && menuPopovers[0]) {
+      if (id.startsWith(Prefix.ContentMenu) && menuStack[0]) {
         shouldSuppressClick = true;
         return;
       }
-      target = target.parentElement;
+      el = el.parentElement;
     }
-    if (menuPopovers[0]) menuHideAll();
+    if (menuStack[0]) menuCloseAll();
   });
 
   addEventListener("pointerup", (event: PointerEvent) => {
     rovingBoundary = null;
-    if (event.button !== 0 || !menuPopovers[0]) return;
-    let el = eventElement(event);
+    if (event.button !== 0 || !menuStack[0]) return;
+    let el = getTarget(event);
     while (el) {
       if (isMenuItem(el) && !isTrigger(el, Prefix.TriggerMenu)) {
-        menuItemAction(el);
+        menuActivate(el);
         return;
       }
       if (el.id.startsWith(Prefix.ContentMenu)) return;
@@ -407,60 +437,54 @@ if (typeof document !== "undefined") {
       shouldSuppressClick = false;
       return;
     }
-    shouldPreventDefault = null;
+    shouldPreventDefault = false;
     rovingBoundary = null;
-    const start = eventElement(event);
+    const start = getTarget(event);
     if (start) {
-      let target: HTMLElement | null = start;
-      while (target) {
-        const id = target.id;
+      let el: HTMLElement | null = start;
+      while (el) {
+        const id = el.id;
         if (id.startsWith(Prefix.Trigger)) {
           if (id.startsWith(Prefix.TriggerMenu)) break;
-          if (id.startsWith(Prefix.TriggerAccordion)) accordion(target);
-          else if (id.startsWith(Prefix.TriggerCollapsible)) collapsible(target);
-          else if (id.startsWith(Prefix.TriggerTabs)) tabs(target);
+          if (id.startsWith(Prefix.TriggerAccordion)) accordion(el);
+          else if (id.startsWith(Prefix.TriggerCollapsible)) collapsible(el);
           else if (id.startsWith(Prefix.TriggerDialogClose)) dialogClose();
-          else if (id.startsWith(Prefix.TriggerDialog) && target.ariaDisabled !== "true") {
-            if (popoverOpen) popover(popoverOpen, false);
-            if (tooltipShown) {
-              tooltipSuppressed = tooltipShown;
-              tooltipSync();
-            }
-            dialogOpenFor(target);
-          } else if (id.startsWith(Prefix.TriggerPopover) && target.ariaDisabled !== "true") {
-            const isOpen = target.ariaExpanded === "true";
-            popover(target, !isOpen);
+          else if (id.startsWith(Prefix.TriggerDialogOpen) && el.ariaDisabled !== "true") {
+            if (popoverShown) popover(popoverShown, false);
+            tooltipSuppress();
+            dialogOpen(el);
+          } else if (id.startsWith(Prefix.TriggerPopover) && el.ariaDisabled !== "true") {
+            const isOpen = el.ariaExpanded === "true";
+            popover(el, !isOpen);
             if (isOpen) {
-              target.focus();
+              el.focus();
             } else {
-              getContent(target, "aria-controls")?.focus();
+              getLinked(el, "aria-controls")?.focus();
             }
-          } else if (id.startsWith(Prefix.TriggerTooltip) && tooltipShown) {
-            tooltipSuppressed = tooltipShown;
-            tooltipSync();
+          } else if (id.startsWith(Prefix.TriggerTabs)) {
+            tabs(el);
+          } else if (id.startsWith(Prefix.TriggerTooltip)) {
+            tooltipSuppress();
           }
           break;
-        } else if (id.startsWith(Prefix.ContentPopover)) {
-          break;
-        } else if (id.startsWith(Prefix.ContentTooltip)) {
-          break;
-        } else if (id.startsWith(Prefix.ContentDialog)) {
-          break;
-        } else if (id.startsWith(Prefix.ContentMenu)) {
+        } else if (
+          id.startsWith(Prefix.ContentDialog) ||
+          id.startsWith(Prefix.ContentMenu) ||
+          id.startsWith(Prefix.ContentPopover) ||
+          id.startsWith(Prefix.ContentTooltip)
+        ) {
           break;
         }
-        target = target.parentElement;
+        el = el.parentElement;
       }
-      if (!target) {
-        if (popoverOpen) popover(popoverOpen, false);
-      }
+      if (!el && popoverShown) popover(popoverShown, false);
     }
     if (shouldPreventDefault) event.preventDefault();
   });
 
   addEventListener("pointermove", (event: PointerEvent) => {
     if (event.pointerType === "touch") return;
-    if (event.target === pointerTarget && !menuPopovers[0]) return;
+    if (event.target === pointerTarget && !menuStack[0]) return;
     pointerTarget = event.target;
     if (isElement(event.target) && !findAncestor(event.target, Prefix.ContentTooltip)) {
       const nextHover = findAncestor(event.target, Prefix.TriggerTooltip);
@@ -469,11 +493,11 @@ if (typeof document !== "undefined") {
         tooltipSync();
       }
     }
-    if (menuPopovers[0]) {
+    if (menuStack[0]) {
       let safe = false;
-      const sub = menuPopovers[1];
-      if (sub) {
-        const rect = sub.getBoundingClientRect();
+      const subTrigger = menuStack[1];
+      if (subTrigger) {
+        const rect = subTrigger.getBoundingClientRect();
         if (
           event.clientX >= rect.left &&
           event.clientX <= rect.right &&
@@ -483,67 +507,72 @@ if (typeof document !== "undefined") {
           safeX = event.clientX;
           safeY = event.clientY;
         } else if (safeX !== null) {
-          const p = safeContent?.getBoundingClientRect();
-          if (p) {
-            const d = (safeX < p.left ? p.left : safeX > p.right ? p.right : safeX) - safeX;
-            const t = d && (event.clientX - safeX) / d;
+          const safeRect = safeContent?.getBoundingClientRect();
+          if (safeRect) {
+            const dx =
+              (safeX < safeRect.left
+                ? safeRect.left
+                : safeX > safeRect.right
+                  ? safeRect.right
+                  : safeX) - safeX;
+            const t = dx && (event.clientX - safeX) / dx;
             safe =
               t > 0 &&
               t <= 1 &&
-              (event.clientY - (safeY + t * (p.top - safeY))) *
-                (event.clientY - (safeY + t * (p.bottom - safeY))) <=
+              (event.clientY - (safeY + t * (safeRect.top - safeY))) *
+                (event.clientY - (safeY + t * (safeRect.bottom - safeY))) <=
                 0 &&
-              (p.left - rect.right) * event.movementX >= 0;
+              (safeRect.left - rect.right) * event.movementX >= 0;
           }
           if (!safe) safeX = null;
         }
       }
       if (!safe && isElement(event.target)) {
-        const popoverTriggers: HTMLButtonElement[] = [];
-        let target: HTMLElement | null = event.target;
-        let bail = false;
+        const triggerPath: HTMLButtonElement[] = [];
+        let el: HTMLElement | null = event.target;
+        let inContent = false;
         let foundItem = false;
-        while (target) {
+        while (el) {
           if (
-            target.role?.startsWith("menuitem") === true ||
-            target.role === "separator" ||
-            target.role === "presentation"
+            el.role?.startsWith("menuitem") ||
+            el.role === "separator" ||
+            el.role === "presentation"
           ) {
             foundItem = true;
           }
-          if (!foundItem && target.id.startsWith(Prefix.Content)) {
-            bail = true;
+          if (!foundItem && el.id.startsWith(Prefix.Content)) {
+            inContent = true;
             break;
           }
-          if (isTrigger(target, Prefix.TriggerMenu)) {
-            popoverTriggers.unshift(target);
-          } else if (target.id.startsWith(Prefix.ContentMenu)) {
-            const trigger = getContent(target, "aria-labelledby");
+          if (isTrigger(el, Prefix.TriggerMenu)) {
+            triggerPath.unshift(el);
+          } else if (el.id.startsWith(Prefix.ContentMenu)) {
+            const trigger = getLinked(el, "aria-labelledby");
             if (isTrigger(trigger, Prefix.TriggerMenu)) {
-              popoverTriggers.unshift(trigger);
+              triggerPath.unshift(trigger);
             }
           }
-          target = target.parentElement;
+          el = el.parentElement;
         }
-        if (!bail && popoverTriggers[0]) {
+        if (!inContent && triggerPath[0]) {
           let i = 0;
-          while (menuPopovers[i] && menuPopovers[i] === popoverTriggers[i]) i++;
+          while (menuStack[i] && menuStack[i] === triggerPath[i]) i++;
           if (
             i === 0 &&
-            (popoverTriggers[0].role !== "menuitem" ||
-              popoverTriggers[0].parentElement?.parentElement !==
-                menuPopovers[0].parentElement?.parentElement)
+            (triggerPath[0].role !== "menuitem" ||
+              triggerPath[0].parentElement?.parentElement !==
+                menuStack[0].parentElement?.parentElement)
           )
             return;
-          menuHideAll(i);
-          menu(popoverTriggers[i], Focus.None);
+          menuCloseAll(i);
+          menu(triggerPath[i], Focus.None);
         }
       }
     }
   });
 
   addEventListener("keydown", (event: KeyboardEvent) => {
-    shouldPreventDefault = null;
+    shouldPreventDefault = false;
     shouldMatchLetter = null;
     rovingBoundary = null;
     const target = event.target;
@@ -573,22 +602,22 @@ if (typeof document !== "undefined") {
       const vertical = target.parentElement?.ariaOrientation === "vertical";
       switch (event.key) {
         case "ArrowDown":
-          if (vertical) tabNext(target);
+          if (vertical) tabsNext(target);
           break;
         case "ArrowUp":
-          if (vertical) tabPrevious(target);
+          if (vertical) tabsPrevious(target);
           break;
         case "ArrowRight":
-          if (!vertical) tabNext(target);
+          if (!vertical) tabsNext(target);
           break;
         case "ArrowLeft":
-          if (!vertical) tabPrevious(target);
+          if (!vertical) tabsPrevious(target);
           break;
         case "Home":
-          tabsRoving(target.parentElement?.firstElementChild, tabNext);
+          tabsRoving(target.parentElement?.firstElementChild, tabsNext);
           break;
         case "End":
-          tabsRoving(target.parentElement?.lastElementChild, tabPrevious);
+          tabsRoving(target.parentElement?.lastElementChild, tabsPrevious);
           break;
       }
     } else {
@@ -601,34 +630,13 @@ if (typeof document !== "undefined") {
             shouldPreventDefault = true;
             break;
           case "ArrowDown":
-            if (isRootTrigger) {
-              if (target.ariaExpanded !== "true") {
-                menu(target, Focus.First);
-              } else {
-                const content = getContent(target, "aria-controls");
-                if (content) menuRoving(content.firstElementChild, menuNext);
-              }
-            }
+            if (isRootTrigger) menuRoveIn(target, Focus.First);
             break;
           case "ArrowUp":
-            if (isRootTrigger) {
-              if (target.ariaExpanded !== "true") {
-                menu(target, Focus.Last);
-              } else {
-                const content = getContent(target, "aria-controls");
-                if (content) menuRoving(content.lastElementChild, menuPrevious);
-              }
-            }
+            if (isRootTrigger) menuRoveIn(target, Focus.Last);
             break;
           case "ArrowRight":
-            if (!isRootTrigger) {
-              if (target.ariaExpanded !== "true") {
-                menu(target, Focus.First);
-              } else {
-                const content = getContent(target, "aria-controls");
-                if (content) menuRoving(content.firstElementChild, menuNext);
-              }
-            }
+            if (!isRootTrigger) menuRoveIn(target, Focus.First);
             break;
         }
       }
@@ -639,19 +647,19 @@ if (typeof document !== "undefined") {
         target.parentElement
       ) {
         const parent = target.parentElement;
-        const menubarRoot = menuPopovers[0]?.parentElement || parent;
+        const menubarRoot = menuStack[0]?.parentElement || parent;
         const inPopover = findAncestor(target.parentElement, Prefix.ContentMenu);
         switch (event.key) {
           case "Enter":
           case " ":
             if (!isTrigger(target, Prefix.TriggerMenu)) {
-              menuItemAction(target);
+              menuActivate(target);
               shouldPreventDefault = event.key === " " || target.tagName !== "A";
             }
             break;
           case "Tab":
-            if (menuPopovers[0]) menuPopovers[0].focus();
-            menuHideAll();
+            if (menuStack[0]) menuStack[0].focus();
+            menuCloseAll();
             break;
           case "ArrowDown":
             if (inPopover) menuNext(parent);
@@ -659,29 +667,14 @@ if (typeof document !== "undefined") {
           case "ArrowUp":
             if (inPopover) menuPrevious(parent);
             break;
-          case "ArrowRight": {
-            const nextNode = menuNext(menubarRoot);
-            if (nextNode) {
-              const hadOpenMenu = menuPopovers[0];
-              menuHideAll();
-              if (hadOpenMenu && isTrigger(nextNode, Prefix.TriggerMenu)) {
-                menu(nextNode, Focus.None);
-              }
-            }
+          case "ArrowRight":
+            menubarStep(menuNext(menubarRoot));
             break;
-          }
           case "ArrowLeft":
-            if (menuPopovers[1]) {
-              menu(menuPopovers.pop(), Focus.Trigger);
+            if (menuStack[1]) {
+              menu(menuStack.pop(), Focus.Trigger);
             } else {
-              const nextNode = menuPrevious(menubarRoot);
-              if (nextNode) {
-                const hadOpenMenu = menuPopovers[0];
-                menuHideAll();
-                if (hadOpenMenu && isTrigger(nextNode, Prefix.TriggerMenu)) {
-                  menu(nextNode, Focus.None);
-                }
-              }
+              menubarStep(menuPrevious(menubarRoot));
             }
             break;
           case "Home":
@@ -691,7 +684,7 @@ if (typeof document !== "undefined") {
             menuRoving(parent.parentElement?.lastElementChild, menuPrevious);
             break;
           default:
-            if (/^[a-zA-Z]$/.test(event.key)) {
+            if (/^[a-z]$/i.test(event.key)) {
               shouldMatchLetter = event.key.toLowerCase();
               menuNext(parent);
             }
@@ -701,14 +694,13 @@ if (typeof document !== "undefined") {
     }
     if (event.key === "Escape") {
       if (tooltipShown) {
-        tooltipSuppressed = tooltipShown;
-        tooltipSync();
+        tooltipSuppress();
         shouldPreventDefault = true;
-      } else if (menuPopovers[0]) {
-        menu(menuPopovers.pop(), Focus.Trigger);
+      } else if (menuStack[0]) {
+        menu(menuStack.pop(), Focus.Trigger);
         shouldPreventDefault = true;
-      } else if (popoverOpen) {
-        const trigger = popoverOpen;
+      } else if (popoverShown) {
+        const trigger = popoverShown;
         popover(trigger, false);
         trigger.focus();
         shouldPreventDefault = true;
@@ -723,35 +715,27 @@ if (typeof document !== "undefined") {
     "scroll",
     (event) => {
       if (
-        menuPopovers[0] &&
+        menuStack[0] &&
         !(isElement(event.target) && findAncestor(event.target, Prefix.ContentMenu))
       ) {
-        menuHideAll();
+        menuCloseAll();
       }
       if (
-        popoverOpen &&
+        popoverShown &&
         !(isElement(event.target) && findAncestor(event.target, Prefix.ContentPopover))
       ) {
-        popover(popoverOpen, false);
+        popover(popoverShown, false);
       }
-      if (tooltipShown) {
-        tooltipHovered = null;
-        tooltipFocused = null;
-        tooltipSync();
-      }
+      if (tooltipShown) tooltipReset();
       pointerTarget = null;
     },
     true,
   );
 
   addEventListener("resize", () => {
-    if (menuPopovers[0]) menuHideAll();
-    if (popoverOpen) popover(popoverOpen, false);
-    if (tooltipShown) {
-      tooltipHovered = null;
-      tooltipFocused = null;
-      tooltipSync();
-    }
+    if (menuStack[0]) menuCloseAll();
+    if (popoverShown) popover(popoverShown, false);
+    if (tooltipShown) tooltipReset();
     pointerTarget = null;
   });
 
@@ -770,12 +754,12 @@ if (typeof document !== "undefined") {
 
   addEventListener("focusout", (event: FocusEvent) => {
     if (
-      popoverOpen &&
+      popoverShown &&
       isElement(event.relatedTarget) &&
-      popoverOpen !== event.relatedTarget &&
-      !getContent(popoverOpen, "aria-controls")?.contains(event.relatedTarget)
+      popoverShown !== event.relatedTarget &&
+      !getLinked(popoverShown, "aria-controls")?.contains(event.relatedTarget)
     ) {
-      popover(popoverOpen, false);
+      popover(popoverShown, false);
     }
     if (tooltipFocused && event.target === tooltipFocused && !event.relatedTarget) {
       tooltipFocused = null;

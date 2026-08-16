@@ -1459,8 +1459,8 @@ test.describe("Positioning", () => {
         el.style.getPropertyValue("--right"),
         el.style.getPropertyValue("--bottom"),
         el.style.getPropertyValue("--left"),
-        el.style.getPropertyValue("--pw"),
-        el.style.getPropertyValue("--ph"),
+        el.style.getPropertyValue("--width"),
+        el.style.getPropertyValue("--height"),
       ]);
     for (const value of vars) expect(value).toMatch(/^-?\d+(\.\d+)?px$/);
   });

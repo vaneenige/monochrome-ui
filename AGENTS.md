@@ -51,14 +51,13 @@ cover dynamically-inserted DOM without re-wiring.
 
 **ID prefix dispatch.** We route events to handlers by checking the
 prefix of `target.id` (`mct:`, `mcc:`, `mcr:`). No classes, no data
-attributes, no registration table. Prefix is the shortest string that
-uniquely identifies a component among the current set; grow only to
-disambiguate (`mct:ta` vs `mct:to` because both start with `t`),
-never preemptively.
+attributes, no registration table. Enum values spell out the full
+component name with a trailing colon (`mct:accordion:`,
+`mct:dialog-open:`), exactly as the ids appear in the DOM.
 
 **Module-level `let` for state.** No classes, no `this`, no closures
 passed down. Handlers share state through module-scope variables
-(`menuPopovers`, `popoverOpen`, `tooltipShown`, …). This is why the
+(`menuStack`, `popoverShown`, `tooltipShown`, …). This is why the
 core is one file: the state is part of the file's mental model.
 
 **`should*` driver flags for cross-handler communication.** The
@@ -116,9 +115,9 @@ is the exact shadow registry the ID-prefix scheme exists to avoid.
 The manual walk is fewer bytes, inlines into a single loop, and
 doesn't pull in the CSS selector engine.
 
-**Array-as-nullable-stack.** `menuPopovers[0]` is "is any menu
-open?", `menuPopovers[1]` is "is a submenu open?",
-`menuPopovers.pop()` closes the topmost. No `.length` check, no
+**Array-as-nullable-stack.** `menuStack[0]` is "is any menu
+open?", `menuStack[1]` is "is a submenu open?",
+`menuStack.pop()` closes the topmost. No `.length` check, no
 parallel `openMenu: HTMLElement | null` variable, no wrapper type.
 One array doubles as flag, stack, and cursor.
 
@@ -134,7 +133,7 @@ walks) so each interaction starts with a fresh boundary.
 **Radio sweep reuses the navigation walker.** Activating a
 `menuitemradio` must clear `aria-checked` on every adjacent radio
 up to the group boundary. Instead of writing a dedicated sweep,
-`menuItemAction` sets three module flags (`shouldResetRadio`,
+`menuActivate` sets three module flags (`shouldResetRadio`,
 `radioHeadDone`, `radioTailChain`) and calls the same `menuNext`
 used for ArrowDown. `menuRoving` notices the non-null driver state
 and switches into sweep mode: clear radios in the "head" half,
@@ -147,7 +146,7 @@ triggers still rely on the browser's synthesized `click` for
 Enter/Space. Menu cannot: `pointerdown` already opened or
 dismissed the menu, and the following click is suppressed via
 `shouldSuppressClick`. Keyboard activation therefore lives in
-`keydown` (`menuOpen` / `menuItemAction`) with `preventDefault`
+`keydown` (`menuOpen` / `menuActivate`) with `preventDefault`
 so Space does not scroll.
 
 **Pointer session and `shouldSuppressClick`.** A menu gesture is
@@ -161,10 +160,11 @@ underneath. Playwright `.click()` still works: it fires
 `pointerdown`.
 
 **Popover API with CSS-variable positioning.** The core publishes
-the trigger rect as CSS custom properties (`--top`, `--bottom`,
-`--left`, `--right`, `--pw`, `--ph`) on the content element. All
-positioning happens in CSS. No JS layout math, no `z-index`
-management (top layer handles that).
+the trigger rect (`--top`, `--right`, `--bottom`, `--left`, in
+TRBL order) and the content's own size (`--width`, `--height`)
+as CSS custom properties on the content element. All positioning
+happens in CSS. No JS layout math, no `z-index` management (top
+layer handles that).
 
 **Safety triangle in JS.** When a submenu is open, pointermove
 records the last cursor point inside the submenu trigger (the
@@ -218,6 +218,12 @@ Rules only. Rationale lives in "Why the core looks weird" and
 - Default parameter values with enum types instead of option
   objects when the set is small:
   `menu(trigger, mode = Focus.Trigger)`.
+- No optional parameters that every caller supplies, and no
+  return values that no caller reads. Signatures are the
+  contract; unused generality is negative value here.
+- Extract a helper at the second verbatim repetition of a
+  multi-line pattern when it saves minified bytes
+  (`tooltipSuppress`, `menubarStep`, `menuRoveIn`).
 
 ### Control flow
 
@@ -232,6 +238,10 @@ Rules only. Rationale lives in "Why the core looks weird" and
   an expression-statement ternary (`c ? f() : g()`) trips oxlint's
   `no-unused-expressions`. Use `if`/`else` for side-effect branches.
 - `array[0]` over `array.length > 0`.
+- `||` for element fallbacks, never `??`: an element is never
+  falsy-but-valid, and one operator keeps the grep simple.
+- `=== true` only where TypeScript needs a boolean (type
+  predicate returns); rely on truthiness everywhere else.
 
 ### DOM access
 
@@ -284,12 +294,64 @@ PropType<...>` where Vue's prop typing requires it.)
 ### Naming
 
 - Core primitives are named after the component they drive:
-  `collapsible`, `accordion`, `tabs`, `menu`, `popover`, `tooltip`,
-  `dialog`.
+  `accordion`, `collapsible`, `dialog`, `menu`, `popover`,
+  `tabs`, `tooltip`. Helpers extend the primitive with a verb:
+  `menuOpen`, `menuCloseAll`, `dialogClose`, `tooltipSync`.
+- Open/close is the verb pair for named actions (it matches
+  `aria-expanded`). Show/hide appears only as the boolean
+  parameter of the primitives that map straight onto
+  `showPopover`/`hidePopover`: `popover(trigger, show)`.
+- A component's name belongs to that component alone: nothing
+  menu-related is called `popover*`. Derived names reuse the
+  component name verbatim, plural included (`tabsNext`, never
+  `tabNext`).
 - `should*` for driver flags, `safe*` for safety-triangle state,
   `tooltip*` for tooltip state, `menu*` for menu state.
-- Short locals where the type carries the meaning: `el`, `target`,
-  `item`, `trigger`, `content`, `rect`.
+- Boolean flags are plain `boolean` reset to `false`;
+  value-carrying flags are `T | null` with null meaning "off".
+- Local booleans read as predicates or adjectives (`isOpen`,
+  `wasOpen`, `vertical`, `safe`). `is*` is current DOM state;
+  `will*` is the computed next state (`willOpen`, `willSelect`).
+  Never a boolean named like an element, or an element used as
+  a flag under a boolean-ish name.
+- `el` is a moving walk cursor; `target` is the fixed element
+  derived from `event.target`; `trigger`/`content` are the
+  resolved pair. Other short locals only where the type carries
+  the meaning: `item`, `rect`, `id`.
+- Single-letter names only for the loop index `i` and the
+  interpolation parameter `t`.
+- Type aliases and their implementations use the same parameter
+  names (`node`, `origin`, `fallback`).
+
+### Sorting
+
+Alphabetical is the house order; a new entry has exactly one
+correct place. It applies to:
+
+- Enum members. Family checks (`Content`, `Trigger`) sort in
+  with their specifics and land first automatically.
+- Module state, alphabetical within its blank-line group.
+  Groups in order: driver flags, generic state, then one group
+  per component, components alphabetical.
+- Type guards, generic helpers, roving callbacks, component
+  clusters, and the functions within a cluster.
+- Dispatch chains (`else if` prefix ladders). One exception: a
+  check that must short-circuit the ladder (the menu break in
+  the click walk) stays first, with a comment saying why.
+
+Fixed, non-alphabetical orders that stay fixed:
+
+- Listeners register in the north-star event order: pointerdown,
+  pointerup, click, pointermove, keydown, scroll, resize,
+  focusin, focusout.
+- `switch` cases on keys: `Enter`, `" "`, `Tab`, `ArrowDown`,
+  `ArrowUp`, `ArrowRight`, `ArrowLeft`, `Home`, `End`, then
+  `default`. Skip keys the component does not handle.
+- CSS custom properties: trigger rect in TRBL order (`--top`,
+  `--right`, `--bottom`, `--left`), then content size
+  (`--width`, `--height`).
+- `Focus` enum: the default member first (`Trigger` is `0`),
+  then semantic order.
 
 ## Prose style
 
