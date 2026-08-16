@@ -575,11 +575,18 @@ if (typeof document !== "undefined") {
     shouldPreventDefault = false;
     shouldMatchLetter = null;
     rovingBoundary = null;
+    const rtl = document.dir === "rtl";
+    const key =
+      rtl && event.key === "ArrowRight"
+        ? "ArrowLeft"
+        : rtl && event.key === "ArrowLeft"
+          ? "ArrowRight"
+          : event.key;
     const target = event.target;
     if (isTrigger(target, Prefix.TriggerAccordion)) {
       const item = target.parentElement?.parentElement;
       if (item) {
-        switch (event.key) {
+        switch (key) {
           case "ArrowDown":
             accordionNext(item);
             break;
@@ -600,7 +607,7 @@ if (typeof document !== "undefined") {
       }
     } else if (isTrigger(target, Prefix.TriggerTabs)) {
       const vertical = target.parentElement?.ariaOrientation === "vertical";
-      switch (event.key) {
+      switch (key) {
         case "ArrowDown":
           if (vertical) tabsNext(target);
           break;
@@ -623,7 +630,7 @@ if (typeof document !== "undefined") {
     } else {
       if (isTrigger(target, Prefix.TriggerMenu)) {
         const isRootTrigger = findAncestor(target, Prefix.ContentMenu) === null;
-        switch (event.key) {
+        switch (key) {
           case "Enter":
           case " ":
             menuOpen(target, Focus.First);
@@ -649,12 +656,12 @@ if (typeof document !== "undefined") {
         const parent = target.parentElement;
         const menubarRoot = menuStack[0]?.parentElement || parent;
         const inPopover = findAncestor(target.parentElement, Prefix.ContentMenu);
-        switch (event.key) {
+        switch (key) {
           case "Enter":
           case " ":
             if (!isTrigger(target, Prefix.TriggerMenu)) {
               menuActivate(target);
-              shouldPreventDefault = event.key === " " || target.tagName !== "A";
+              shouldPreventDefault = key === " " || target.tagName !== "A";
             }
             break;
           case "Tab":
@@ -684,15 +691,15 @@ if (typeof document !== "undefined") {
             menuRoving(parent.parentElement?.lastElementChild, menuPrevious);
             break;
           default:
-            if (/^[a-z]$/i.test(event.key)) {
-              shouldMatchLetter = event.key.toLowerCase();
+            if (/^[a-z]$/i.test(key)) {
+              shouldMatchLetter = key.toLowerCase();
               menuNext(parent);
             }
             break;
         }
       }
     }
-    if (event.key === "Escape") {
+    if (key === "Escape") {
       if (tooltipShown) {
         tooltipSuppress();
         shouldPreventDefault = true;

@@ -1,6 +1,6 @@
 import type { Page } from "@playwright/test";
 import { expect, test } from "./fixtures";
-import { pointerDown, pointerUp, scrollAndSettle } from "./helpers";
+import { pointerDown, pointerUp, scrollAndSettle, setRtl } from "./helpers";
 
 const openRoot = async (page: Page) => {
   await page.getByTestId("root-trigger").click();
@@ -250,6 +250,17 @@ test.describe("Menu", () => {
         await expect(page.getByTestId("root-submenu-trigger")).toBeFocused();
       });
     }
+
+    test("ArrowLeft opens and ArrowRight closes the submenu in RTL", async ({ page }) => {
+      await setRtl(page);
+      await page.getByTestId("root-submenu-trigger").focus();
+      await page.getByTestId("root-submenu-trigger").press("ArrowLeft");
+      await expect(page.getByTestId("root-submenu-list")).toBeVisible();
+      await expect(page.getByTestId("root-submenu-item-1")).toBeFocused();
+      await page.keyboard.press("ArrowRight");
+      await expect(page.getByTestId("root-submenu-list")).not.toBeVisible();
+      await expect(page.getByTestId("root-submenu-trigger")).toBeFocused();
+    });
 
     test("ArrowDown / ArrowUp wrap around the submenu items", async ({ page }) => {
       await openSubmenuViaKeyboard(page);
@@ -755,6 +766,21 @@ test.describe("Menubar", () => {
       await expect(page.getByTestId("menubar-trigger-3")).toBeFocused();
     });
 
+    test("ArrowRight / ArrowLeft reverse direction in RTL", async ({ page }) => {
+      await setRtl(page);
+      await page.getByTestId("menubar-trigger-1").focus();
+      await page.keyboard.press("ArrowLeft");
+      await expect(page.getByTestId("menubar-item-1")).toBeFocused();
+      await page.getByTestId("menubar-trigger-2").focus();
+      await page.keyboard.press("ArrowRight");
+      await expect(page.getByTestId("menubar-item-1")).toBeFocused();
+      await page.getByTestId("menubar-trigger-3").focus();
+      await page.keyboard.press("ArrowLeft");
+      await expect(page.getByTestId("menubar-trigger-1")).toBeFocused();
+      await page.keyboard.press("ArrowRight");
+      await expect(page.getByTestId("menubar-trigger-3")).toBeFocused();
+    });
+
     test("Home / End jump to first / last menubar item", async ({ page }) => {
       await page.getByTestId("menubar-trigger-2").focus();
       await page.keyboard.press("Home");
@@ -1102,6 +1128,30 @@ test.describe("Safety triangle", () => {
     });
     await expect(page.getByTestId("submenu2-list")).not.toBeVisible();
     await expect(page.getByTestId("submenu-list")).toBeVisible();
+  });
+
+  test("protects a left-opening submenu in RTL", async ({ page }) => {
+    await setRtl(page);
+    await page.getByTestId("trigger").click();
+    await expect(page.getByTestId("list")).not.toBeVisible();
+    await page.getByTestId("trigger").click();
+    await page.getByTestId("submenu-trigger").hover();
+    await expect(page.getByTestId("submenu-list")).toBeVisible();
+    const trigger = await arm(page);
+    await pointer(page, {
+      testId: "item-1",
+      x: trigger.x - 8,
+      y: trigger.y + trigger.height / 2,
+      movementX: -1,
+    });
+    await expect(page.getByTestId("submenu-list")).toBeVisible();
+    await pointer(page, {
+      testId: "item-1",
+      x: trigger.x - 12,
+      y: trigger.y + trigger.height / 2,
+      movementX: 5,
+    });
+    await expect(page.getByTestId("submenu-list")).not.toBeVisible();
   });
 });
 

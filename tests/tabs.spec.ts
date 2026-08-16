@@ -1,5 +1,5 @@
 import { expect, test } from "./fixtures";
-import { scrollAndSettle } from "./helpers";
+import { scrollAndSettle, setRtl } from "./helpers";
 
 test.describe("Tabs", () => {
   test.describe("ARIA", () => {
@@ -150,6 +150,30 @@ test.describe("Tabs", () => {
       });
     });
   }
+
+  test.describe("Keyboard (RTL)", () => {
+    test("ArrowLeft / ArrowRight reverse direction in RTL", async ({ page, renderer }) => {
+      await page.goto(`/${renderer}/tabs/horizontal`);
+      await setRtl(page);
+      await page.getByTestId("tab-1").focus();
+      await page.keyboard.press("ArrowLeft");
+      await expect(page.getByTestId("tab-2")).toBeFocused();
+      await page.keyboard.press("ArrowRight");
+      await expect(page.getByTestId("tab-1")).toBeFocused();
+      await page.keyboard.press("ArrowRight");
+      await expect(page.getByTestId("tab-3")).toBeFocused();
+    });
+
+    test("vertical arrows are unaffected by RTL", async ({ page, renderer }) => {
+      await page.goto(`/${renderer}/tabs/vertical`);
+      await setRtl(page);
+      await page.getByTestId("vtab-1").focus();
+      await page.keyboard.press("ArrowDown");
+      await expect(page.getByTestId("vtab-2")).toBeFocused();
+      await page.keyboard.press("ArrowUp");
+      await expect(page.getByTestId("vtab-1")).toBeFocused();
+    });
+  });
 
   test.describe("Mouse", () => {
     test.beforeEach(async ({ page, renderer }) => {

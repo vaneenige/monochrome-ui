@@ -24,6 +24,15 @@ export const scrollAndSettle = (page: Page, x: number, y: number) =>
     { x, y },
   );
 
+/**
+ * Flip the document to right-to-left. The core reads `document.dir`
+ * on every event (DOM as state), so no reload is needed.
+ */
+export const setRtl = (page: Page) =>
+  page.evaluate(() => {
+    document.dir = "rtl";
+  });
+
 export const pointerDown = (locator: Locator, init: PointerEventInit = {}) =>
   locator.dispatchEvent("pointerdown", init);
 export const pointerUp = (locator: Locator, init: PointerEventInit = {}) =>

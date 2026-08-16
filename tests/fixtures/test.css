@@ -18,6 +18,16 @@
   margin-left: 16px;
 }
 
+/* RTL: surfaces align to the trigger's right edge and submenus
+   open to the left. */
+[dir="rtl"] [popover] {
+  left: calc(var(--right) - var(--width));
+}
+[dir="rtl"] [role="menu"] [role="menu"] {
+  left: calc(var(--left) - var(--width) - 16px);
+  margin-left: 0;
+}
+
 /* Menu items stack vertically; menubar items lay out horizontally. */
 ul {
   margin: 0;

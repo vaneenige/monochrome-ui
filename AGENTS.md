@@ -189,6 +189,21 @@ Its rect is measured live while testing the triangle, not
 at open time, because `@starting-style` transforms leave
 the rect wrong until the animation settles.
 
+**RTL by mirroring the key, once.** Horizontal arrows are
+spatial: with `dir="rtl"` the item visually to the right is the
+previous DOM sibling, submenus fly out to the left, and every
+ArrowLeft/ArrowRight meaning flips. Instead of branching at each
+dispatch site, `keydown` swaps ArrowLeft and ArrowRight into a
+local `key` when `document.dir` is `"rtl"` and dispatches on
+that. The switches keep reading as the LTR spec; RTL is one
+input transform. Logical keys (Home, End, Tab, typeahead) follow
+DOM order and pass through untouched. Direction is read from
+`document.dir` on every keydown (DOM as state, never cached);
+consumers declare `dir` on `<html>`. The pointer layer needs no
+branch at all: the safety triangle's near-edge clamp and
+signed-movement test are side-agnostic, and which side anything
+opens on is consumer CSS.
+
 **Monotonic token for async cancellation.** The router uses a
 counter that increments on every `navigateTo`; callbacks check if
 their token is still the latest before touching the DOM. Handles
