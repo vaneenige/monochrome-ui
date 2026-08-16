@@ -987,11 +987,11 @@ test.describe("Safety triangle", () => {
         );
     }, opts);
 
-  const arm = async (page: Page) => {
-    const rect = await page.getByTestId("submenu-trigger").boundingBox();
-    if (!rect) throw new Error("submenu-trigger not visible");
+  const arm = async (page: Page, testId = "submenu-trigger") => {
+    const rect = await page.getByTestId(testId).boundingBox();
+    if (!rect) throw new Error(`${testId} not visible`);
     await pointer(page, {
-      testId: "submenu-trigger",
+      testId,
       x: rect.x + rect.width / 2,
       y: rect.y + rect.height / 2,
       movementX: 1,
@@ -1073,6 +1073,34 @@ test.describe("Safety triangle", () => {
       y: trigger.y + trigger.height / 2,
       movementX: 1,
     });
+    await expect(page.getByTestId("submenu-list")).toBeVisible();
+  });
+
+  test("diagonal travel toward a nested submenu does not close it", async ({ page }) => {
+    await page.getByTestId("submenu2-trigger").hover();
+    await expect(page.getByTestId("submenu2-list")).toBeVisible();
+    const trigger = await arm(page, "submenu2-trigger");
+    await pointer(page, {
+      testId: "submenu-item-1",
+      x: trigger.x + trigger.width + 8,
+      y: trigger.y + trigger.height / 2,
+      movementX: 1,
+    });
+    await expect(page.getByTestId("submenu2-list")).toBeVisible();
+    await expect(page.getByTestId("submenu-list")).toBeVisible();
+  });
+
+  test("moving away from a nested submenu closes it", async ({ page }) => {
+    await page.getByTestId("submenu2-trigger").hover();
+    await expect(page.getByTestId("submenu2-list")).toBeVisible();
+    const trigger = await arm(page, "submenu2-trigger");
+    await pointer(page, {
+      testId: "submenu-item-1",
+      x: trigger.x + trigger.width + 8,
+      y: trigger.y + trigger.height / 2,
+      movementX: -5,
+    });
+    await expect(page.getByTestId("submenu2-list")).not.toBeVisible();
     await expect(page.getByTestId("submenu-list")).toBeVisible();
   });
 });

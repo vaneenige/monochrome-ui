@@ -495,7 +495,7 @@ if (typeof document !== "undefined") {
     }
     if (menuStack[0]) {
       let safe = false;
-      const subTrigger = menuStack[1];
+      const subTrigger = menuStack[1] && menuStack.at(-1);
       if (subTrigger) {
         const rect = subTrigger.getBoundingClientRect();
         if (

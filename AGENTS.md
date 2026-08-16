@@ -167,8 +167,8 @@ happens in CSS. No JS layout math, no `z-index` management (top
 layer handles that).
 
 **Safety triangle in JS.** When a submenu is open, pointermove
-records the last cursor point inside the submenu trigger (the
-apex). Later moves skip hover activation while the cursor is
+records the last cursor point inside the topmost open submenu
+trigger (the apex). Later moves skip hover activation while the cursor is
 inside the triangle from that apex to the submenu's near
 vertical edge (`clamp(left, apexX, right)` as the base) and
 still moving toward the submenu. A failed test (left the
