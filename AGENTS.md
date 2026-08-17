@@ -184,10 +184,11 @@ Submenu to the right: `left - right` is positive, so the
 product stays non-negative while `movementX >= 0` (moving
 right). Submenu to the left: inverted, same expression. One
 signed multiplication covers both sides without a branch.
-The submenu popover is stored as `safeContent` on open.
-Its rect is measured live while testing the triangle, not
-at open time, because `@starting-style` transforms leave
-the rect wrong until the animation settles.
+The submenu popover is resolved live from the topmost
+trigger's `aria-controls` while testing the triangle, and
+its rect is measured then, not at open time: stale state
+cannot survive a close, and `@starting-style` transforms
+leave the rect wrong until the animation settles anyway.
 
 **RTL by mirroring the key, once.** Horizontal arrows are
 spatial: with `dir="rtl"` the item visually to the right is the

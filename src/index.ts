@@ -39,7 +39,6 @@ if (typeof document !== "undefined") {
 
   const menuStack: HTMLElement[] = [];
 
-  let safeContent: HTMLElement | null = null;
   let safeX: number | null = null;
   let safeY = 0;
 
@@ -130,6 +129,10 @@ if (typeof document !== "undefined") {
       if (!rovingBoundary) rovingBoundary = node;
       const menuitem = node.firstElementChild;
       if (shouldResetRadio) {
+        if (node === node.parentElement?.firstElementChild) {
+          radioHeadDone = true;
+          radioTailChain = [];
+        }
         if (isElement(menuitem)) {
           if (menuitem === shouldResetRadio) {
             for (const item of radioTailChain) item.ariaChecked = "false";
@@ -245,7 +248,6 @@ if (typeof document !== "undefined") {
           trigger.ariaExpanded = "true";
           content.ariaHidden = "false";
           position(trigger, content);
-          safeContent = content;
           safeX = null;
           if (mode === Focus.Trigger) {
             trigger.focus();
@@ -507,7 +509,7 @@ if (typeof document !== "undefined") {
           safeX = event.clientX;
           safeY = event.clientY;
         } else if (safeX !== null) {
-          const safeRect = safeContent?.getBoundingClientRect();
+          const safeRect = getLinked(subTrigger, "aria-controls")?.getBoundingClientRect();
           if (safeRect) {
             const dx =
               (safeX < safeRect.left
@@ -572,8 +574,9 @@ if (typeof document !== "undefined") {
   });
 
   addEventListener("keydown", (event: KeyboardEvent) => {
-    shouldPreventDefault = false;
     shouldMatchLetter = null;
+    shouldPreventDefault = false;
+    shouldSuppressClick = false;
     rovingBoundary = null;
     const rtl = document.dir === "rtl";
     const key =
@@ -660,7 +663,7 @@ if (typeof document !== "undefined") {
           case "Enter":
           case " ":
             if (!isTrigger(target, Prefix.TriggerMenu)) {
-              menuActivate(target);
+              if (target.ariaDisabled !== "true") menuActivate(target);
               shouldPreventDefault = key === " " || target.tagName !== "A";
             }
             break;

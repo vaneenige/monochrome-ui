@@ -393,6 +393,17 @@ test.describe("Menu", () => {
       await page.goto(`/${renderer}/menu/with-disclosure`);
     });
 
+    test("keyboard activation works after an abandoned pointer session", async ({ page }) => {
+      // A pointerdown with no trailing click (a cancelled touch
+      // gesture) must not leave the suppression flag armed for the
+      // next keyboard-synthesized click.
+      await pointerDown(page.getByTestId("menu-trigger"));
+      await expect(page.getByTestId("menu-list")).toBeVisible();
+      await page.getByTestId("disclosure-trigger").focus();
+      await page.keyboard.press("Enter");
+      await expect(page.getByTestId("disclosure-content")).toBeVisible();
+    });
+
     test("outside pointerdown onto a closed disclosure closes the menu; click opens the disclosure", async ({
       page,
     }) => {
@@ -1130,6 +1141,21 @@ test.describe("Safety triangle", () => {
     await expect(page.getByTestId("submenu-list")).toBeVisible();
   });
 
+  test("protects the parent submenu after a nested submenu closes", async ({ page }) => {
+    await page.getByTestId("submenu2-trigger").hover();
+    await expect(page.getByTestId("submenu2-list")).toBeVisible();
+    await page.keyboard.press("Escape");
+    await expect(page.getByTestId("submenu2-list")).not.toBeVisible();
+    const trigger = await arm(page);
+    await pointer(page, {
+      testId: "item-1",
+      x: trigger.x + trigger.width + 8,
+      y: trigger.y + trigger.height / 2,
+      movementX: 1,
+    });
+    await expect(page.getByTestId("submenu-list")).toBeVisible();
+  });
+
   test("protects a left-opening submenu in RTL", async ({ page }) => {
     await setRtl(page);
     await page.getByTestId("trigger").click();
@@ -1159,6 +1185,37 @@ test.describe("Checkbox and radio items", () => {
   test.beforeEach(async ({ page, renderer }) => {
     await page.goto(`/${renderer}/menu/checkbox-radio`);
     await page.getByTestId("trigger").click();
+  });
+
+  test("the wrap seam scopes a bottom radio group from a top one", async ({ page, renderer }) => {
+    test.skip(renderer !== "html", "Structure edge case; wrappers emit the canonical shape");
+    // Groups touch the physical ends of the menu, so the sweep's
+    // last-to-first wrap runs straight from group B into group A. The
+    // seam must act as a group boundary or selecting in B clears A.
+    await page.goto("/html/menu/radio-groups-at-ends");
+    await page.getByTestId("trigger").click();
+    await page.getByTestId("radio-b2").click();
+    await expect(page.getByTestId("radio-b2")).toHaveAttribute("aria-checked", "true");
+    await expect(page.getByTestId("radio-b1")).toHaveAttribute("aria-checked", "false");
+    await expect(page.getByTestId("radio-a1")).toHaveAttribute("aria-checked", "true");
+    await expect(page.getByTestId("radio-a2")).toHaveAttribute("aria-checked", "false");
+  });
+
+  test("the wrap seam scopes a top radio group from a bottom one", async ({ page, renderer }) => {
+    test.skip(renderer !== "html", "Structure edge case; wrappers emit the canonical shape");
+    await page.goto("/html/menu/radio-groups-at-ends");
+    await page.getByTestId("trigger").click();
+    await page.getByTestId("radio-a2").click();
+    await expect(page.getByTestId("radio-a2")).toHaveAttribute("aria-checked", "true");
+    await expect(page.getByTestId("radio-a1")).toHaveAttribute("aria-checked", "false");
+    await expect(page.getByTestId("radio-b1")).toHaveAttribute("aria-checked", "true");
+    await expect(page.getByTestId("radio-b2")).toHaveAttribute("aria-checked", "false");
+  });
+
+  test("Enter on a focused disabled item does not activate it", async ({ page }) => {
+    await page.getByTestId("checkbox-disabled").focus();
+    await page.keyboard.press("Enter");
+    await expect(page.getByTestId("checkbox-disabled")).toHaveAttribute("aria-checked", "false");
   });
 
   test("declares the menuitemcheckbox / menuitemradio / separator roles and initial `aria-checked`", async ({
