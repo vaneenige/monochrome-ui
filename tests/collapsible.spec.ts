@@ -151,6 +151,23 @@ test.describe("Collapsible", () => {
     });
   });
 
+  test.describe("Disabled", () => {
+    test("ignores activation via mouse, Enter, and Space", async ({ page, renderer }) => {
+      test.skip(renderer !== "html", "Wrappers do not emit disabled collapsibles");
+      await page.goto("/html/collapsible/disabled");
+      const trigger = page.getByTestId("collapsible-trigger");
+      const content = page.getByTestId("collapsible-content");
+      await trigger.click({ force: true });
+      await expect(content).not.toBeVisible();
+      await expect(trigger).toHaveAttribute("aria-expanded", "false");
+      await trigger.focus();
+      await trigger.press("Enter");
+      await expect(content).not.toBeVisible();
+      await trigger.press("Space");
+      await expect(content).not.toBeVisible();
+    });
+  });
+
   test.describe("Multiple", () => {
     test("operate independently", async ({ page, renderer }) => {
       await page.goto(`/${renderer}/collapsible/multiple`);

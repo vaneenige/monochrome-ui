@@ -449,8 +449,9 @@ if (typeof document !== "undefined") {
         if (id.startsWith(Prefix.Trigger)) {
           if (id.startsWith(Prefix.TriggerMenu)) break;
           if (id.startsWith(Prefix.TriggerAccordion)) accordion(el);
-          else if (id.startsWith(Prefix.TriggerCollapsible)) collapsible(el);
-          else if (id.startsWith(Prefix.TriggerDialogClose)) dialogClose();
+          else if (id.startsWith(Prefix.TriggerCollapsible) && el.ariaDisabled !== "true") {
+            collapsible(el);
+          } else if (id.startsWith(Prefix.TriggerDialogClose)) dialogClose();
           else if (id.startsWith(Prefix.TriggerDialogOpen) && el.ariaDisabled !== "true") {
             if (popoverShown) popover(popoverShown, false);
             tooltipSuppress();
