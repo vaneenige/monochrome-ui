@@ -102,6 +102,22 @@ if (typeof document !== "undefined") {
   };
 
   /**
+   * Write one cache entry, bounding the map first. Full pages add up
+   * and hover-prefetching can touch a lot of them. Insertion order
+   * approximates oldest-first eviction, which is enough at this size.
+   * Overwriting an existing key does not grow the map, so that case
+   * evicts nothing. Every write goes through here (the requested key
+   * and any redirect alias) so the bound cannot be bypassed.
+   */
+  const store = (key: string, value: Promise<Fetched | null>) => {
+    if (cache.size >= 32 && !cache.has(key)) {
+      const oldest = cache.keys().next().value;
+      if (oldest) cache.delete(oldest);
+    }
+    cache.set(key, value);
+  };
+
+  /**
    * Fetch a page and cache the result. Returns `null` for network
    * errors, non-2xx responses, or cross-origin redirects (any of
    * which should fall back to a full browser navigation).
@@ -113,26 +129,19 @@ if (typeof document !== "undefined") {
   const fetchPage = (key: string): Promise<Fetched | null> => {
     const hit = cache.get(key);
     if (hit) return hit;
-    // Bound the cache: full pages add up, and hover-prefetching can
-    // touch a lot of them. Insertion order approximates oldest-first
-    // eviction, which is enough at this size.
-    if (cache.size >= 32) {
-      const oldest = cache.keys().next().value;
-      if (oldest) cache.delete(oldest);
-    }
     const promise = (async () => {
       try {
         const response = await fetch(key);
         if (!response.ok) return null;
         if (new URL(response.url).origin !== location.origin) return null;
         const result: Fetched = [await response.text(), response.url];
-        if (response.url !== key) cache.set(response.url, Promise.resolve(result));
+        if (response.url !== key) store(response.url, Promise.resolve(result));
         return result;
       } catch {
         return null;
       }
     })();
-    cache.set(key, promise);
+    store(key, promise);
     // Evict failed fetches so a retry is possible.
     void promise.then((result) => {
       if (result === null) cache.delete(key);

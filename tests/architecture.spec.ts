@@ -31,6 +31,10 @@ test.describe("Architecture invariants", () => {
     expect(router.split("querySelectorAll").length - 1).toBe(1);
   });
 
+  test("router writes the fetch cache only through the bounded `store`", () => {
+    expect(router.split("cache.set(").length - 1).toBe(1);
+  });
+
   test("core and router contain no `as` casts or non-null assertions", () => {
     for (const source of [core, router]) {
       // Prose mentions "as" too; only code lines count.
