@@ -90,7 +90,13 @@ if (typeof document !== "undefined") {
     } else {
       stampScroll();
       history.pushState({ scrollY: 0 }, "", url);
-      scrollTo(0, 0);
+      // A pushed URL may carry a #fragment (a cross-page anchor like
+      // `/guide#install`); jump to that target as the browser would,
+      // otherwise start the new page at the top.
+      const hash = url.split("#")[1];
+      const target = hash ? document.getElementById(hash) : null;
+      if (target) target.scrollIntoView();
+      else scrollTo(0, 0);
     }
     dispatchEvent(new Event("mc:navigate"));
   };
@@ -260,7 +266,11 @@ if (typeof document !== "undefined") {
             document.title = newDoc.title;
             if (swap(newDoc)) {
               lastKey = stripHash(url);
-              commit(url, pop);
+              // Carry the clicked anchor's #fragment onto the resolved
+              // URL so the address bar and scroll target match a normal
+              // navigation; `response.url` never includes the fragment.
+              const hash = href.split("#")[1];
+              commit(hash ? `${stripHash(url)}#${hash}` : url, pop);
             } else {
               location.href = href;
             }

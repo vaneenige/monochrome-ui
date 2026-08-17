@@ -206,6 +206,29 @@ test.describe("Router", () => {
   });
 
   test.describe("History", () => {
+    test("carries a #fragment across a cross-page navigation and scrolls to it", async ({
+      page,
+    }) => {
+      await page.goto("/html/router/frag-source");
+      await page.evaluate(() => {
+        window.__sentinel = 7;
+      });
+      await page.getByTestId("frag-link").click();
+      await expect(page).toHaveURL("/html/router/frag-target#section");
+      await expect(page.getByTestId("page-title")).toHaveText("Frag Target");
+      // The sentinel survives only if the router swapped in place; a
+      // full browser navigation would have wiped it.
+      expect(await page.evaluate(() => window.__sentinel)).toBe(7);
+      await expect
+        .poll(() =>
+          page.evaluate(() => {
+            const section = document.getElementById("section");
+            return section ? Math.abs(window.scrollY - section.offsetTop) < 100 : false;
+          }),
+        )
+        .toBe(true);
+    });
+
     test("takes ownership of scroll restoration", async ({ page }) => {
       await page.goto("/html/router/index");
       const mode = await page.evaluate(() => history.scrollRestoration);

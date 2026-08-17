@@ -106,13 +106,13 @@
   },
   "versionMeta": {
     "gzipSize": 2865,
-    "routerGzipSize": 1163,
+    "routerGzipSize": 1202,
     "wrappersGzipSize": {
       "react": 2000,
       "vue": 1939
     },
     "tests": {
-      "total": 368,
+      "total": 369,
       "a11y": 11,
       "accordion": 33,
       "architecture": 5,
@@ -120,7 +120,7 @@
       "dialog": 18,
       "menu": 161,
       "popover": 25,
-      "router": 32,
+      "router": 33,
       "ssr": 2,
       "tabs": 40,
       "tooltip": 18
