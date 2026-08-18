@@ -173,8 +173,9 @@ inside the triangle from that apex to the submenu's near
 vertical edge (`clamp(left, apexX, right)` as the base) and
 still moving toward the submenu. A failed test (left the
 path, or arrived in the submenu where `t > 1`) clears the
-apex; hover the trigger again to re-arm. Pointermove sets
-`data-highlighted` on the enabled item under the pointer.
+apex; hover the trigger again to re-arm. Pointermove focuses the
+enabled item under the pointer (React Aria / Base UI) so Arrow
+keys continue from there; `data-highlighted` follows that item.
 Disabled items, labels, and separators clear the paint only.
 CSS `:hover` is not enough: a press-and-drag leaves the
 trigger `:active`, so `:hover` on items never fires. Triangle

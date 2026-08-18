@@ -459,10 +459,18 @@ test.describe("Menu", () => {
       await expect(page.getByTestId("second-list")).toBeVisible();
     });
 
-    test("hovering an item does not move focus to it", async ({ page }) => {
+    test("hovering an item focuses it so ArrowDown continues from there", async ({ page }) => {
       await openRoot(page);
       await page.getByTestId("root-item-2").hover();
-      await expect(page.getByTestId("root-item-2")).not.toBeFocused();
+      await expect(page.getByTestId("root-item-2")).toBeFocused();
+      await page.keyboard.press("ArrowDown");
+      await expect(page.getByTestId("root-item-3")).toBeFocused();
+    });
+
+    test("hovering a disabled item does not move focus", async ({ page }) => {
+      await openRoot(page);
+      await page.getByTestId("root-item-disabled").hover();
+      await expect(page.getByTestId("root-trigger")).toBeFocused();
     });
 
     test("hovering a submenu trigger opens its submenu; leaving to another item closes it", async ({
@@ -1539,9 +1547,9 @@ test.describe("Structure independence", () => {
     await page.getByTestId("c-item-1").hover();
     await expect(page.getByTestId("c-list")).toBeVisible();
 
-    // The submenu's popover lives in a sibling <footer>, not next to
-    // its trigger; the runtime resolves it via aria-controls regardless.
-    await page.keyboard.press("ArrowDown");
+    // Hover already focused the item, so one ArrowDown reaches the
+    // submenu trigger. The submenu popover lives in a sibling
+    // <footer>; the runtime resolves it via aria-controls regardless.
     await page.keyboard.press("ArrowDown");
     await expect(page.getByTestId("c-submenu-trigger")).toBeFocused();
     await page.keyboard.press("ArrowRight");

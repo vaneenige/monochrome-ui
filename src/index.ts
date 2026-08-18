@@ -99,6 +99,7 @@ if (typeof document !== "undefined") {
     menuHighlighted?.removeAttribute("data-highlighted");
     menuHighlighted = item;
     item?.setAttribute("data-highlighted", "");
+    item?.focus({ preventScroll: true });
   };
 
   const roving: Roving = (focus) => {
