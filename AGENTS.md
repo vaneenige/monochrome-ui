@@ -147,7 +147,9 @@ Enter/Space. Menu cannot: `pointerdown` already opened or
 dismissed the menu, and the following click is suppressed via
 `shouldSuppressClick`. Keyboard activation therefore lives in
 `keydown` (`menuOpen` / `menuActivate`) with `preventDefault`
-so Space does not scroll.
+so Space does not scroll. Enter on an href menuitem is the
+exception: no `preventDefault`, so the synthesized `click`
+navigates and the click listener closes the menu.
 
 **Pointer session and `shouldSuppressClick`.** A menu gesture is
 a pointer session, not a click. `pointerdown` on a trigger opens
@@ -177,10 +179,15 @@ apex; hover the trigger again to re-arm. Pointermove focuses the
 enabled item under the pointer (React Aria / Base UI) so Arrow
 keys continue from there; `data-highlighted` follows that item.
 Disabled items, labels, and separators clear the paint only.
-CSS `:hover` is not enough: a press-and-drag leaves the
-trigger `:active`, so `:hover` on items never fires. Triangle
-travel still skips open/close. No overlay, no CSS vars, no
-timers.
+They do not steal focus. CSS `:hover` is not enough: a
+press-and-drag leaves the trigger `:active`, so `:hover` on
+items never fires. Triangle travel still skips open/close. No
+overlay, no CSS vars, no timers. Hover can leave focus inside
+the popover. A `Focus.None` close focuses the trigger first
+when the active element is inside the content, so
+`hidePopover` never drops a focused node that lives in the
+menu. Enter on an href does not activate in `keydown`; the
+synthesized `click` both navigates and closes.
 
 **Signed movement for triangle direction.** "Is the cursor
 moving toward the submenu?" is

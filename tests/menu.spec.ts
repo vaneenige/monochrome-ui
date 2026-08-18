@@ -1412,6 +1412,15 @@ test.describe("Link items", () => {
     await expect(page).not.toHaveURL(/#menu-link-nav/);
     await expect(page.getByTestId("list")).not.toBeVisible();
   });
+
+  test("activating an href menuitem moves focus off the link before aria-hidden", async ({
+    page,
+  }) => {
+    await page.getByTestId("item-link").click();
+    await expect(page.getByTestId("list")).toHaveAttribute("aria-hidden", "true");
+    await expect(page.getByTestId("item-link")).not.toBeFocused();
+    await expect(page.getByTestId("trigger")).toBeFocused();
+  });
 });
 
 test.describe("Dynamic", () => {

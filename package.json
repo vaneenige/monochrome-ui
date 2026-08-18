@@ -105,20 +105,20 @@
     "playwright-core": "1.61.1"
   },
   "versionMeta": {
-    "gzipSize": 2948,
+    "gzipSize": 2989,
     "routerGzipSize": 1218,
     "wrappersGzipSize": {
       "react": 2000,
       "vue": 1939
     },
     "tests": {
-      "total": 375,
+      "total": 376,
       "a11y": 11,
       "accordion": 33,
       "architecture": 6,
       "collapsible": 23,
       "dialog": 18,
-      "menu": 165,
+      "menu": 166,
       "popover": 25,
       "router": 34,
       "ssr": 2,

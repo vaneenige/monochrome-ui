@@ -248,7 +248,12 @@ if (typeof document !== "undefined") {
       const content = getLinked(trigger, "aria-controls");
       if (content) {
         if (trigger.ariaExpanded === "true") {
-          if (mode !== Focus.None) trigger.focus();
+          if (
+            mode !== Focus.None ||
+            (isElement(document.activeElement) && content.contains(document.activeElement))
+          ) {
+            trigger.focus();
+          }
           menuHighlight(null);
           content.hidePopover();
           trigger.ariaExpanded = "false";
@@ -481,6 +486,9 @@ if (typeof document !== "undefined") {
             tooltipSuppress();
           }
           break;
+        } else if (isMenuItem(el) && el.tagName === "A") {
+          menuActivate(el);
+          break;
         } else if (
           id.startsWith(Prefix.ContentDialog) ||
           id.startsWith(Prefix.ContentMenu) ||
@@ -675,8 +683,10 @@ if (typeof document !== "undefined") {
           case "Enter":
           case " ":
             if (!isTrigger(target, Prefix.TriggerMenu)) {
-              if (target.ariaDisabled !== "true") menuActivate(target);
               shouldPreventDefault = key === " " || target.tagName !== "A";
+              if (target.ariaDisabled !== "true" && shouldPreventDefault) {
+                menuActivate(target);
+              }
             }
             break;
           case "Tab":
