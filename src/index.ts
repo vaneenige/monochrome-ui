@@ -549,46 +549,48 @@ if (typeof document !== "undefined") {
           if (!safe) safeX = null;
         }
       }
-      const triggerPath: HTMLButtonElement[] = [];
-      let inContent = false;
-      let foundItem = false;
-      let el = getTarget(event);
-      while (el) {
-        if (
-          el.role?.startsWith("menuitem") ||
-          el.role === "separator" ||
-          el.role === "presentation"
-        ) {
-          if (!foundItem) menuHighlight(isMenuItem(el) ? el : null);
-          foundItem = true;
-        }
-        if (!foundItem && el.id.startsWith(Prefix.Content)) {
-          inContent = true;
-          break;
-        }
-        if (isTrigger(el, Prefix.TriggerMenu)) {
-          triggerPath.unshift(el);
-        } else if (el.id.startsWith(Prefix.ContentMenu)) {
-          const trigger = getLinked(el, "aria-labelledby");
-          if (isTrigger(trigger, Prefix.TriggerMenu)) {
-            triggerPath.unshift(trigger);
+      if (!safe) {
+        const triggerPath: HTMLButtonElement[] = [];
+        let inContent = false;
+        let foundItem = false;
+        let el = getTarget(event);
+        while (el) {
+          if (
+            el.role?.startsWith("menuitem") ||
+            el.role === "separator" ||
+            el.role === "presentation"
+          ) {
+            if (!foundItem) menuHighlight(isMenuItem(el) ? el : null);
+            foundItem = true;
           }
+          if (!foundItem && el.id.startsWith(Prefix.Content)) {
+            inContent = true;
+            break;
+          }
+          if (isTrigger(el, Prefix.TriggerMenu)) {
+            triggerPath.unshift(el);
+          } else if (el.id.startsWith(Prefix.ContentMenu)) {
+            const trigger = getLinked(el, "aria-labelledby");
+            if (isTrigger(trigger, Prefix.TriggerMenu)) {
+              triggerPath.unshift(trigger);
+            }
+          }
+          el = el.parentElement;
         }
-        el = el.parentElement;
-      }
-      if (!foundItem) menuHighlight(null);
-      if (!safe && !inContent && triggerPath[0]) {
-        let i = 0;
-        while (menuStack[i] && menuStack[i] === triggerPath[i]) i++;
-        if (
-          i === 0 &&
-          (triggerPath[0].role !== "menuitem" ||
-            triggerPath[0].parentElement?.parentElement !==
-              menuStack[0].parentElement?.parentElement)
-        )
-          return;
-        menuCloseAll(i);
-        menu(triggerPath[i], Focus.None);
+        if (!foundItem) menuHighlight(null);
+        if (!inContent && triggerPath[0]) {
+          let i = 0;
+          while (menuStack[i] && menuStack[i] === triggerPath[i]) i++;
+          if (
+            i === 0 &&
+            (triggerPath[0].role !== "menuitem" ||
+              triggerPath[0].parentElement?.parentElement !==
+                menuStack[0].parentElement?.parentElement)
+          )
+            return;
+          menuCloseAll(i);
+          menu(triggerPath[i], Focus.None);
+        }
       }
     }
   });

@@ -181,13 +181,14 @@ keys continue from there; `data-highlighted` follows that item.
 Disabled items, labels, and separators clear the paint only.
 They do not steal focus. CSS `:hover` is not enough: a
 press-and-drag leaves the trigger `:active`, so `:hover` on
-items never fires. Triangle travel still skips open/close. No
-overlay, no CSS vars, no timers. Hover can leave focus inside
-the popover. A `Focus.None` close focuses the trigger first
-when the active element is inside the content, so
-`hidePopover` never drops a focused node that lives in the
-menu. Enter on an href does not activate in `keydown`; the
-synthesized `click` both navigates and closes.
+items never fires. Triangle travel still skips open, close, and
+highlight: focus stays on the submenu trigger so items under
+the path cannot steal it. No overlay, no CSS vars, no timers.
+Hover can leave focus inside the popover. A `Focus.None` close
+focuses the trigger first when the active element is inside
+the content, so `hidePopover` never drops a focused node that
+lives in the menu. Enter on an href does not activate in
+`keydown`; the synthesized `click` both navigates and closes.
 
 **Signed movement for triangle direction.** "Is the cursor
 moving toward the submenu?" is

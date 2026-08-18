@@ -1099,6 +1099,20 @@ test.describe("Safety triangle", () => {
     await expect(page.getByTestId("submenu-list")).toBeVisible();
   });
 
+  test("items under the triangle do not take focus", async ({ page }) => {
+    const trigger = await arm(page);
+    await expect(page.getByTestId("submenu-trigger")).toBeFocused();
+    await pointer(page, {
+      testId: "item-1",
+      x: trigger.x + trigger.width + 8,
+      y: trigger.y + trigger.height / 2,
+      movementX: 1,
+    });
+    await expect(page.getByTestId("submenu-list")).toBeVisible();
+    await expect(page.getByTestId("item-1")).not.toBeFocused();
+    await expect(page.getByTestId("submenu-trigger")).toBeFocused();
+  });
+
   test("hovering a sibling item closes the submenu", async ({ page }) => {
     await arm(page);
     await page.getByTestId("item-1").hover();
