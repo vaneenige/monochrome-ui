@@ -38,6 +38,7 @@ if (typeof document !== "undefined") {
   let dialogTrigger: HTMLElement | null = null;
 
   const menuStack: HTMLElement[] = [];
+  let menuHighlighted: HTMLElement | null = null;
 
   let safeX: number | null = null;
   let safeY = 0;
@@ -91,6 +92,13 @@ if (typeof document !== "undefined") {
     content.style.setProperty("--left", `${rect.left}px`);
     content.style.setProperty("--width", `${content.offsetWidth}px`);
     content.style.setProperty("--height", `${content.offsetHeight}px`);
+  };
+
+  const menuHighlight = (item: HTMLElement | null) => {
+    if (menuHighlighted === item) return;
+    menuHighlighted?.removeAttribute("data-highlighted");
+    menuHighlighted = item;
+    item?.setAttribute("data-highlighted", "");
   };
 
   const roving: Roving = (focus) => {
@@ -158,6 +166,7 @@ if (typeof document !== "undefined") {
       ) {
         shouldPreventDefault = true;
         menuitem.focus();
+        menuHighlight(menuitem);
         return menuitem;
       }
       return fallback(node);
@@ -239,6 +248,7 @@ if (typeof document !== "undefined") {
       if (content) {
         if (trigger.ariaExpanded === "true") {
           if (mode !== Focus.None) trigger.focus();
+          menuHighlight(null);
           content.hidePopover();
           trigger.ariaExpanded = "false";
           content.ariaHidden = "true";
@@ -530,46 +540,46 @@ if (typeof document !== "undefined") {
           if (!safe) safeX = null;
         }
       }
-      if (!safe && isElement(event.target)) {
-        const triggerPath: HTMLButtonElement[] = [];
-        let el: HTMLElement | null = event.target;
-        let inContent = false;
-        let foundItem = false;
-        while (el) {
-          if (
-            el.role?.startsWith("menuitem") ||
-            el.role === "separator" ||
-            el.role === "presentation"
-          ) {
-            foundItem = true;
-          }
-          if (!foundItem && el.id.startsWith(Prefix.Content)) {
-            inContent = true;
-            break;
-          }
-          if (isTrigger(el, Prefix.TriggerMenu)) {
-            triggerPath.unshift(el);
-          } else if (el.id.startsWith(Prefix.ContentMenu)) {
-            const trigger = getLinked(el, "aria-labelledby");
-            if (isTrigger(trigger, Prefix.TriggerMenu)) {
-              triggerPath.unshift(trigger);
-            }
-          }
-          el = el.parentElement;
+      const triggerPath: HTMLButtonElement[] = [];
+      let inContent = false;
+      let foundItem = false;
+      let el = getTarget(event);
+      while (el) {
+        if (
+          el.role?.startsWith("menuitem") ||
+          el.role === "separator" ||
+          el.role === "presentation"
+        ) {
+          if (!foundItem) menuHighlight(isMenuItem(el) ? el : null);
+          foundItem = true;
         }
-        if (!inContent && triggerPath[0]) {
-          let i = 0;
-          while (menuStack[i] && menuStack[i] === triggerPath[i]) i++;
-          if (
-            i === 0 &&
-            (triggerPath[0].role !== "menuitem" ||
-              triggerPath[0].parentElement?.parentElement !==
-                menuStack[0].parentElement?.parentElement)
-          )
-            return;
-          menuCloseAll(i);
-          menu(triggerPath[i], Focus.None);
+        if (!foundItem && el.id.startsWith(Prefix.Content)) {
+          inContent = true;
+          break;
         }
+        if (isTrigger(el, Prefix.TriggerMenu)) {
+          triggerPath.unshift(el);
+        } else if (el.id.startsWith(Prefix.ContentMenu)) {
+          const trigger = getLinked(el, "aria-labelledby");
+          if (isTrigger(trigger, Prefix.TriggerMenu)) {
+            triggerPath.unshift(trigger);
+          }
+        }
+        el = el.parentElement;
+      }
+      if (!foundItem) menuHighlight(null);
+      if (!safe && !inContent && triggerPath[0]) {
+        let i = 0;
+        while (menuStack[i] && menuStack[i] === triggerPath[i]) i++;
+        if (
+          i === 0 &&
+          (triggerPath[0].role !== "menuitem" ||
+            triggerPath[0].parentElement?.parentElement !==
+              menuStack[0].parentElement?.parentElement)
+        )
+          return;
+        menuCloseAll(i);
+        menu(triggerPath[i], Focus.None);
       }
     }
   });

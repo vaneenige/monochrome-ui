@@ -173,9 +173,13 @@ inside the triangle from that apex to the submenu's near
 vertical edge (`clamp(left, apexX, right)` as the base) and
 still moving toward the submenu. A failed test (left the
 path, or arrived in the submenu where `t > 1`) clears the
-apex; hover the trigger again to re-arm. CSS `:hover` still
-paints items under the path; they just do not open or close
-menus. No overlay, no CSS vars, no timers.
+apex; hover the trigger again to re-arm. Pointermove sets
+`data-highlighted` on the enabled item under the pointer.
+Disabled items, labels, and separators clear the paint only.
+CSS `:hover` is not enough: a press-and-drag leaves the
+trigger `:active`, so `:hover` on items never fires. Triangle
+travel still skips open/close. No overlay, no CSS vars, no
+timers.
 
 **Signed movement for triangle direction.** "Is the cursor
 moving toward the submenu?" is

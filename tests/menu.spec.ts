@@ -552,6 +552,38 @@ test.describe("Menu", () => {
     });
   });
 
+  test.describe("Highlight", () => {
+    test("keyboard roving sets `data-highlighted` on the focused item", async ({ page }) => {
+      await openRootViaKeyboard(page);
+      await expect(page.getByTestId("root-item-1")).toHaveAttribute("data-highlighted", "");
+      await page.keyboard.press("ArrowDown");
+      await expect(page.getByTestId("root-item-1")).not.toHaveAttribute("data-highlighted");
+      await expect(page.getByTestId("root-item-2")).toHaveAttribute("data-highlighted", "");
+    });
+
+    test("pointermove sets `data-highlighted` on the item under the pointer", async ({ page }) => {
+      await openRootViaPointer(page);
+      await page.getByTestId("root-item-2").hover();
+      await expect(page.getByTestId("root-item-2")).toHaveAttribute("data-highlighted", "");
+      await expect(page.getByTestId("root-item-1")).not.toHaveAttribute("data-highlighted");
+    });
+
+    test("hold from the trigger still highlights the item under the pointer", async ({ page }) => {
+      const trigger = page.getByTestId("root-trigger");
+      const item = page.getByTestId("root-item-2");
+      const box = await trigger.boundingBox();
+      if (!box) throw new Error("missing bounding box");
+      await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+      await page.mouse.down();
+      await expect(page.getByTestId("root-list")).toBeVisible();
+      const itemBox = await item.boundingBox();
+      if (!itemBox) throw new Error("missing bounding box");
+      await page.mouse.move(itemBox.x + itemBox.width / 2, itemBox.y + itemBox.height / 2);
+      await expect(item).toHaveAttribute("data-highlighted", "");
+      await page.mouse.up();
+    });
+  });
+
   test.describe("Trigger with nested SVG", () => {
     test("clicking the SVG opens the menu", async ({ page }) => {
       const svg = page.getByTestId("svg-icon");
