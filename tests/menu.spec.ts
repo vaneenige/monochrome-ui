@@ -467,6 +467,17 @@ test.describe("Menu", () => {
       await expect(page.getByTestId("root-item-3")).toBeFocused();
     });
 
+    test("ArrowDown after hover-opening a submenu closes it", async ({ page }) => {
+      await openRoot(page);
+      await openSubmenuViaHover(page);
+      await expect(page.getByTestId("root-submenu-trigger")).toBeFocused();
+      await page.keyboard.press("ArrowDown");
+      await expect(page.getByTestId("root-submenu-list")).not.toBeVisible();
+      await expect(page.getByTestId("root-item-1")).toBeFocused();
+      await expect(page.getByTestId("root-item-1")).toHaveAttribute("data-highlighted", "");
+      await expect(page.getByTestId("root-list")).toBeVisible();
+    });
+
     test("hovering a disabled item does not move focus", async ({ page }) => {
       await openRoot(page);
       await page.getByTestId("root-item-disabled").hover();
@@ -1232,6 +1243,61 @@ test.describe("Safety triangle", () => {
       movementX: 5,
     });
     await expect(page.getByTestId("submenu-list")).not.toBeVisible();
+  });
+});
+
+test.describe("Sibling submenus", () => {
+  test.beforeEach(async ({ page, renderer }) => {
+    await page.goto(`/${renderer}/menu/siblings`);
+    await page.getByTestId("trigger").click();
+  });
+
+  test("hovering a sibling submenu trigger replaces the open submenu", async ({ page }) => {
+    await page.getByTestId("share-trigger").hover();
+    await expect(page.getByTestId("share-list")).toBeVisible();
+    await page.getByTestId("export-trigger").hover();
+    await expect(page.getByTestId("export-list")).toBeVisible();
+    await expect(page.getByTestId("share-list")).not.toBeVisible();
+  });
+
+  test("pointerdown on a sibling submenu trigger replaces the open submenu", async ({ page }) => {
+    await page.getByTestId("share-trigger").hover();
+    await expect(page.getByTestId("share-list")).toBeVisible();
+    await pointerDown(page.getByTestId("export-trigger"));
+    await expect(page.getByTestId("export-list")).toBeVisible();
+    await expect(page.getByTestId("share-list")).not.toBeVisible();
+  });
+
+  test("ArrowRight after hover-opening a submenu enters it", async ({ page }) => {
+    await page.getByTestId("share-trigger").hover();
+    await expect(page.getByTestId("share-list")).toBeVisible();
+    await expect(page.getByTestId("share-trigger")).toBeFocused();
+    await page.keyboard.press("ArrowRight");
+    await expect(page.getByTestId("share-list")).toBeVisible();
+    await expect(page.getByTestId("share-item-1")).toBeFocused();
+  });
+
+  test("ArrowDown after hover-opening a submenu closes it", async ({ page }) => {
+    await page.getByTestId("share-trigger").hover();
+    await expect(page.getByTestId("share-list")).toBeVisible();
+    await page.keyboard.press("ArrowDown");
+    await expect(page.getByTestId("export-trigger")).toBeFocused();
+    await expect(page.getByTestId("export-trigger")).toHaveAttribute("data-highlighted", "");
+    await expect(page.getByTestId("share-list")).not.toBeVisible();
+    await expect(page.getByTestId("list")).toBeVisible();
+  });
+
+  test("ArrowRight opens the focused sibling submenu", async ({ page }) => {
+    await page.getByTestId("share-trigger").hover();
+    await expect(page.getByTestId("share-list")).toBeVisible();
+    await expect(page.getByTestId("share-trigger")).toBeFocused();
+    await page.keyboard.press("ArrowDown");
+    await expect(page.getByTestId("export-trigger")).toBeFocused();
+    await expect(page.getByTestId("share-list")).not.toBeVisible();
+    await page.keyboard.press("ArrowRight");
+    await expect(page.getByTestId("export-list")).toBeVisible();
+    await expect(page.getByTestId("share-list")).not.toBeVisible();
+    await expect(page.getByTestId("export-item-1")).toBeFocused();
   });
 });
 

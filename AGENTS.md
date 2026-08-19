@@ -161,6 +161,19 @@ the menu cannot also toggle a disclosure (or anything else)
 underneath. Playwright `.click()` still works: it fires
 `pointerdown`.
 
+**Sibling submenu replace.** Opening a menu closes every stack
+entry whose content does not contain the new trigger
+(`menuTrim`). Pointer hover already did this via
+`triggerPath`. Keyboard `menu` / `menuRoveIn` share that
+walk, so hover-open A then ArrowRight on sibling B cannot
+leave both open. Menu `keydown` then trims the same way
+against `document.activeElement`, except when focus is still
+the open trigger. Hover-open a submenu then ArrowDown
+through the parent therefore closes it. ArrowRight still
+enters. Close only clears `data-highlighted` when the
+painted item lives in that menu's content, so the next
+parent item keeps its highlight.
+
 **Popover API with CSS-variable positioning.** The core publishes
 the trigger rect (`--top`, `--right`, `--bottom`, `--left`, in
 TRBL order) and the content's own size (`--width`, `--height`)
@@ -252,7 +265,7 @@ Rules only. Rationale lives in "Why the core looks weird" and
   contract; unused generality is negative value here.
 - Extract a helper at the second verbatim repetition of a
   multi-line pattern when it saves minified bytes
-  (`tooltipSuppress`, `menubarStep`, `menuRoveIn`).
+  (`tooltipSuppress`, `menubarStep`, `menuRoveIn`, `menuTrim`).
 
 ### Control flow
 

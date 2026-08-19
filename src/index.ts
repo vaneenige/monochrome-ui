@@ -254,11 +254,12 @@ if (typeof document !== "undefined") {
           ) {
             trigger.focus();
           }
-          menuHighlight(null);
+          if (content.contains(menuHighlighted)) menuHighlight(null);
           content.hidePopover();
           trigger.ariaExpanded = "false";
           content.ariaHidden = "true";
         } else if (trigger.ariaDisabled !== "true") {
+          menuTrim(trigger);
           menuStack.push(trigger);
           content.showPopover();
           trigger.ariaExpanded = "true";
@@ -331,6 +332,11 @@ if (typeof document !== "undefined") {
         }
       }
     }
+  };
+
+  const menuTrim = (el: HTMLElement) => {
+    while (menuStack[0] && !getLinked(menuStack.at(-1) || el, "aria-controls")?.contains(el))
+      menu(menuStack.pop(), Focus.None);
   };
 
   const popover = (trigger: HTMLElement, show: boolean) => {
@@ -725,6 +731,8 @@ if (typeof document !== "undefined") {
             break;
         }
       }
+      const active = document.activeElement;
+      if (isElement(active) && active !== menuStack.at(-1)) menuTrim(active);
     }
     if (key === "Escape") {
       if (tooltipShown) {
