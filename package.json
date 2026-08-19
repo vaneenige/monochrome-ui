@@ -105,7 +105,7 @@
     "playwright-core": "1.61.1"
   },
   "versionMeta": {
-    "gzipSize": 3061,
+    "gzipSize": 3065,
     "routerGzipSize": 1218,
     "wrappersGzipSize": {
       "react": 2000,

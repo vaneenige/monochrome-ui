@@ -34,7 +34,7 @@ any more:
 
 ## Why the core looks weird (and should stay weird)
 
-Six architectural choices that explain the *shape* of the library.
+Six architectural choices that explain the _shape_ of the library.
 Each looks odd at a glance and each has a specific reason. Don't
 "fix" them.
 
@@ -158,7 +158,9 @@ synthesized `click` navigates and the click listener closes
 the menu. Tab / Shift+Tab
 close every open menu whenever `menuStack[0]`, including from a
 pointer-opened standalone trigger (`role="button"`); they do not
-`preventDefault`.
+`preventDefault`. Root ArrowDown / ArrowUp always
+`preventDefault` so empty and all-disabled menus do not
+scroll.
 
 **Pointer session and `shouldSuppressClick`.** A menu gesture is
 a pointer session, not a click. `pointerdown` on a trigger opens

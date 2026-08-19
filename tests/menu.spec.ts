@@ -793,17 +793,32 @@ test.describe("Edge cases", () => {
     await expect(page.getByTestId("disabled-first-item-2")).toBeFocused();
   });
 
-  test("an all-disabled menu still opens", async ({ page }) => {
+  test("an all-disabled menu still opens and arrows do not scroll", async ({ page }) => {
+    await page.evaluate(() => {
+      document.body.style.height = "3000px";
+    });
     await page.getByTestId("all-disabled-trigger").focus();
     await page.getByTestId("all-disabled-trigger").press("Enter");
     await expect(page.getByTestId("all-disabled-list")).toBeVisible();
+    const before = await page.evaluate(() => window.scrollY);
+    await page.keyboard.press("ArrowDown");
+    await page.keyboard.press("ArrowUp");
+    expect(await page.evaluate(() => window.scrollY)).toBe(before);
+    await expect(page.getByTestId("all-disabled-list")).toBeVisible();
+    await expect(page.getByTestId("all-disabled-trigger")).toBeFocused();
   });
 
-  test("an empty menu opens, dismisses on Escape, and survives arrow keys", async ({ page }) => {
+  test("an empty menu opens, dismisses on Escape, and arrows do not scroll", async ({ page }) => {
+    await page.evaluate(() => {
+      document.body.style.height = "3000px";
+    });
     await page.getByTestId("no-items-trigger").focus();
     await page.getByTestId("no-items-trigger").press("Enter");
     await expect(page.getByTestId("no-items-trigger")).toHaveAttribute("aria-expanded", "true");
+    const before = await page.evaluate(() => window.scrollY);
     await page.keyboard.press("ArrowDown");
+    await page.keyboard.press("ArrowUp");
+    expect(await page.evaluate(() => window.scrollY)).toBe(before);
     await expect(page.getByTestId("no-items-trigger")).toHaveAttribute("aria-expanded", "true");
     await page.keyboard.press("Escape");
     await expect(page.getByTestId("no-items-trigger")).toHaveAttribute("aria-expanded", "false");

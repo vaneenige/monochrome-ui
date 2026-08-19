@@ -673,10 +673,16 @@ if (typeof document !== "undefined") {
             shouldPreventDefault = true;
             break;
           case "ArrowDown":
-            if (isRootTrigger) menuRoveIn(target, Focus.First);
+            if (isRootTrigger) {
+              menuRoveIn(target, Focus.First);
+              shouldPreventDefault = true;
+            }
             break;
           case "ArrowUp":
-            if (isRootTrigger) menuRoveIn(target, Focus.Last);
+            if (isRootTrigger) {
+              menuRoveIn(target, Focus.Last);
+              shouldPreventDefault = true;
+            }
             break;
           case "ArrowRight":
             if (!isRootTrigger) menuRoveIn(target, Focus.First);
