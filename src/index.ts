@@ -95,10 +95,11 @@ if (typeof document !== "undefined") {
   };
 
   const menuHighlight = (item: HTMLElement | null) => {
-    if (menuHighlighted === item) return;
-    menuHighlighted?.removeAttribute("data-highlighted");
-    menuHighlighted = item;
-    item?.setAttribute("data-highlighted", "");
+    if (menuHighlighted !== item) {
+      menuHighlighted?.removeAttribute("data-highlighted");
+      menuHighlighted = item;
+      item?.setAttribute("data-highlighted", "");
+    }
     item?.focus({ preventScroll: true });
   };
 
@@ -273,6 +274,8 @@ if (typeof document !== "undefined") {
             menuRoving(content.firstElementChild, menuNext);
           } else if (mode === Focus.Last) {
             menuRoving(content.lastElementChild, menuPrevious);
+          } else {
+            menuHighlighted?.focus({ preventScroll: true });
           }
         }
       }
@@ -615,7 +618,16 @@ if (typeof document !== "undefined") {
         : rtl && event.key === "ArrowLeft"
           ? "ArrowRight"
           : event.key;
-    const target = event.target;
+    let target = event.target;
+    if (
+      menuStack[0] &&
+      isElement(target) &&
+      !isTrigger(target, Prefix.TriggerMenu) &&
+      !target.role?.startsWith("menuitem") &&
+      findAncestor(target, Prefix.ContentMenu)
+    ) {
+      target = menuHighlighted || menuStack.at(-1) || target;
+    }
     if (isTrigger(target, Prefix.TriggerAccordion)) {
       const item = target.parentElement?.parentElement;
       if (item) {
@@ -663,6 +675,8 @@ if (typeof document !== "undefined") {
     } else {
       if (isTrigger(target, Prefix.TriggerMenu)) {
         const isRootTrigger = findAncestor(target, Prefix.ContentMenu) === null;
+        const isOpenMenuButton =
+          isRootTrigger && target.ariaExpanded === "true" && target.role === "button";
         switch (key) {
           case "Enter":
           case " ":
@@ -688,6 +702,23 @@ if (typeof document !== "undefined") {
           case "ArrowRight":
             if (!isRootTrigger) menuRoveIn(target, Focus.First);
             break;
+          case "Home":
+            if (isOpenMenuButton) {
+              menuRoveIn(target, Focus.First);
+              shouldPreventDefault = true;
+            }
+            break;
+          case "End":
+            if (isOpenMenuButton) {
+              menuRoveIn(target, Focus.Last);
+              shouldPreventDefault = true;
+            }
+            break;
+          default:
+            if (isOpenMenuButton && /^[a-z]$/i.test(key)) {
+              shouldMatchLetter = key.toLowerCase();
+              menuRoveIn(target, Focus.First);
+            }
         }
       }
       if (

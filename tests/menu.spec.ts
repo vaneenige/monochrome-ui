@@ -29,6 +29,12 @@ const openSubmenuViaKeyboard = async (page: Page) => {
   await expect(page.getByTestId("root-submenu-list")).toBeVisible();
 };
 
+const focusPopover = (page: Page, testId: string) =>
+  page.getByTestId(testId).evaluate((el) => {
+    el.tabIndex = -1;
+    el.focus();
+  });
+
 test.describe("Menu", () => {
   test.beforeEach(async ({ page, renderer }) => {
     await page.goto(`/${renderer}/menu/basic`);
@@ -126,6 +132,24 @@ test.describe("Menu", () => {
       await page.getByTestId("root-trigger").press("ArrowUp");
       await expect(page.getByTestId("root-list")).toBeVisible();
       await expect(page.getByTestId("root-submenu-trigger")).toBeFocused();
+    });
+
+    test("Home / End on a closed trigger do not open the menu", async ({ page }) => {
+      await page.getByTestId("root-trigger").focus();
+      await page.keyboard.press("Home");
+      await expect(page.getByTestId("root-list")).not.toBeVisible();
+      await page.keyboard.press("End");
+      await expect(page.getByTestId("root-list")).not.toBeVisible();
+    });
+
+    test("Home / End from a click-opened trigger jump to first / last item", async ({ page }) => {
+      await openRoot(page);
+      await expect(page.getByTestId("root-trigger")).toBeFocused();
+      await page.keyboard.press("End");
+      await expect(page.getByTestId("root-submenu-trigger")).toBeFocused();
+      await page.getByTestId("root-trigger").focus();
+      await page.keyboard.press("Home");
+      await expect(page.getByTestId("root-item-1")).toBeFocused();
     });
 
     test("Escape from the trigger after open returns focus to the trigger and closes", async ({
@@ -521,6 +545,15 @@ test.describe("Menu", () => {
       await expect(page.getByTestId("root-item-3")).toBeFocused();
     });
 
+    test("arrows continue if hover-open leaves focus on the submenu popover", async ({ page }) => {
+      await openRoot(page);
+      await openSubmenuViaHover(page);
+      await focusPopover(page, "root-submenu-list");
+      await page.keyboard.press("ArrowRight");
+      await expect(page.getByTestId("root-submenu-list")).toBeVisible();
+      await expect(page.getByTestId("root-submenu-item-1")).toBeFocused();
+    });
+
     test("Escape after hover-opening a submenu highlights the submenu trigger", async ({
       page,
     }) => {
@@ -534,6 +567,73 @@ test.describe("Menu", () => {
         "data-highlighted",
         "",
       );
+    });
+
+    test("Tab still closes if hover-open leaves focus on the submenu popover", async ({ page }) => {
+      await openRoot(page);
+      await openSubmenuViaHover(page);
+      await focusPopover(page, "root-submenu-list");
+      await page.keyboard.press("Tab");
+      await expect(page.getByTestId("root-list")).not.toBeVisible();
+      await expect(page.getByTestId("focus-after")).toBeFocused();
+    });
+
+    test("ArrowDown works if click-open leaves focus on the menu popover", async ({ page }) => {
+      await openRoot(page);
+      await focusPopover(page, "root-list");
+      await page.keyboard.press("ArrowDown");
+      await expect(page.getByTestId("root-item-1")).toBeFocused();
+    });
+
+    test("Home / End work if click-open leaves focus on the menu popover", async ({ page }) => {
+      await openRoot(page);
+      await focusPopover(page, "root-list");
+      await page.keyboard.press("End");
+      await expect(page.getByTestId("root-submenu-trigger")).toBeFocused();
+      await focusPopover(page, "root-list");
+      await page.keyboard.press("Home");
+      await expect(page.getByTestId("root-item-1")).toBeFocused();
+    });
+
+    test("Escape from the menu popover closes without highlighting the trigger", async ({
+      page,
+    }) => {
+      await openRoot(page);
+      await focusPopover(page, "root-list");
+      await page.keyboard.press("Escape");
+      await expect(page.getByTestId("root-list")).not.toBeVisible();
+      await expect(page.getByTestId("root-trigger")).toBeFocused();
+      await expect(page.getByTestId("root-trigger")).not.toHaveAttribute("data-highlighted");
+    });
+
+    test("ArrowLeft from the submenu popover highlights the submenu trigger", async ({ page }) => {
+      await openRoot(page);
+      await openSubmenuViaHover(page);
+      await focusPopover(page, "root-submenu-list");
+      await page.keyboard.press("ArrowLeft");
+      await expect(page.getByTestId("root-submenu-list")).not.toBeVisible();
+      await expect(page.getByTestId("root-submenu-trigger")).toBeFocused();
+      await expect(page.getByTestId("root-submenu-trigger")).toHaveAttribute(
+        "data-highlighted",
+        "",
+      );
+    });
+
+    test("Home from the submenu popover roves the parent menu", async ({ page }) => {
+      await openRoot(page);
+      await openSubmenuViaHover(page);
+      await focusPopover(page, "root-submenu-list");
+      await page.keyboard.press("Home");
+      await expect(page.getByTestId("root-submenu-list")).not.toBeVisible();
+      await expect(page.getByTestId("root-item-1")).toBeFocused();
+    });
+
+    test("Enter from the submenu popover focuses the first submenu item", async ({ page }) => {
+      await openRoot(page);
+      await openSubmenuViaHover(page);
+      await focusPopover(page, "root-submenu-list");
+      await page.keyboard.press("Enter");
+      await expect(page.getByTestId("root-submenu-item-1")).toBeFocused();
     });
 
     test("ArrowDown after hover-opening a submenu closes it", async ({ page }) => {
@@ -791,6 +891,25 @@ test.describe("Typeahead", () => {
     await expect(page.getByTestId("typeahead-item-5")).toBeFocused();
   });
 
+  test("a letter matches if click-open leaves focus on the menu popover", async ({ page }) => {
+    await page.keyboard.press("Escape");
+    await page.getByTestId("typeahead-trigger").click();
+    await page.getByRole("menu").evaluate((el) => {
+      el.tabIndex = -1;
+      el.focus();
+    });
+    await page.keyboard.press("b");
+    await expect(page.getByTestId("typeahead-item-2")).toBeFocused();
+  });
+
+  test("a letter matches from a click-opened trigger", async ({ page }) => {
+    await page.keyboard.press("Escape");
+    await page.getByTestId("typeahead-trigger").click();
+    await expect(page.getByTestId("typeahead-trigger")).toBeFocused();
+    await page.keyboard.press("b");
+    await expect(page.getByTestId("typeahead-item-2")).toBeFocused();
+  });
+
   test("no-op when no items match", async ({ page }) => {
     await page.keyboard.press("z");
     await expect(page.getByTestId("typeahead-item-1")).toBeFocused();
@@ -935,6 +1054,19 @@ test.describe("Menubar", () => {
       await expect(page.getByTestId("menubar-trigger-3")).toBeFocused();
     });
 
+    test("Home / End on an open menubar trigger stay on the menubar", async ({ page }) => {
+      await page.getByTestId("menubar-trigger-2").click();
+      await expect(page.getByTestId("menubar-list-2")).toBeVisible();
+      await page.keyboard.press("Home");
+      await expect(page.getByTestId("menubar-trigger-1")).toBeFocused();
+      await expect(page.getByTestId("menubar-item-2-1")).not.toBeFocused();
+      await expect(page.getByTestId("menubar-list-2")).not.toBeVisible();
+      await page.getByTestId("menubar-trigger-2").click();
+      await page.keyboard.press("End");
+      await expect(page.getByTestId("menubar-trigger-3")).toBeFocused();
+      await expect(page.getByTestId("menubar-item-2-1")).not.toBeFocused();
+    });
+
     for (const key of ["Enter", "Space"] as const) {
       test(`${key} on an already-open menubar trigger focuses the first item`, async ({ page }) => {
         await page.getByTestId("menubar-trigger-1").click();
@@ -944,6 +1076,23 @@ test.describe("Menubar", () => {
         await expect(page.getByTestId("menubar-item-1-1")).toBeFocused();
       });
     }
+
+    test("a letter from an open menubar trigger typeaheads the bar, not the menu", async ({
+      page,
+    }) => {
+      await page.getByTestId("menubar-trigger-1").click();
+      await page.keyboard.press("s");
+      await expect(page.getByTestId("menubar-trigger-1")).toBeFocused();
+      await expect(page.getByTestId("menubar-submenu-trigger-1")).not.toBeFocused();
+      await expect(page.getByTestId("menubar-list-1")).toBeVisible();
+    });
+
+    test("a letter from a menubar menu item typeaheads the menu", async ({ page }) => {
+      await page.getByTestId("menubar-trigger-1").press("Enter");
+      await expect(page.getByTestId("menubar-item-1-1")).toBeFocused();
+      await page.keyboard.press("s");
+      await expect(page.getByTestId("menubar-submenu-trigger-1")).toBeFocused();
+    });
 
     for (const key of ["Enter", "Space", "ArrowDown"] as const) {
       test(`${key} on a menubar trigger opens its menu and focuses the first item`, async ({
@@ -1105,6 +1254,96 @@ test.describe("Menubar", () => {
       await page.getByTestId("menubar-trigger-1").click();
       await expect(page.getByTestId("menubar-list-1")).toBeVisible();
       await expect(page.getByTestId("menubar-item-1-1")).not.toBeFocused();
+    });
+
+    test("ArrowDown works if click-open leaves focus on the menu popover", async ({ page }) => {
+      await page.getByTestId("menubar-trigger-1").click();
+      await focusPopover(page, "menubar-list-1");
+      await page.keyboard.press("ArrowDown");
+      await expect(page.getByTestId("menubar-item-1-1")).toBeFocused();
+    });
+
+    test("Home from the menu popover stays on the menubar", async ({ page }) => {
+      await page.getByTestId("menubar-trigger-2").click();
+      await focusPopover(page, "menubar-list-2");
+      await page.keyboard.press("Home");
+      await expect(page.getByTestId("menubar-trigger-1")).toBeFocused();
+      await expect(page.getByTestId("menubar-item-2-1")).not.toBeFocused();
+    });
+
+    test("Home from a painted menu item roves the menu, not the bar", async ({ page }) => {
+      await page.getByTestId("menubar-trigger-1").click();
+      await page.getByTestId("menubar-submenu-trigger-1").hover();
+      await focusPopover(page, "menubar-list-1");
+      await page.keyboard.press("Home");
+      await expect(page.getByTestId("menubar-item-1-1")).toBeFocused();
+      await expect(page.getByTestId("menubar-list-1")).toBeVisible();
+    });
+
+    test("Escape from the menu popover highlights the menubar trigger", async ({ page }) => {
+      await page.getByTestId("menubar-trigger-1").click();
+      await focusPopover(page, "menubar-list-1");
+      await page.keyboard.press("Escape");
+      await expect(page.getByTestId("menubar-list-1")).not.toBeVisible();
+      await expect(page.getByTestId("menubar-trigger-1")).toBeFocused();
+      await expect(page.getByTestId("menubar-trigger-1")).toHaveAttribute("data-highlighted", "");
+    });
+
+    test("Tab still closes if click-open leaves focus on the menu popover", async ({ page }) => {
+      await page.getByTestId("menubar-trigger-1").click();
+      await focusPopover(page, "menubar-list-1");
+      await page.keyboard.press("Tab");
+      await expect(page.getByTestId("menubar-list-1")).not.toBeVisible();
+    });
+
+    test("a letter from the menu popover typeaheads the menubar, not the menu", async ({
+      page,
+    }) => {
+      await page.getByTestId("menubar-trigger-1").click();
+      await focusPopover(page, "menubar-list-1");
+      await page.keyboard.press("s");
+      await expect(page.getByTestId("menubar-submenu-trigger-1")).not.toBeFocused();
+      await expect(page.getByTestId("menubar-list-1")).toBeVisible();
+    });
+
+    test("hovering a submenu trigger opens it; ArrowRight enters", async ({ page }) => {
+      await page.getByTestId("menubar-trigger-1").click();
+      await page.getByTestId("menubar-submenu-trigger-1").hover();
+      await expect(page.getByTestId("menubar-submenu-list-1")).toBeVisible();
+      await page.keyboard.press("ArrowRight");
+      await expect(page.getByTestId("menubar-submenu-item-1-1")).toBeFocused();
+    });
+
+    test("Escape after hover-opening a submenu highlights the submenu trigger", async ({
+      page,
+    }) => {
+      await page.getByTestId("menubar-trigger-1").click();
+      await page.getByTestId("menubar-submenu-trigger-1").hover();
+      await page.keyboard.press("Escape");
+      await expect(page.getByTestId("menubar-submenu-list-1")).not.toBeVisible();
+      await expect(page.getByTestId("menubar-list-1")).toBeVisible();
+      await expect(page.getByTestId("menubar-submenu-trigger-1")).toBeFocused();
+      await expect(page.getByTestId("menubar-submenu-trigger-1")).toHaveAttribute(
+        "data-highlighted",
+        "",
+      );
+    });
+
+    test("arrows continue if hover-open leaves focus on the submenu popover", async ({ page }) => {
+      await page.getByTestId("menubar-trigger-1").click();
+      await page.getByTestId("menubar-submenu-trigger-1").hover();
+      await focusPopover(page, "menubar-submenu-list-1");
+      await page.keyboard.press("ArrowRight");
+      await expect(page.getByTestId("menubar-submenu-item-1-1")).toBeFocused();
+    });
+
+    test("Escape after hover-switching highlights the new trigger", async ({ page }) => {
+      await page.getByTestId("menubar-trigger-1").click();
+      await page.getByTestId("menubar-trigger-2").hover();
+      await page.keyboard.press("Escape");
+      await expect(page.getByTestId("menubar-list-2")).not.toBeVisible();
+      await expect(page.getByTestId("menubar-trigger-2")).toBeFocused();
+      await expect(page.getByTestId("menubar-trigger-2")).toHaveAttribute("data-highlighted", "");
     });
 
     test("hovering an adjacent trigger switches the open menu", async ({ page }) => {

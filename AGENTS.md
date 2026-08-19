@@ -208,6 +208,16 @@ path, or arrived in the submenu where `t > 1`) clears the
 apex; hover the trigger again to re-arm. Pointermove focuses the
 enabled item under the pointer (React Aria / Base UI) so Arrow
 keys continue from there; `data-highlighted` follows that item.
+`showPopover` can leave focus on the content node, so
+`Focus.None` open restores `menuHighlighted` and `keydown`
+from a `mcc:menu:` surface retargets to that item or the
+stack top. Home, End, and typeahead on an already-open root
+trigger (click-open, or that retarget when nothing is
+painted) rove the open menu; they do not open a closed one,
+and they do not apply to menubar items (Home / End /
+typeahead stay on the bar). `menuHighlight` focuses even
+when the painted item did not change, so a later move on
+the same trigger repairs stolen focus.
 Disabled items, labels, and separators clear the paint only.
 They do not steal focus. CSS `:hover` is not enough: a
 press-and-drag leaves the trigger `:active`, so `:hover` on
