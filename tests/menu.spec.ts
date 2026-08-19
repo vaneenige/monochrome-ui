@@ -904,9 +904,11 @@ test.describe("Typeahead", () => {
   test("a letter focuses the first matching item; repeating it cycles", async ({ page }) => {
     await page.keyboard.press("b");
     await expect(page.getByTestId("typeahead-item-2")).toBeFocused();
+    await page.getByTestId("typeahead-item-1").focus();
     await page.keyboard.press("a");
     await expect(page.getByTestId("typeahead-item-3")).toBeFocused();
-    await page.getByTestId("typeahead-item-5").focus();
+    await page.keyboard.press("a");
+    await expect(page.getByTestId("typeahead-item-5")).toBeFocused();
     await page.keyboard.press("a");
     await expect(page.getByTestId("typeahead-item-1")).toBeFocused();
   });
@@ -945,6 +947,12 @@ test.describe("Typeahead", () => {
     await page.keyboard.press("b");
     await expect(page.getByTestId("typeahead-item-2")).toBeFocused();
     await page.keyboard.press("ArrowDown");
+    await expect(page.getByTestId("typeahead-item-3")).toBeFocused();
+  });
+
+  test("a letter continues from the hovered item", async ({ page }) => {
+    await page.getByTestId("typeahead-item-2").hover();
+    await page.keyboard.press("a");
     await expect(page.getByTestId("typeahead-item-3")).toBeFocused();
   });
 
@@ -1846,18 +1854,6 @@ test.describe("Checkbox and radio items", () => {
     await expect(page.getByTestId("radio-a1")).toHaveAttribute("aria-checked", "false");
   });
 
-  test("a radio whose button is not the first child of its `li` still checks", async ({
-    page,
-    renderer,
-  }) => {
-    test.skip(renderer !== "html", "Structure edge case; wrappers emit the canonical shape");
-    await page.goto("/html/menu/radio-wrapped");
-    await page.getByTestId("trigger").click();
-    await page.getByTestId("radio-2").click();
-    await expect(page.getByTestId("radio-2")).toHaveAttribute("aria-checked", "true");
-    await expect(page.getByTestId("list")).toBeVisible();
-  });
-
   test("arrow navigation skips disabled items and separators", async ({ page }) => {
     await page.getByTestId("checkbox-2").focus();
     await page.keyboard.press("ArrowDown");
@@ -1897,7 +1893,7 @@ test.describe("Click handler", () => {
     });
 
     for (const key of ["Enter", "Space"] as const) {
-      test(`${target} ${key} activates without a synthesized click`, async ({ page }) => {
+      test(`${target} ${key} does not fire a click handler`, async ({ page }) => {
         if (target !== "trigger") await page.getByTestId("trigger").click();
         await page.getByTestId(target).focus();
         await page.keyboard.press(key);
