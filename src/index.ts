@@ -698,10 +698,6 @@ if (typeof document !== "undefined") {
               }
             }
             break;
-          case "Tab":
-            if (menuStack[0]) menuStack[0].focus();
-            menuCloseAll();
-            break;
           case "ArrowDown":
             if (inPopover) menuNext(parent);
             break;
@@ -734,6 +730,10 @@ if (typeof document !== "undefined") {
       }
       const active = document.activeElement;
       if (isElement(active) && active !== menuStack.at(-1)) menuTrim(active);
+    }
+    if (key === "Tab" && menuStack[0]) {
+      menuStack[0].focus();
+      menuCloseAll();
     }
     if (key === "Escape") {
       if (tooltipShown) {

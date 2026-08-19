@@ -151,6 +151,21 @@ test.describe("Menu", () => {
       await expect(page.getByTestId("focus-before")).toBeFocused();
     });
 
+    test("Tab from a pointer-opened trigger closes the menu and moves focus forward", async ({
+      page,
+    }) => {
+      await openRoot(page);
+      await expect(page.getByTestId("root-trigger")).toBeFocused();
+      await page.keyboard.press("Tab");
+      await expect(page.getByTestId("root-list")).not.toBeVisible();
+      await expect(page.getByTestId("focus-after")).toBeFocused();
+
+      await openRoot(page);
+      await page.keyboard.press("Shift+Tab");
+      await expect(page.getByTestId("root-list")).not.toBeVisible();
+      await expect(page.getByTestId("focus-before")).toBeFocused();
+    });
+
     test("ArrowDown on an already-open trigger focuses the first item", async ({ page }) => {
       await openRoot(page);
       await page.getByTestId("root-trigger").press("ArrowDown");
@@ -952,6 +967,13 @@ test.describe("Menubar", () => {
       await page.getByTestId("menubar-item-1").press("ArrowRight");
       await expect(page.getByTestId("menubar-trigger-2")).toBeFocused();
       await expect(page.getByTestId("menubar-list-2")).not.toBeVisible();
+    });
+
+    test("Tab from a pointer-opened menubar trigger closes the menu", async ({ page }) => {
+      await page.getByTestId("menubar-trigger-1").click();
+      await expect(page.getByTestId("menubar-list-1")).toBeVisible();
+      await page.keyboard.press("Tab");
+      await expect(page.getByTestId("menubar-list-1")).not.toBeVisible();
     });
   });
 

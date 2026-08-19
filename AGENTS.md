@@ -149,7 +149,10 @@ dismissed the menu, and the following click is suppressed via
 `keydown` (`menuOpen` / `menuActivate`) with `preventDefault`
 so Space does not scroll. Enter on an href menuitem is the
 exception: no `preventDefault`, so the synthesized `click`
-navigates and the click listener closes the menu.
+navigates and the click listener closes the menu. Tab / Shift+Tab
+close every open menu whenever `menuStack[0]`, including from a
+pointer-opened standalone trigger (`role="button"`); they do not
+`preventDefault`.
 
 **Pointer session and `shouldSuppressClick`.** A menu gesture is
 a pointer session, not a click. `pointerdown` on a trigger opens
