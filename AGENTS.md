@@ -159,7 +159,10 @@ are ignored. After a menu `pointerdown`, `shouldSuppressClick`
 makes the trailing `click` a no-op so a press that started on
 the menu cannot also toggle a disclosure (or anything else)
 underneath. Playwright `.click()` still works: it fires
-`pointerdown`.
+`pointerdown`. `pointerup` on an href calls `el.click()` before
+activate so sticky-drag navigates: the browser does not
+synthesize click across elements. Same-element press then
+fires a real click too (hash navigation is idempotent).
 
 **Sibling submenu replace.** Opening a menu closes every stack
 entry whose content does not contain the new trigger
@@ -202,6 +205,7 @@ focuses the trigger first when the active element is inside
 the content, so `hidePopover` never drops a focused node that
 lives in the menu. Enter on an href does not activate in
 `keydown`; the synthesized `click` both navigates and closes.
+Sticky-drag onto an href uses the `pointerup` `click()` above.
 
 **Signed movement for triangle direction.** "Is the cursor
 moving toward the submenu?" is

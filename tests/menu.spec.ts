@@ -1501,6 +1501,23 @@ test.describe("Link items", () => {
     await expect(page.getByTestId("item-link")).not.toBeFocused();
     await expect(page.getByTestId("trigger")).toBeFocused();
   });
+
+  test("pointerdown on trigger, drag to an href, pointerup navigates", async ({
+    page,
+    renderer,
+  }) => {
+    await page.goto(`/${renderer}/menu/basic`);
+    const trigger = page.getByTestId("trigger");
+    const link = page.getByTestId("item-link");
+    await trigger.hover();
+    await page.mouse.down();
+    await expect(page.getByTestId("list")).toBeVisible();
+    await link.hover();
+    await page.mouse.up();
+    await expect(page).toHaveURL(/#menu-link-nav/);
+    await expect(page.getByTestId("list")).not.toBeVisible();
+    await expect(page.getByTestId("trigger")).toBeFocused();
+  });
 });
 
 test.describe("Dynamic", () => {

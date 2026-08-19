@@ -448,6 +448,7 @@ if (typeof document !== "undefined") {
     let el = getTarget(event);
     while (el) {
       if (isMenuItem(el) && !isTrigger(el, Prefix.TriggerMenu)) {
+        if (el.tagName === "A") el.click();
         menuActivate(el);
         return;
       }
