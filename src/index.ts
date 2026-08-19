@@ -665,7 +665,11 @@ if (typeof document !== "undefined") {
         switch (key) {
           case "Enter":
           case " ":
-            menuOpen(target, Focus.First);
+            if (isRootTrigger && target.role === "button") {
+              menuOpen(target, Focus.First);
+            } else {
+              menuRoveIn(target, Focus.First);
+            }
             shouldPreventDefault = true;
             break;
           case "ArrowDown":

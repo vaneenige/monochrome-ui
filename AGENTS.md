@@ -146,10 +146,16 @@ triggers still rely on the browser's synthesized `click` for
 Enter/Space. Menu cannot: `pointerdown` already opened or
 dismissed the menu, and the following click is suppressed via
 `shouldSuppressClick`. Keyboard activation therefore lives in
-`keydown` (`menuOpen` / `menuActivate`) with `preventDefault`
-so Space does not scroll. Enter on an href menuitem is the
-exception: no `preventDefault`, so the synthesized `click`
-navigates and the click listener closes the menu. Tab / Shift+Tab
+`keydown` (`menuOpen` / `menuRoveIn` / `menuActivate`) with
+`preventDefault` so Space does not scroll. Enter/Space on a
+submenu trigger use `menuRoveIn`, so an already-open submenu
+moves focus to the first item. Root menu buttons still
+`menuOpen` (toggle closed if already the stack root).
+Menubar items use `menuRoveIn`, so Enter on an open trigger
+moves into the menu instead of closing it. Enter on an href
+menuitem is the exception: no `preventDefault`, so the
+synthesized `click` navigates and the click listener closes
+the menu. Tab / Shift+Tab
 close every open menu whenever `menuStack[0]`, including from a
 pointer-opened standalone trigger (`role="button"`); they do not
 `preventDefault`.

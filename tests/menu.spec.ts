@@ -177,6 +177,13 @@ test.describe("Menu", () => {
       await page.getByTestId("root-trigger").press("ArrowUp");
       await expect(page.getByTestId("root-submenu-trigger")).toBeFocused();
     });
+
+    test("Enter on a click-opened menu button closes the menu", async ({ page }) => {
+      await openRoot(page);
+      await expect(page.getByTestId("root-trigger")).toBeFocused();
+      await page.getByTestId("root-trigger").press("Enter");
+      await expect(page.getByTestId("root-list")).not.toBeVisible();
+    });
   });
 
   test.describe("Item keyboard", () => {
@@ -241,19 +248,21 @@ test.describe("Menu", () => {
       });
     }
 
-    test("ArrowRight on an open submenu trigger focuses the first item", async ({ page }) => {
-      await page.getByTestId("root-submenu-trigger").focus();
-      await page.getByTestId("root-submenu-trigger").press("ArrowRight");
-      await expect(page.getByTestId("root-submenu-list")).toBeVisible();
-      await page.getByTestId("root-submenu-trigger").focus();
-      await page.getByTestId("root-submenu-trigger").press("ArrowRight");
-      await expect(page.getByTestId("root-submenu-list")).toBeVisible();
-      await expect(page.getByTestId("root-submenu-item-1")).toBeFocused();
-      await page.keyboard.press("Escape");
-      await expect(page.getByTestId("root-submenu-list")).not.toBeVisible();
-      await expect(page.getByTestId("root-list")).toBeVisible();
-      await expect(page.getByTestId("root-submenu-trigger")).toBeFocused();
-    });
+    for (const key of ["Enter", "Space", "ArrowRight"] as const) {
+      test(`${key} on an open submenu trigger focuses the first item`, async ({ page }) => {
+        await page.getByTestId("root-submenu-trigger").focus();
+        await page.getByTestId("root-submenu-trigger").press("ArrowRight");
+        await expect(page.getByTestId("root-submenu-list")).toBeVisible();
+        await page.getByTestId("root-submenu-trigger").focus();
+        await page.getByTestId("root-submenu-trigger").press(key);
+        await expect(page.getByTestId("root-submenu-list")).toBeVisible();
+        await expect(page.getByTestId("root-submenu-item-1")).toBeFocused();
+        await page.keyboard.press("Escape");
+        await expect(page.getByTestId("root-submenu-list")).not.toBeVisible();
+        await expect(page.getByTestId("root-list")).toBeVisible();
+        await expect(page.getByTestId("root-submenu-trigger")).toBeFocused();
+      });
+    }
 
     for (const key of ["ArrowLeft", "Escape"] as const) {
       test(`${key} inside the submenu closes it and focuses the submenu trigger`, async ({
@@ -865,6 +874,16 @@ test.describe("Menubar", () => {
       await page.keyboard.press("End");
       await expect(page.getByTestId("menubar-trigger-3")).toBeFocused();
     });
+
+    for (const key of ["Enter", "Space"] as const) {
+      test(`${key} on an already-open menubar trigger focuses the first item`, async ({ page }) => {
+        await page.getByTestId("menubar-trigger-1").click();
+        await expect(page.getByTestId("menubar-trigger-1")).toBeFocused();
+        await page.getByTestId("menubar-trigger-1").press(key);
+        await expect(page.getByTestId("menubar-list-1")).toBeVisible();
+        await expect(page.getByTestId("menubar-item-1-1")).toBeFocused();
+      });
+    }
 
     for (const key of ["Enter", "Space", "ArrowDown"] as const) {
       test(`${key} on a menubar trigger opens its menu and focuses the first item`, async ({
