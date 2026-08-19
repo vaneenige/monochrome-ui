@@ -248,13 +248,14 @@ if (typeof document !== "undefined") {
       const content = getLinked(trigger, "aria-controls");
       if (content) {
         if (trigger.ariaExpanded === "true") {
-          if (
-            mode !== Focus.None ||
-            (isElement(document.activeElement) && content.contains(document.activeElement))
-          ) {
-            trigger.focus();
+          if (mode === Focus.Trigger && trigger.role?.startsWith("menuitem")) {
+            menuHighlight(trigger);
+          } else {
+            if (mode !== Focus.None || content.contains(document.activeElement)) {
+              trigger.focus();
+            }
+            if (content.contains(menuHighlighted)) menuHighlight(null);
           }
-          if (content.contains(menuHighlighted)) menuHighlight(null);
           content.hidePopover();
           trigger.ariaExpanded = "false";
           content.ariaHidden = "true";

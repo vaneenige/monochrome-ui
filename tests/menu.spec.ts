@@ -229,6 +229,7 @@ test.describe("Menu", () => {
       await page.keyboard.press("Escape");
       await expect(page.getByTestId("root-list")).not.toBeVisible();
       await expect(page.getByTestId("root-trigger")).toBeFocused();
+      await expect(page.getByTestId("root-trigger")).not.toHaveAttribute("data-highlighted");
     });
   });
 
@@ -272,8 +273,33 @@ test.describe("Menu", () => {
         await page.getByTestId("root-submenu-item-1").press(key);
         await expect(page.getByTestId("root-submenu-list")).not.toBeVisible();
         await expect(page.getByTestId("root-submenu-trigger")).toBeFocused();
+        await expect(page.getByTestId("root-submenu-trigger")).toHaveAttribute(
+          "data-highlighted",
+          "",
+        );
       });
     }
+
+    test("ArrowRight after ArrowLeft re-enters the submenu", async ({ page }) => {
+      await openSubmenuViaKeyboard(page);
+      await page.getByTestId("root-submenu-item-1").press("ArrowLeft");
+      await expect(page.getByTestId("root-submenu-trigger")).toHaveAttribute(
+        "data-highlighted",
+        "",
+      );
+      await page.keyboard.press("ArrowRight");
+      await expect(page.getByTestId("root-submenu-list")).toBeVisible();
+      await expect(page.getByTestId("root-submenu-item-1")).toBeFocused();
+    });
+
+    test("ArrowDown after ArrowLeft roves the parent menu", async ({ page }) => {
+      await openSubmenuViaKeyboard(page);
+      await page.getByTestId("root-submenu-item-1").press("ArrowLeft");
+      await page.keyboard.press("ArrowDown");
+      await expect(page.getByTestId("root-submenu-list")).not.toBeVisible();
+      await expect(page.getByTestId("root-item-1")).toBeFocused();
+      await expect(page.getByTestId("root-item-1")).toHaveAttribute("data-highlighted", "");
+    });
 
     test("ArrowLeft opens and ArrowRight closes the submenu in RTL", async ({ page }) => {
       await setRtl(page);
@@ -284,6 +310,10 @@ test.describe("Menu", () => {
       await page.keyboard.press("ArrowRight");
       await expect(page.getByTestId("root-submenu-list")).not.toBeVisible();
       await expect(page.getByTestId("root-submenu-trigger")).toBeFocused();
+      await expect(page.getByTestId("root-submenu-trigger")).toHaveAttribute(
+        "data-highlighted",
+        "",
+      );
     });
 
     test("ArrowDown / ArrowUp wrap around the submenu items", async ({ page }) => {
@@ -489,6 +519,21 @@ test.describe("Menu", () => {
       await expect(page.getByTestId("root-item-2")).toBeFocused();
       await page.keyboard.press("ArrowDown");
       await expect(page.getByTestId("root-item-3")).toBeFocused();
+    });
+
+    test("Escape after hover-opening a submenu highlights the submenu trigger", async ({
+      page,
+    }) => {
+      await openRoot(page);
+      await openSubmenuViaHover(page);
+      await page.keyboard.press("Escape");
+      await expect(page.getByTestId("root-submenu-list")).not.toBeVisible();
+      await expect(page.getByTestId("root-list")).toBeVisible();
+      await expect(page.getByTestId("root-submenu-trigger")).toBeFocused();
+      await expect(page.getByTestId("root-submenu-trigger")).toHaveAttribute(
+        "data-highlighted",
+        "",
+      );
     });
 
     test("ArrowDown after hover-opening a submenu closes it", async ({ page }) => {
@@ -1003,6 +1048,48 @@ test.describe("Menubar", () => {
       await expect(page.getByTestId("menubar-list-2")).not.toBeVisible();
     });
 
+    test("Escape closes the menu and returns focus to the trigger", async ({ page }) => {
+      await page.getByTestId("menubar-trigger-1").click();
+      await page.getByTestId("menubar-item-1-1").hover();
+      await page.keyboard.press("Escape");
+      await expect(page.getByTestId("menubar-list-1")).not.toBeVisible();
+      await expect(page.getByTestId("menubar-trigger-1")).toBeFocused();
+      await expect(page.getByTestId("menubar-trigger-1")).toHaveAttribute("data-highlighted", "");
+    });
+
+    for (const key of ["ArrowLeft", "Escape"] as const) {
+      test(`${key} inside a menubar submenu highlights the submenu trigger`, async ({ page }) => {
+        await page.getByTestId("menubar-trigger-1").press("Enter");
+        await page.getByTestId("menubar-submenu-trigger-1").press("Enter");
+        await page.getByTestId("menubar-submenu-item-1-1").press(key);
+        await expect(page.getByTestId("menubar-submenu-list-1")).not.toBeVisible();
+        await expect(page.getByTestId("menubar-list-1")).toBeVisible();
+        await expect(page.getByTestId("menubar-submenu-trigger-1")).toBeFocused();
+        await expect(page.getByTestId("menubar-submenu-trigger-1")).toHaveAttribute(
+          "data-highlighted",
+          "",
+        );
+      });
+    }
+
+    test("ArrowRight after ArrowLeft re-enters the menubar submenu", async ({ page }) => {
+      await page.getByTestId("menubar-trigger-1").press("Enter");
+      await page.getByTestId("menubar-submenu-trigger-1").press("Enter");
+      await page.getByTestId("menubar-submenu-item-1-1").press("ArrowLeft");
+      await page.keyboard.press("ArrowRight");
+      await expect(page.getByTestId("menubar-submenu-list-1")).toBeVisible();
+      await expect(page.getByTestId("menubar-submenu-item-1-1")).toBeFocused();
+    });
+
+    test("ArrowDown after ArrowLeft roves the menubar menu", async ({ page }) => {
+      await page.getByTestId("menubar-trigger-1").press("Enter");
+      await page.getByTestId("menubar-submenu-trigger-1").press("Enter");
+      await page.getByTestId("menubar-submenu-item-1-1").press("ArrowLeft");
+      await page.keyboard.press("ArrowDown");
+      await expect(page.getByTestId("menubar-submenu-list-1")).not.toBeVisible();
+      await expect(page.getByTestId("menubar-item-1-1")).toBeFocused();
+    });
+
     test("Tab from a pointer-opened menubar trigger closes the menu", async ({ page }) => {
       await page.getByTestId("menubar-trigger-1").click();
       await expect(page.getByTestId("menubar-list-1")).toBeVisible();
@@ -1164,6 +1251,17 @@ test.describe("Safety triangle", () => {
     await page.mouse.move(trigger.x + trigger.width / 2, trigger.y + trigger.height / 2);
     await page.mouse.move(submenu.x + 8, submenu.y + submenu.height / 2, { steps: 12 });
     await expect(page.getByTestId("submenu-list")).toBeVisible();
+  });
+
+  test("ArrowLeft from a nested submenu highlights the nested trigger", async ({ page }) => {
+    await page.getByTestId("submenu2-trigger").hover();
+    await expect(page.getByTestId("submenu2-list")).toBeVisible();
+    await page.getByTestId("submenu2-trigger").press("ArrowRight");
+    await page.getByTestId("submenu2-item-1").press("ArrowLeft");
+    await expect(page.getByTestId("submenu2-list")).not.toBeVisible();
+    await expect(page.getByTestId("submenu-list")).toBeVisible();
+    await expect(page.getByTestId("submenu2-trigger")).toBeFocused();
+    await expect(page.getByTestId("submenu2-trigger")).toHaveAttribute("data-highlighted", "");
   });
 
   test("items under the triangle do not take focus", async ({ page }) => {

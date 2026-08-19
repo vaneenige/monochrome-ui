@@ -186,7 +186,10 @@ the open trigger. Hover-open a submenu then ArrowDown
 through the parent therefore closes it. ArrowRight still
 enters. Close only clears `data-highlighted` when the
 painted item lives in that menu's content, so the next
-parent item keeps its highlight.
+parent item keeps its highlight. `Focus.Trigger` close
+(`ArrowLeft` / Escape) paints a menuitem trigger, so
+leaving a submenu is not an empty slot. `Focus.None`
+does not, so sibling hover is not overwritten.
 
 **Popover API with CSS-variable positioning.** The core publishes
 the trigger rect (`--top`, `--right`, `--bottom`, `--left`, in
