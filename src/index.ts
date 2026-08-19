@@ -571,7 +571,7 @@ if (typeof document !== "undefined") {
             el.role === "separator" ||
             el.role === "presentation"
           ) {
-            if (!foundItem) menuHighlight(isMenuItem(el) ? el : null);
+            if (!foundItem && isMenuItem(el)) menuHighlight(el);
             foundItem = true;
           }
           if (!foundItem && el.id.startsWith(Prefix.Content)) {
@@ -588,7 +588,6 @@ if (typeof document !== "undefined") {
           }
           el = el.parentElement;
         }
-        if (!foundItem) menuHighlight(null);
         if (!inContent && triggerPath[0]) {
           let i = 0;
           while (menuStack[i] && menuStack[i] === triggerPath[i]) i++;

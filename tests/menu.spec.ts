@@ -653,6 +653,32 @@ test.describe("Menu", () => {
       await expect(page.getByTestId("root-trigger")).toBeFocused();
     });
 
+    test("hovering a disabled item, label, or separator keeps highlight without moving focus", async ({
+      page,
+    }) => {
+      await openRoot(page);
+      await page.getByTestId("root-item-1").hover();
+      await expect(page.getByTestId("root-item-1")).toHaveAttribute("data-highlighted", "");
+      for (const id of ["root-item-disabled", "root-label", "root-separator"] as const) {
+        await page.getByTestId(id).hover();
+        await expect(page.getByTestId("root-item-1")).toBeFocused();
+        await expect(page.getByTestId("root-item-1")).toHaveAttribute("data-highlighted", "");
+        await page.getByTestId("root-item-1").hover();
+      }
+    });
+
+    test("hovering out of the menu keeps highlight; ArrowDown continues from there", async ({
+      page,
+    }) => {
+      await openRoot(page);
+      await page.getByTestId("root-item-2").hover();
+      await page.mouse.move(0, 0);
+      await expect(page.getByTestId("root-item-2")).toBeFocused();
+      await expect(page.getByTestId("root-item-2")).toHaveAttribute("data-highlighted", "");
+      await page.keyboard.press("ArrowDown");
+      await expect(page.getByTestId("root-item-3")).toBeFocused();
+    });
+
     test("hovering a submenu trigger opens its submenu; leaving to another item closes it", async ({
       page,
     }) => {
@@ -1344,6 +1370,21 @@ test.describe("Menubar", () => {
       await expect(page.getByTestId("menubar-list-2")).not.toBeVisible();
       await expect(page.getByTestId("menubar-trigger-2")).toBeFocused();
       await expect(page.getByTestId("menubar-trigger-2")).toHaveAttribute("data-highlighted", "");
+    });
+
+    test("hovering out of a menubar menu keeps highlight; ArrowDown continues from there", async ({
+      page,
+    }) => {
+      await page.getByTestId("menubar-trigger-1").click();
+      await page.getByTestId("menubar-item-1-1").hover();
+      const box = await page.getByTestId("menubar-list-1").boundingBox();
+      if (!box) throw new Error("missing bounding box");
+      await page.mouse.move(box.x + box.width / 2, box.y + box.height + 40);
+      await expect(page.getByTestId("menubar-item-1-1")).toBeFocused();
+      await expect(page.getByTestId("menubar-item-1-1")).toHaveAttribute("data-highlighted", "");
+      await page.keyboard.press("ArrowDown");
+      await expect(page.getByTestId("menubar-item-1-1")).not.toBeFocused();
+      await expect(page.getByTestId("menubar-list-1")).toBeVisible();
     });
 
     test("hovering an adjacent trigger switches the open menu", async ({ page }) => {

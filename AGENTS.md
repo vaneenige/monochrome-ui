@@ -218,10 +218,10 @@ and they do not apply to menubar items (Home / End /
 typeahead stay on the bar). `menuHighlight` focuses even
 when the painted item did not change, so a later move on
 the same trigger repairs stolen focus.
-Disabled items, labels, and separators clear the paint only.
-They do not steal focus. CSS `:hover` is not enough: a
-press-and-drag leaves the trigger `:active`, so `:hover` on
-items never fires. Triangle travel still skips open, close, and
+Pointer only paints an enabled item. Leaving the menu, or
+hovering a disabled item, label, or separator, leaves
+`data-highlighted` on the last item so keyboard still has a
+visible current item. Triangle travel still skips open, close, and
 highlight: focus stays on the submenu trigger so items under
 the path cannot steal it. No overlay, no CSS vars, no timers.
 Hover can leave focus inside the popover. A `Focus.None` close
