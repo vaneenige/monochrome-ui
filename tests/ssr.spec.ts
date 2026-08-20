@@ -18,4 +18,11 @@ test.describe("SSR", () => {
     expect(typeof document).toBe("undefined");
     await expect(import("../dist/router.js")).resolves.toBeDefined();
   });
+
+  for (const name of ["accordion", "collapsible", "dialog", "menu", "popover", "tabs", "tooltip"]) {
+    test(`${name} standalone imports without a DOM`, async () => {
+      expect(typeof document).toBe("undefined");
+      await expect(import(`../dist/${name}.js`)).resolves.toBeDefined();
+    });
+  }
 });

@@ -1,13 +1,25 @@
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import { expect, test } from "./fixtures";
 
 // Decision tests: the non-negotiables from AGENTS.md, encoded as
 // source greps so drift is caught before review. Paths are relative
 // to the repo root (Playwright's working directory).
-const core = readFileSync("src/index.ts", "utf8");
+const helper = readFileSync("src/dom.ts", "utf8");
+const combined = readFileSync("src/index.ts", "utf8");
 const router = readFileSync("src/router.ts", "utf8");
+const components = readdirSync("src")
+  .filter(
+    (name) =>
+      name.endsWith(".ts") && name !== "index.ts" && name !== "router.ts" && name !== "dom.ts",
+  )
+  .sort()
+  .map((name) => [name, readFileSync(`src/${name}`, "utf8")] as const);
 
+const cores = [helper, combined, ...components.map(([, source]) => source)];
 const timers = ["setTimeout(", "setInterval(", "requestAnimationFrame(", "queueMicrotask("];
+
+const importsFrom = (source: string) =>
+  [...source.matchAll(/^import[\s\S]*?from\s+"([^"]+)"/gm)].map((match) => match[1]);
 
 test.describe("Architecture invariants", () => {
   test.beforeEach(({ renderer }) => {
@@ -15,12 +27,16 @@ test.describe("Architecture invariants", () => {
   });
 
   test("core contains no timers", () => {
-    for (const banned of timers) expect(core).not.toContain(banned);
+    for (const source of cores) {
+      for (const banned of timers) expect(source).not.toContain(banned);
+    }
   });
 
   test("core contains no `querySelector` or `closest`", () => {
-    expect(core).not.toContain("querySelector");
-    expect(core).not.toContain(".closest(");
+    for (const source of cores) {
+      expect(source).not.toContain("querySelector");
+      expect(source).not.toContain(".closest(");
+    }
   });
 
   test("router contains no timers", () => {
@@ -36,7 +52,7 @@ test.describe("Architecture invariants", () => {
   });
 
   test("core and router contain no `as` casts or non-null assertions", () => {
-    for (const source of [core, router]) {
+    for (const source of [...cores, router]) {
       // Prose mentions "as" too; only code lines count.
       const code = source
         .split("\n")
@@ -45,5 +61,28 @@ test.describe("Architecture invariants", () => {
       expect(code).not.toMatch(/ as [A-Z]/);
       expect(code).not.toMatch(/[)\w\]]!\./);
     }
+  });
+
+  test("helpers import nothing", () => {
+    expect(helper).not.toMatch(/^import /m);
+  });
+
+  test("components import only shared helpers", () => {
+    for (const [name, source] of components) {
+      expect(importsFrom(source), name).toEqual(["./dom.js"]);
+    }
+  });
+
+  test("combined entry imports every component and nothing else", () => {
+    expect(importsFrom(combined)).toEqual([]);
+    expect([...combined.matchAll(/^import "([^"]+)"/gm)].map((match) => match[1])).toEqual([
+      "./accordion.js",
+      "./collapsible.js",
+      "./dialog.js",
+      "./menu.js",
+      "./popover.js",
+      "./tabs.js",
+      "./tooltip.js",
+    ]);
   });
 });

@@ -17,20 +17,24 @@ any more:
    `aria-expanded`, `aria-selected`, `aria-checked`, `aria-hidden`,
    `aria-disabled`. There is no internal state object mirroring the
    DOM anywhere in the library.
-2. **Event delegation only.** Nine global listeners in the core:
+2. **Event delegation only.** Listeners go on `window`. Zero
+   per-element listeners. Each component registers only the
+   events it handles. Combined, the set is still the nine:
    `pointerdown`, `pointerup`, `click`, `pointermove`, `keydown`,
-   `scroll`, `resize`, `focusin`, `focusout`. Zero per-element
-   listeners.
+   `scroll`, `resize`, `focusin`, `focusout`.
 3. **Zero timers.** No `setTimeout`, `requestAnimationFrame`,
    `queueMicrotask`, debounce, or throttle. Every action is
    synchronous within its event.
-4. **Zero runtime dependencies.** The core imports nothing. The
+4. **Zero runtime dependencies.** Shared helpers (`src/dom.ts`)
+   import nothing. Components import only those helpers. The
    wrappers import only their framework (as peer deps).
 5. **Baseline 2024 browsers.** We rely on the Popover API. No
    polyfills shipped.
-6. **The core is one file.** `src/index.ts`. Don't split it. The
-   whole-file view is what makes the event-delegation logic
-   reviewable.
+6. **One file per component.** Shared helpers live in
+   `src/dom.ts`. Each component is `src/{name}.ts` and registers
+   its own window listeners. `src/index.ts` only imports every
+   component so `import "monochrome"` still lights up the page.
+   Components do not import each other.
 
 ## Why the core looks weird (and should stay weird)
 
@@ -44,10 +48,12 @@ the moment a user, a framework, or devtools mutates the DOM, and
 tracking who owns what becomes a maintenance tax. With DOM-as-state
 there is exactly one truth and we never have to reconcile.
 
-**Global delegated listeners.** Per-component listeners scale with
-component count and require teardown on unmount. Nine global
-listeners are constant cost, require zero teardown, and automatically
-cover dynamically-inserted DOM without re-wiring.
+**Global delegated listeners.** Per-instance listeners scale with
+component count and require teardown on unmount. Window listeners
+are constant cost per component (not per instance), require zero
+teardown, and automatically cover dynamically-inserted DOM without
+re-wiring. Each file registers its own; the combined entry does
+not own a dispatcher.
 
 **ID prefix dispatch.** We route events to handlers by checking the
 prefix of `target.id` (`mct:`, `mcc:`, `mcr:`). No classes, no data
@@ -57,8 +63,9 @@ component name with a trailing colon (`mct:accordion:`,
 
 **Module-level `let` for state.** No classes, no `this`, no closures
 passed down. Handlers share state through module-scope variables
-(`menuStack`, `popoverShown`, `tooltipShown`, …). This is why the
-core is one file: the state is part of the file's mental model.
+(`menuStack`, `popoverShown`, `tooltipShown`, …). This is why
+each component is one file: the state is part of that file's
+mental model, and no other component reads it.
 
 **`should*` driver flags for cross-handler communication.** The
 conventional move is to thread a mutable parameter (or return a
@@ -99,14 +106,19 @@ needs close-before-open, Tabs toggles off-and-on in one pass), and
 lets a single traversal do work that a list plus follow-up would
 split in two.
 
-**Walk-up then walk-down for click dispatch.** The click listener
-walks UP from the event target (`target = target.parentElement`)
-until it finds a recognised ID prefix. Menu open/dismiss lives on
-`pointerdown` and item activation on `pointerup`; click still
-dispatches the other components and is skipped entirely when
-`shouldSuppressClick` is set (a menu pointer session owns that
-gesture). The fall-through case (walk reached the document root
-without matching) is the outside-click detector for popovers.
+**Walk-up then walk-down for click dispatch.** Single-prefix
+clicks (Collapsible, Accordion, Tabs) use `findAncestor` from
+the event target. Overlay components keep a hand-rolled walk:
+several prefixes plus "inside content, stop". Menu open/dismiss
+lives on `pointerdown` and item activation on `pointerup`. A
+menu pointer session arms a capture-phase `click` that marks
+the event (`suppressedClicks`); other components skip that
+gesture via `suppressedClicks.has`. The event is not stopped,
+so user listeners still fire. Popover's fall-through (walk
+reached the document root without matching) is its outside-click
+detector; it also dismisses on outside `pointerdown` so a Menu
+opening on pointerdown closes it without either file naming the
+other.
 
 **`findAncestor` over `closest()`.** `findAncestor(el, prefix)`
 walks `parentElement` up checking `id.startsWith(prefix)`.
@@ -144,8 +156,8 @@ radio sweep), selected by which module-scope flag is non-null.
 **Menu Enter/Space in `keydown`.** Accordion, Tabs, and the other
 triggers still rely on the browser's synthesized `click` for
 Enter/Space. Menu cannot: `pointerdown` already opened or
-dismissed the menu, and the following click is suppressed via
-`shouldSuppressClick`. Keyboard activation therefore lives in
+dismissed the menu, and the following click is swallowed by the
+capture-phase suppressor. Keyboard activation therefore lives in
 `keydown` (`menuOpen` / `menuRoveIn` / `menuActivate`) with
 `preventDefault` so Space does not scroll. Enter/Space on a
 submenu trigger use `menuRoveIn`, so an already-open submenu
@@ -162,18 +174,30 @@ pointer-opened standalone trigger (`role="button"`); they do not
 `preventDefault` so empty and all-disabled menus do not
 scroll.
 
-**Pointer session and `shouldSuppressClick`.** A menu gesture is
-a pointer session, not a click. `pointerdown` on a trigger opens
-or toggles; `pointerdown` outside dismisses; `pointerup` on a
-plain menuitem activates. Non-primary buttons (`button !== 0`)
-are ignored. After a menu `pointerdown`, `shouldSuppressClick`
-makes the trailing `click` a no-op so a press that started on
-the menu cannot also toggle a disclosure (or anything else)
-underneath. Playwright `.click()` still works: it fires
+**Pointer session and capture-phase click suppress.** A menu
+gesture is a pointer session, not a click. `pointerdown` on a
+trigger opens or toggles; `pointerdown` outside dismisses;
+`pointerup` on a plain menuitem activates. Non-primary buttons
+(`button !== 0`) are ignored. After a menu `pointerdown`, a
+one-shot capture `click` listener marks the event
+(`suppressedClicks` in `src/dom.ts`). Other components skip
+that click via `suppressedClicks.has`. The event is not
+stopped, so user listeners still fire. Menu does not name
+Collapsible.
+The suppressor is removed at the start of `pointerdown` and
+`keydown`, so an abandoned press then Enter on a disclosure
+still works. Playwright `.click()` still works: it fires
 `pointerdown`. `pointerup` on an href calls `el.click()` before
 activate so sticky-drag navigates: the browser does not
 synthesize click across elements. Same-element press then
 fires a real click too (hash navigation is idempotent).
+
+**Tooltip Escape in capture.** When a tooltip is shown, its
+`keydown` listener runs in capture and
+`stopImmediatePropagation`s on Escape. The first Escape
+dismisses the tooltip; a Menu or Popover still open sees the
+second Escape. No import-order coordinator, and Tooltip does
+not name those components.
 
 **Sibling submenu replace.** Opening a menu closes every stack
 entry whose content does not contain the new trigger
@@ -293,7 +317,8 @@ Rules only. Rationale lives in "Why the core looks weird" and
   contract; unused generality is negative value here.
 - Extract a helper at the second verbatim repetition of a
   multi-line pattern when it saves minified bytes
-  (`tooltipSuppress`, `menubarStep`, `menuRoveIn`, `menuTrim`).
+  (`tooltipSuppress`, `menubarStep`, `menuRoveIn`, `menuTrim`,
+  `toggleDisclosure`).
 
 ### Control flow
 
@@ -356,9 +381,11 @@ PropType<...>` where Vue's prop typing requires it.)
 - Custom events (`mc:navigate`) for cross-boundary signals the
   wrappers need. No callback props or event-emitter exports from
   the core.
-- Menu open/dismiss/activate on `pointerdown` / `pointerup`;
-  `shouldSuppressClick` skips the trailing click. Enter/Space for
-  menu are handled in `keydown` with `preventDefault`.
+- Menu open/dismiss/activate on `pointerdown` / `pointerup`; a
+  capture-phase one-shot `click` marks the event so other
+  components skip it (user listeners still fire). Enter/Space
+  for menu are handled in `keydown` with `preventDefault`.
+  Tooltip Escape is capture-phase.
 - `void` on fire-and-forget promise expressions.
 
 ### Naming
@@ -367,6 +394,8 @@ PropType<...>` where Vue's prop typing requires it.)
   `accordion`, `collapsible`, `dialog`, `menu`, `popover`,
   `tabs`, `tooltip`. Helpers extend the primitive with a verb:
   `menuOpen`, `menuCloseAll`, `dialogClose`, `tooltipSync`.
+  Shared DOM writes that are not a component (`toggleDisclosure`,
+  `position`) live in `src/dom.ts` and take no component name.
 - Open/close is the verb pair for named actions (it matches
   `aria-expanded`). Show/hide appears only as the boolean
   parameter of the primitives that map straight onto
@@ -440,10 +469,14 @@ AGENTS.md, commit messages, PR descriptions.
 
 ## Comment policy
 
-- `src/index.ts` and `src/router.ts`: **fully commented.** TSDoc
-  (`/** */`) for every declared symbol. Inline `//` for non-obvious
-  decisions. File-top `@file` header explaining architecture,
-  invariants, and file layout. This is the convention; keep it.
+- `src/dom.ts` and `src/router.ts`: **fully commented.** TSDoc
+  (`/** */`) for every declared symbol. Inline `//` for
+  non-obvious decisions. File-top `@file` header explaining
+  architecture, invariants, and file layout.
+- Each `src/{component}.ts` and `src/index.ts`: `@file` header
+  (same wrap). TSDoc on the `Prefix` enum and the component
+  primitive; inline `//` for non-obvious decisions (capture
+  suppress, capture Escape, outside `pointerdown`).
 - `src/react/*`, `src/vue/*`: **no comments** except
   `// oxlint-disable-next-line` pragmas where required. Each file is
   small and self-evident.
@@ -457,8 +490,10 @@ free in source and never reach the published bundles.
 
 `npm run build` (`node build.ts`) lints, bundles to `dist/` with
 rolldown, emits `.d.ts` via `tsc`, and rewrites `package.json`'s
-`versionMeta` (gzip sizes and Playwright test counts) from the
-current source. The numbers are generated, never hand-edited.
+`versionMeta` from the current source: `gzipSize` is the combined
+core (headline / badge), `gzipSizes` is one gzip number per
+published JS file, and `tests` is Playwright counts. The numbers
+are generated, never hand-edited.
 
 **Requires Node >= 24.** `build.ts` and the SSR test server
 (`tests/server.ts`) are run directly as TypeScript via Node's native

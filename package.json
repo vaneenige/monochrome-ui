@@ -32,29 +32,144 @@
     "collapsible",
     "dialog",
     "menu",
-    "tabs"
+    "menubar",
+    "popover",
+    "tabs",
+    "tooltip"
   ],
   "type": "module",
   "sideEffects": [
+    "./src/index.ts",
+    "./src/accordion.ts",
+    "./src/collapsible.ts",
+    "./src/dialog.ts",
+    "./src/menu.ts",
+    "./src/popover.ts",
+    "./src/router.ts",
+    "./src/tabs.ts",
+    "./src/tooltip.ts",
     "./dist/index.js",
-    "./dist/router.js"
+    "./dist/accordion.js",
+    "./dist/collapsible.js",
+    "./dist/dialog.js",
+    "./dist/menu.js",
+    "./dist/popover.js",
+    "./dist/router.js",
+    "./dist/tabs.js",
+    "./dist/tooltip.js"
   ],
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
     },
+    "./accordion": {
+      "types": "./dist/accordion.d.ts",
+      "default": "./dist/accordion.js"
+    },
+    "./collapsible": {
+      "types": "./dist/collapsible.d.ts",
+      "default": "./dist/collapsible.js"
+    },
+    "./dialog": {
+      "types": "./dist/dialog.d.ts",
+      "default": "./dist/dialog.js"
+    },
+    "./menu": {
+      "types": "./dist/menu.d.ts",
+      "default": "./dist/menu.js"
+    },
+    "./menubar": {
+      "types": "./dist/menu.d.ts",
+      "default": "./dist/menu.js"
+    },
+    "./popover": {
+      "types": "./dist/popover.d.ts",
+      "default": "./dist/popover.js"
+    },
     "./router": {
       "types": "./dist/router.d.ts",
       "default": "./dist/router.js"
+    },
+    "./tabs": {
+      "types": "./dist/tabs.d.ts",
+      "default": "./dist/tabs.js"
+    },
+    "./tooltip": {
+      "types": "./dist/tooltip.d.ts",
+      "default": "./dist/tooltip.js"
     },
     "./react": {
       "types": "./dist/react/index.d.ts",
       "default": "./dist/react/index.js"
     },
+    "./react/accordion": {
+      "types": "./dist/react/accordion.d.ts",
+      "default": "./dist/react/accordion.js"
+    },
+    "./react/collapsible": {
+      "types": "./dist/react/collapsible.d.ts",
+      "default": "./dist/react/collapsible.js"
+    },
+    "./react/dialog": {
+      "types": "./dist/react/dialog.d.ts",
+      "default": "./dist/react/dialog.js"
+    },
+    "./react/menu": {
+      "types": "./dist/react/menu.d.ts",
+      "default": "./dist/react/menu.js"
+    },
+    "./react/menubar": {
+      "types": "./dist/react/menubar.d.ts",
+      "default": "./dist/react/menubar.js"
+    },
+    "./react/popover": {
+      "types": "./dist/react/popover.d.ts",
+      "default": "./dist/react/popover.js"
+    },
+    "./react/tabs": {
+      "types": "./dist/react/tabs.d.ts",
+      "default": "./dist/react/tabs.js"
+    },
+    "./react/tooltip": {
+      "types": "./dist/react/tooltip.d.ts",
+      "default": "./dist/react/tooltip.js"
+    },
     "./vue": {
       "types": "./dist/vue/index.d.ts",
       "default": "./dist/vue/index.js"
+    },
+    "./vue/accordion": {
+      "types": "./dist/vue/accordion.d.ts",
+      "default": "./dist/vue/accordion.js"
+    },
+    "./vue/collapsible": {
+      "types": "./dist/vue/collapsible.d.ts",
+      "default": "./dist/vue/collapsible.js"
+    },
+    "./vue/dialog": {
+      "types": "./dist/vue/dialog.d.ts",
+      "default": "./dist/vue/dialog.js"
+    },
+    "./vue/menu": {
+      "types": "./dist/vue/menu.d.ts",
+      "default": "./dist/vue/menu.js"
+    },
+    "./vue/menubar": {
+      "types": "./dist/vue/menubar.d.ts",
+      "default": "./dist/vue/menubar.js"
+    },
+    "./vue/popover": {
+      "types": "./dist/vue/popover.d.ts",
+      "default": "./dist/vue/popover.js"
+    },
+    "./vue/tabs": {
+      "types": "./dist/vue/tabs.d.ts",
+      "default": "./dist/vue/tabs.js"
+    },
+    "./vue/tooltip": {
+      "types": "./dist/vue/tooltip.d.ts",
+      "default": "./dist/vue/tooltip.js"
     }
   },
   "files": [
@@ -105,23 +220,48 @@
     "playwright-core": "1.61.1"
   },
   "versionMeta": {
-    "gzipSize": 3109,
-    "routerGzipSize": 1218,
-    "wrappersGzipSize": {
+    "gzipSize": 3299,
+    "gzipSizes": {
+      "accordion": 687,
+      "collapsible": 336,
+      "core": 3299,
+      "dialog": 417,
+      "menu": 2180,
+      "menubar": 2180,
+      "popover": 723,
       "react": 2000,
-      "vue": 1939
+      "react/accordion": 501,
+      "react/collapsible": 409,
+      "react/dialog": 522,
+      "react/menu": 668,
+      "react/menubar": 920,
+      "react/popover": 511,
+      "react/tabs": 557,
+      "react/tooltip": 356,
+      "router": 1218,
+      "tabs": 728,
+      "tooltip": 741,
+      "vue": 1939,
+      "vue/accordion": 540,
+      "vue/collapsible": 443,
+      "vue/dialog": 574,
+      "vue/menu": 703,
+      "vue/menubar": 961,
+      "vue/popover": 569,
+      "vue/tabs": 659,
+      "vue/tooltip": 364
     },
     "tests": {
-      "total": 428,
+      "total": 438,
       "a11y": 11,
       "accordion": 33,
-      "architecture": 6,
+      "architecture": 9,
       "collapsible": 23,
       "dialog": 18,
       "menu": 218,
       "popover": 25,
       "router": 34,
-      "ssr": 2,
+      "ssr": 9,
       "tabs": 40,
       "tooltip": 18
     }

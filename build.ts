@@ -3,27 +3,56 @@ import { readFileSync, rmSync, writeFileSync } from "node:fs";
 import { gzipSync } from "node:zlib";
 import { rolldown } from "rolldown";
 
-// One entry per published export. `external` keeps peer frameworks out
-// of the bundle; the React wrapper needs the `"use client";` banner so
-// RSC treats it as a client module. Rolldown's minifier strips comments
-// on its own, so there is no pre-strip pass.
+const cores = ["accordion", "collapsible", "dialog", "menu", "popover", "tabs", "tooltip"] as const;
+const wrappers = [
+  "accordion",
+  "collapsible",
+  "dialog",
+  "menu",
+  "menubar",
+  "popover",
+  "tabs",
+  "tooltip",
+] as const;
+
+// One entry per published export. Combined `index` stays the default
+// (`import "monochrome"`). Each component also ships its own file;
+// rolldown inlines `dom.ts` into that bundle. `package.json`
+// `sideEffects` lists the source component files so the combined
+// entry's side-effect imports are not tree-shaken. `external` keeps
+// peer frameworks out of wrapper bundles; the React wrappers need
+// the `"use client";` banner so RSC treats them as client modules.
 const builds = [
   { input: "src/index.ts", dir: "dist", external: [] as string[] },
   { input: "src/router.ts", dir: "dist", external: [] as string[] },
+  ...cores.map((name) => ({
+    input: `src/${name}.ts`,
+    dir: "dist",
+    external: [] as string[],
+  })),
   {
     input: "src/react/index.ts",
     dir: "dist/react",
     external: ["react", "react-dom"],
     banner: '"use client";',
   },
+  ...wrappers.map((name) => ({
+    input: `src/react/${name}.ts`,
+    dir: "dist/react",
+    external: ["react", "react-dom"],
+    banner: '"use client";',
+  })),
   { input: "src/vue/index.ts", dir: "dist/vue", external: ["vue"] },
+  ...wrappers.map((name) => ({
+    input: `src/vue/${name}.ts`,
+    dir: "dist/vue",
+    external: ["vue"],
+  })),
 ];
 
 execSync("npm run lint", { stdio: "inherit" });
 rmSync("dist", { recursive: true, force: true });
 
-// The four bundles are independent, so build them in parallel. Cuts
-// pre-commit time roughly in half on a warm cache.
 await Promise.all(
   builds.map(async (config) => {
     const bundle = await rolldown({
@@ -33,7 +62,9 @@ await Promise.all(
     await bundle.write({
       dir: config.dir,
       format: "es",
-      minify: true,
+      // Full Oxc minify (compress + mangle). Rolldown's default is
+      // `'dce-only'`.
+      minify: { compress: true, mangle: true },
       ...(config.banner ? { banner: config.banner } : {}),
     });
     await bundle.close();
@@ -50,18 +81,28 @@ try {
 
 const gzip = (path: string) => gzipSync(readFileSync(path)).length;
 const fmt = (bytes: number) => `${(bytes / 1024).toFixed(1)}kB`;
+const wrapperSizes = (dir: "react" | "vue") =>
+  Object.fromEntries(wrappers.map((name) => [`${dir}/${name}`, gzip(`dist/${dir}/${name}.js`)]));
 
 const coreGz = gzip("dist/index.js");
-const routerGz = gzip("dist/router.js");
-const reactGz = gzip("dist/react/index.js");
-const vueGz = gzip("dist/vue/index.js");
+const menuGz = gzip("dist/menu.js");
+const gzipSizes: Record<string, number> = {
+  accordion: gzip("dist/accordion.js"),
+  collapsible: gzip("dist/collapsible.js"),
+  core: coreGz,
+  dialog: gzip("dist/dialog.js"),
+  menu: menuGz,
+  menubar: menuGz,
+  popover: gzip("dist/popover.js"),
+  react: gzip("dist/react/index.js"),
+  ...wrapperSizes("react"),
+  router: gzip("dist/router.js"),
+  tabs: gzip("dist/tabs.js"),
+  tooltip: gzip("dist/tooltip.js"),
+  vue: gzip("dist/vue/index.js"),
+  ...wrapperSizes("vue"),
+};
 
-// Counts actual runtime tests (so table-driven loops are counted by
-// iterations, not by source occurrences). Lists every spec under the
-// `html` project, which excludes only the router skips in react/vue.
-// This is the number of UNIQUE tests; the react and vue projects run
-// (almost) the same suite again, so CI executes roughly three times
-// this figure. Marketing copy quotes the unique count on purpose.
 const listing = execSync("npx playwright test --list --project=html --reporter=line", {
   encoding: "utf8",
 });
@@ -75,12 +116,12 @@ const totalTests = Object.values(testCounts).reduce((a, b) => a + b, 0);
 const pkg = JSON.parse(readFileSync("package.json", "utf8"));
 pkg.versionMeta = {
   gzipSize: coreGz,
-  routerGzipSize: routerGz,
-  wrappersGzipSize: { react: reactGz, vue: vueGz },
+  gzipSizes,
   tests: { total: totalTests, ...testCounts },
 };
 writeFileSync("package.json", `${JSON.stringify(pkg, null, 2)}\n`);
 
+const listed = cores.map((name) => `${name} ${fmt(gzipSizes[name] ?? 0)}`).join(", ");
 console.log(
-  `Build complete. Core: ${fmt(coreGz)} gzipped, router: ${fmt(routerGz)} gzipped, ${totalTests} tests.`,
+  `Build complete. Core: ${fmt(coreGz)} gzipped, router: ${fmt(gzipSizes.router ?? 0)} gzipped, standalone: ${listed}, ${totalTests} tests.`,
 );

@@ -22,14 +22,21 @@ npm install monochrome
 ```
 
 ```ts
-// core runtime
+// every component (helpers once)
 import "monochrome"
+
+// one component (helpers inlined into that file)
+import "monochrome/menu"
+
+// two or more: prefer the combined import. Several standalones
+// each inline `dom.ts` and can exceed the combined file.
 
 // optional router
 import "monochrome/router"
 
-// React wrappers
+// React wrappers (all, or one)
 import { Accordion } from "monochrome/react"
+import { Menu } from "monochrome/react/menu"
 
 // Vue wrappers
 import { Accordion } from "monochrome/vue"
