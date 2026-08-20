@@ -81,27 +81,28 @@ try {
 
 const gzip = (path: string) => gzipSync(readFileSync(path)).length;
 const fmt = (bytes: number) => `${(bytes / 1024).toFixed(1)}kB`;
-const wrapperSizes = (dir: "react" | "vue") =>
-  Object.fromEntries(wrappers.map((name) => [`${dir}/${name}`, gzip(`dist/${dir}/${name}.js`)]));
 
+// One entry per export, each an object with a gzip number per
+// published flavour. `menubar` shares the menu core file; `router`
+// has no wrappers; `index` is the three combined entries.
 const coreGz = gzip("dist/index.js");
-const menuGz = gzip("dist/menu.js");
-const gzipSizes: Record<string, number> = {
-  accordion: gzip("dist/accordion.js"),
-  collapsible: gzip("dist/collapsible.js"),
-  core: coreGz,
-  dialog: gzip("dist/dialog.js"),
-  menu: menuGz,
-  menubar: menuGz,
-  popover: gzip("dist/popover.js"),
-  react: gzip("dist/react/index.js"),
-  ...wrapperSizes("react"),
-  router: gzip("dist/router.js"),
-  tabs: gzip("dist/tabs.js"),
-  tooltip: gzip("dist/tooltip.js"),
-  vue: gzip("dist/vue/index.js"),
-  ...wrapperSizes("vue"),
-};
+const componentSizes = (name: (typeof wrappers)[number]) => ({
+  core: gzip(`dist/${name === "menubar" ? "menu" : name}.js`),
+  react: gzip(`dist/react/${name}.js`),
+  vue: gzip(`dist/vue/${name}.js`),
+});
+const gzipSizes: Record<string, Record<string, number>> = Object.fromEntries(
+  (
+    [
+      [
+        "index",
+        { core: coreGz, react: gzip("dist/react/index.js"), vue: gzip("dist/vue/index.js") },
+      ],
+      ["router", { core: gzip("dist/router.js") }],
+      ...wrappers.map((name) => [name, componentSizes(name)] as const),
+    ] as [string, Record<string, number>][]
+  ).sort(([a], [b]) => a.localeCompare(b)),
+);
 
 const listing = execSync("npx playwright test --list --project=html --reporter=line", {
   encoding: "utf8",
@@ -121,7 +122,7 @@ pkg.versionMeta = {
 };
 writeFileSync("package.json", `${JSON.stringify(pkg, null, 2)}\n`);
 
-const listed = cores.map((name) => `${name} ${fmt(gzipSizes[name] ?? 0)}`).join(", ");
+const listed = cores.map((name) => `${name} ${fmt(gzipSizes[name]?.core ?? 0)}`).join(", ");
 console.log(
-  `Build complete. Core: ${fmt(coreGz)} gzipped, router: ${fmt(gzipSizes.router ?? 0)} gzipped, standalone: ${listed}, ${totalTests} tests.`,
+  `Build complete. Core: ${fmt(coreGz)} gzipped, router: ${fmt(gzipSizes.router?.core ?? 0)} gzipped, standalone: ${listed}, ${totalTests} tests.`,
 );

@@ -506,9 +506,11 @@ router's comments never reach the published bundles.
 `npm run build` (`node build.ts`) lints, bundles to `dist/` with
 rolldown, emits `.d.ts` via `tsc`, and rewrites `package.json`'s
 `versionMeta` from the current source: `gzipSize` is the combined
-core (headline / badge), `gzipSizes` is one gzip number per
-published JS file, and `tests` is Playwright counts. The numbers
-are generated, never hand-edited.
+core (headline / badge), `gzipSizes` has one entry per export
+(each component plus `index` and `router`), each an object with
+a gzip number per published flavour (`core` / `react` / `vue`;
+`router` is core-only), and `tests` is Playwright counts. The
+numbers are generated, never hand-edited.
 
 **Requires Node >= 24.** `build.ts` and the SSR test server
 (`tests/server.ts`) are run directly as TypeScript via Node's native
