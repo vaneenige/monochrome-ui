@@ -1,9 +1,3 @@
-/**
- * @file Accordion: exclusive or multiple disclosures with roving
- * tabindex on the triggers. Registers its own `click` and
- * `keydown` listeners. Uses `toggleDisclosure` for the ARIA
- * write; does not import Collapsible.
- */
 import {
   findAncestor,
   getTarget,
@@ -16,7 +10,6 @@ import {
   toggleDisclosure,
 } from "./dom.js";
 
-/** ID prefixes this file dispatches on. */
 enum Prefix {
   RootAccordion = "mcr:accordion:",
   TriggerAccordion = "mct:accordion:",
@@ -41,7 +34,6 @@ if (hasDocument) {
   };
   const [accordionNext, accordionPrevious] = roving(accordionRoving);
 
-  /** Expand or collapse the item; single-mode closes the others. */
   const accordion = (trigger: HTMLElement) => {
     if (trigger.ariaDisabled === "true") return;
     if (trigger.ariaExpanded === "true") {

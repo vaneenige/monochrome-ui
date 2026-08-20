@@ -1,10 +1,5 @@
-/**
- * @file Collapsible: one trigger, one panel. Registers its own
- * `click` listener. The ARIA write lives in `toggleDisclosure`.
- */
 import { findAncestor, getTarget, hasDocument, suppressedClicks, toggleDisclosure } from "./dom.js";
 
-/** ID prefixes this file dispatches on. */
 enum Prefix {
   TriggerCollapsible = "mct:collapsible:",
 }

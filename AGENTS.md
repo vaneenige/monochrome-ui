@@ -435,8 +435,9 @@ correct place. It applies to:
 - Type guards, generic helpers, roving callbacks, component
   clusters, and the functions within a cluster.
 - Dispatch chains (`else if` prefix ladders). One exception: a
-  check that must short-circuit the ladder (the menu break in
-  the click walk) stays first, with a comment saying why.
+  check that must short-circuit the ladder stays first. The menu
+  click walk breaks on `mct:menu:` before the href-item check so
+  a submenu trigger that is also a link never activates.
 
 Fixed, non-alphabetical orders that stay fixed:
 
@@ -451,6 +452,9 @@ Fixed, non-alphabetical orders that stay fixed:
   (`--width`, `--height`).
 - `Focus` enum: the default member first (`Trigger` is `0`),
   then semantic order.
+- `src/dom.ts` declares `suppressedClicks` before `hasDocument`.
+  Swapping the two costs ~39 B combined gzip at the same raw
+  size; leave that order.
 
 ## Prose style
 
@@ -469,22 +473,22 @@ AGENTS.md, commit messages, PR descriptions.
 
 ## Comment policy
 
-- `src/dom.ts` and `src/router.ts`: **fully commented.** TSDoc
-  (`/** */`) for every declared symbol. Inline `//` for
-  non-obvious decisions. File-top `@file` header explaining
-  architecture, invariants, and file layout.
-- Each `src/{component}.ts` and `src/index.ts`: `@file` header
-  (same wrap). TSDoc on the `Prefix` enum and the component
-  primitive; inline `//` for non-obvious decisions (capture
-  suppress, capture Escape, outside `pointerdown`).
+- Core (`src/dom.ts`, `src/index.ts`, each `src/{component}.ts`):
+  **no comments.** Behaviour and rationale live in this file
+  ("Why the core looks weird" and "Clever tricks"), never in the
+  source. When a mechanism needs explaining, explain it here.
+- `src/router.ts`: **fully commented.** TSDoc (`/** */`) for
+  every declared symbol. Inline `//` for non-obvious decisions.
+  File-top `@file` header explaining architecture, invariants,
+  and file layout.
 - `src/react/*`, `src/vue/*`: **no comments** except
   `// oxlint-disable-next-line` pragmas where required. Each file is
   small and self-evident.
 - Tests: no comments except when the _why_ of a setup step would
   surprise the next reader (race conditions, sentinel globals, etc.).
 
-Rolldown's minifier drops all comments from `dist/`, so comments are
-free in source and never reach the published bundles.
+Rolldown's minifier drops all comments from `dist/`, so the
+router's comments never reach the published bundles.
 
 ## Build pipeline
 

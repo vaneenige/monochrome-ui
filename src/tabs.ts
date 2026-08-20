@@ -1,8 +1,3 @@
-/**
- * @file Tabs: a tablist of triggers, each with a panel. Registers
- * its own `click` and `keydown` listeners. Horizontal vs vertical
- * is `aria-orientation` on the list (DOM as state).
- */
 import {
   findAncestor,
   getLinked,
@@ -16,7 +11,6 @@ import {
   suppressedClicks,
 } from "./dom.js";
 
-/** ID prefixes this file dispatches on. */
 enum Prefix {
   TriggerTabs = "mct:tabs:",
 }
@@ -39,7 +33,6 @@ if (hasDocument) {
   };
   const [tabsNext, tabsPrevious] = roving(tabsRoving);
 
-  /** Select this tab and hide the previously selected panel. */
   const tabs = (trigger: HTMLElement) => {
     if (trigger.ariaDisabled !== "true" && trigger.ariaSelected !== "true") {
       let tab = trigger.parentElement?.firstElementChild;

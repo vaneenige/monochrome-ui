@@ -1,10 +1,3 @@
-/**
- * @file Menu and Menubar. Registers its own listeners. A pointer
- * session arms a capture-phase `click` that marks the event via
- * `suppressedClicks` so other components skip it; user listeners
- * still fire. `keydown` disarms it. Menu does not name Popover
- * or Collapsible.
- */
 import {
   findAncestor,
   getLinked,
@@ -19,7 +12,6 @@ import {
   suppressedClicks,
 } from "./dom.js";
 
-/** Where to put focus after `menu` opens or closes. */
 enum Focus {
   Trigger,
   First,
@@ -27,7 +19,6 @@ enum Focus {
   None,
 }
 
-/** ID prefixes this file dispatches on. */
 enum Prefix {
   Content = "mcc:",
   ContentMenu = "mcc:menu:",
@@ -108,7 +99,6 @@ if (hasDocument) {
   };
   const [menuNext, menuPrevious] = roving(menuRoving);
 
-  /** Open or close the menu linked from this trigger. */
   const menu = (trigger: HTMLElement | undefined, mode = Focus.Trigger) => {
     if (trigger?.id.startsWith(Prefix.TriggerMenu)) {
       const content = getLinked(trigger, "aria-controls");
@@ -207,10 +197,6 @@ if (hasDocument) {
       menu(menuStack.pop(), Focus.None);
   };
 
-  // Capture-phase one-shot: mark the trailing click so other
-  // components skip it. The event is not stopped, so user
-  // listeners still fire. Disarmed on pointerdown and keydown
-  // so an abandoned gesture then Enter still works.
   const menuSuppressClick = (event: Event) => {
     suppressedClicks.add(event);
     removeEventListener("click", menuSuppressClick, true);

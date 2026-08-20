@@ -1,9 +1,3 @@
-/**
- * @file Popover: one trigger, one `popover=manual` panel.
- * Registers its own listeners. Outside `pointerdown` dismisses so
- * a Menu (or anything else) opening on pointerdown closes this
- * popover without Popover naming that component.
- */
 import {
   findAncestor,
   getLinked,
@@ -14,7 +8,6 @@ import {
   suppressedClicks,
 } from "./dom.js";
 
-/** ID prefixes this file dispatches on. */
 enum Prefix {
   ContentPopover = "mcc:popover:",
   TriggerPopover = "mct:popover:",
@@ -23,7 +16,6 @@ enum Prefix {
 if (hasDocument) {
   let popoverShown: HTMLElement | null = null;
 
-  /** Show or hide the popover linked from this trigger. */
   const popover = (trigger: HTMLElement, show: boolean) => {
     if ((trigger.ariaExpanded === "true") === show) return;
     const content = getLinked(trigger, "aria-controls");
@@ -42,8 +34,6 @@ if (hasDocument) {
     }
   };
 
-  // Outside pointerdown dismisses so another overlay opening on
-  // pointerdown closes this popover without naming that overlay.
   addEventListener("pointerdown", (event: PointerEvent) => {
     if (event.button !== 0 || !popoverShown) return;
     let el = getTarget(event);

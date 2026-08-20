@@ -1,9 +1,3 @@
-/**
- * @file Tooltip: hover and focus show a `popover=manual` hint.
- * Registers its own listeners. Escape is capture-phase so a shown
- * tooltip dismisses first and `stopImmediatePropagation` keeps a
- * Menu (or Popover) open without Tooltip importing them.
- */
 import {
   findAncestor,
   getLinked,
@@ -15,7 +9,6 @@ import {
   suppressedClicks,
 } from "./dom.js";
 
-/** ID prefixes this file dispatches on. */
 enum Prefix {
   ContentTooltip = "mcc:tooltip:",
   TriggerTooltip = "mct:tooltip:",
@@ -28,7 +21,6 @@ if (hasDocument) {
   let tooltipShown: HTMLElement | null = null;
   let tooltipSuppressed: HTMLElement | null = null;
 
-  /** Show or hide the hint linked from this trigger. */
   const tooltip = (trigger: HTMLElement, show: boolean) => {
     const content = getLinked(trigger, "aria-describedby");
     if (content) {
@@ -100,8 +92,6 @@ if (hasDocument) {
   addEventListener(
     "keydown",
     (event: KeyboardEvent) => {
-      // Capture + stop so the first Escape dismisses the tooltip
-      // and leaves an open menu or popover for the second.
       if (event.key === "Escape" && tooltipShown) {
         tooltipSuppress();
         event.preventDefault();
