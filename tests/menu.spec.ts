@@ -507,6 +507,37 @@ test.describe("Menu", () => {
     });
   });
 
+  test.describe("Activation with dialog", () => {
+    test.beforeEach(async ({ page, renderer }) => {
+      await page.goto(`/${renderer}/menu/with-dialog`);
+    });
+
+    test("clicking a dialog-trigger menuitem opens the dialog and closes the menu", async ({
+      page,
+    }) => {
+      await page.getByTestId("menu-trigger").click();
+      await expect(page.getByTestId("menu-list")).toBeVisible();
+      await page.getByTestId("dialog-item").click();
+      await expect(page.getByTestId("dialog-content")).toBeVisible();
+      await expect(page.getByTestId("menu-list")).not.toBeVisible();
+    });
+
+    for (const key of ["Enter", "Space"] as const) {
+      test(`${key} on a dialog-trigger menuitem opens the dialog and closes the menu`, async ({
+        page,
+      }) => {
+        await page.getByTestId("menu-trigger").focus();
+        await page.keyboard.press("Enter");
+        await expect(page.getByTestId("menu-item-1")).toBeFocused();
+        await page.keyboard.press("ArrowDown");
+        await expect(page.getByTestId("dialog-item")).toBeFocused();
+        await page.keyboard.press(key);
+        await expect(page.getByTestId("dialog-content")).toBeVisible();
+        await expect(page.getByTestId("menu-list")).not.toBeVisible();
+      });
+    }
+  });
+
   test.describe("Mouse", () => {
     test("trigger click opens the menu without moving focus to the first item", async ({
       page,
@@ -1891,13 +1922,23 @@ test.describe("Click handler", () => {
       await page.getByTestId(target).click();
       await expect(page.getByTestId("output")).toHaveText(`${target}-clicked`);
     });
+  }
 
+  for (const key of ["Enter", "Space"] as const) {
+    test(`trigger ${key} does not fire a click handler`, async ({ page }) => {
+      await page.getByTestId("trigger").focus();
+      await page.keyboard.press(key);
+      await expect(page.getByTestId("output")).not.toHaveText("trigger-clicked");
+    });
+  }
+
+  for (const target of ["item", "checkbox", "radio-2"] as const) {
     for (const key of ["Enter", "Space"] as const) {
-      test(`${target} ${key} does not fire a click handler`, async ({ page }) => {
-        if (target !== "trigger") await page.getByTestId("trigger").click();
+      test(`${target} ${key} fires the click handler`, async ({ page }) => {
+        await page.getByTestId("trigger").click();
         await page.getByTestId(target).focus();
         await page.keyboard.press(key);
-        await expect(page.getByTestId("output")).not.toHaveText(`${target}-clicked`);
+        await expect(page.getByTestId("output")).toHaveText(`${target}-clicked`);
       });
     }
   }

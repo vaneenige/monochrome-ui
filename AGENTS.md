@@ -159,7 +159,15 @@ Enter/Space. Menu cannot: `pointerdown` already opened or
 dismissed the menu, and the following click is swallowed by the
 capture-phase suppressor. Keyboard activation therefore lives in
 `keydown` (`menuOpen` / `menuRoveIn` / `menuActivate`) with
-`preventDefault` so Space does not scroll. Enter/Space on a
+`preventDefault` so Space does not scroll. After `menuActivate`
+on a non-href item, `keydown` dispatches `target.click()` so
+keyboard activation produces the same click a pointer session
+does: user `onclick` handlers fire, and a menuitem that is also
+another component's trigger (a `mct:dialog-open:` item) works
+without Menu naming that component. When the menu stays open
+(checkbox, radio), the one-shot suppressor is armed first, so
+that click is marked exactly like a pointer session's trailing
+click and other monochrome components skip it. Enter/Space on a
 submenu trigger use `menuRoveIn`, so an already-open submenu
 moves focus to the first item. Root menu buttons still
 `menuOpen` (toggle closed if already the stack root).
@@ -186,8 +194,11 @@ stopped, so user listeners still fire. Menu does not name
 Collapsible.
 The suppressor is removed at the start of `pointerdown` and
 `keydown`, so an abandoned press then Enter on a disclosure
-still works. Playwright `.click()` still works: it fires
-`pointerdown`. `pointerup` on an href calls `el.click()` before
+still works. It is also removed when a `pointerup` activation
+closes the menu: that trailing click is the activation itself,
+so it must reach every component (a `mct:dialog-open:` menuitem
+opens its dialog), not just user listeners. Playwright `.click()`
+still works: it fires `pointerdown`. `pointerup` on an href calls `el.click()` before
 activate so sticky-drag navigates: the browser does not
 synthesize click across elements. Same-element press then
 fires a real click too (hash navigation is idempotent).

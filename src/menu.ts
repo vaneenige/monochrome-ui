@@ -231,6 +231,7 @@ if (hasDocument) {
       if (isMenuItem(el) && !isTrigger(el, Prefix.TriggerMenu)) {
         if (el.tagName === "A") el.click();
         menuActivate(el);
+        if (!menuStack[0]) removeEventListener("click", menuSuppressClick, true);
         return;
       }
       if (el.id.startsWith(Prefix.ContentMenu)) return;
@@ -416,6 +417,10 @@ if (hasDocument) {
             shouldPreventDefault = key === " " || target.tagName !== "A";
             if (target.ariaDisabled !== "true" && shouldPreventDefault) {
               menuActivate(target);
+              if (target.tagName !== "A") {
+                if (menuStack[0]) addEventListener("click", menuSuppressClick, true);
+                target.click();
+              }
             }
           }
           break;
