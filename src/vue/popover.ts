@@ -1,3 +1,4 @@
+import "../popover.js";
 import { defineComponent, h, provide, useId } from "vue";
 import { PopoverKey, requireInject } from "./shared.js";
 

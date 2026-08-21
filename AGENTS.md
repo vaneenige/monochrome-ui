@@ -27,7 +27,9 @@ any more:
    synchronous within its event.
 4. **Zero runtime dependencies.** Shared helpers (`src/dom.ts`)
    import nothing. Components import only those helpers. The
-   wrappers import only their framework (as peer deps).
+   wrappers import only their framework (as peer deps) plus one
+   side-effect import of their own core file, so a single wrapper
+   import ships both markup and behavior.
 5. **Baseline 2024 browsers.** We rely on the Popover API. No
    polyfills shipped.
 6. **One file per component.** Shared helpers live in

@@ -22,30 +22,28 @@ npm install monochrome
 ```
 
 ```ts
-// every component (helpers once)
+// every component, one flat file — for pages that ship no other
+// monochrome import; don't combine with the granular imports below
 import "monochrome"
 
-// one component (helpers inlined into that file)
+// one component (shared helpers dedupe across entries)
 import "monochrome/menu"
-
-// two or more: prefer the combined import. Several standalones
-// each inline `dom.ts` and can exceed the combined file.
 
 // optional router
 import "monochrome/router"
 
-// React wrappers (all, or one)
-import { Accordion } from "monochrome/react"
-import { Menu } from "monochrome/react/menu"
+// React wrappers — each auto-imports its own core, so one import
+// wires markup and behavior, tree-shaken to the components you use
+import { Accordion, Menu } from "monochrome/react"
 
-// Vue wrappers
-import { Accordion } from "monochrome/vue"
+// Vue wrappers, same shape
+import { Accordion, Menu } from "monochrome/vue"
 ```
 
 ## Example
 
 ```html
-<script type="module" src="https://esm.sh/monochrome"></script>
+<script type="module" src="https://unpkg.com/monochrome"></script>
 
 <button id="mct:collapsible:1" aria-expanded="false" aria-controls="mcc:collapsible:1">
   Show details

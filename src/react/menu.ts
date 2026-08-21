@@ -1,3 +1,4 @@
+import "../menu.js";
 import {
   createContext,
   createElement,

@@ -1,3 +1,4 @@
+import "../collapsible.js";
 import { defineComponent, h, provide, reactive, toRef, useId } from "vue";
 import { CollapsibleKey, requireInject } from "./shared.js";
 

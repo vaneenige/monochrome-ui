@@ -1,3 +1,4 @@
+import "../tooltip.js";
 import { defineComponent, h, provide, useId } from "vue";
 import { requireInject, TooltipKey } from "./shared.js";
 

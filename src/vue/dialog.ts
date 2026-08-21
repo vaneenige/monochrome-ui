@@ -1,3 +1,4 @@
+import "../dialog.js";
 import { defineComponent, h, provide, useId } from "vue";
 import { DialogKey, requireInject } from "./shared.js";
 

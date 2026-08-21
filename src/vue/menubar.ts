@@ -1,3 +1,4 @@
+import "../menu.js";
 import { defineComponent, h, onUnmounted, provide, reactive, ref, useId, watchEffect } from "vue";
 import { Menu } from "./menu.js";
 import { MenubarClaimKey, MenubarSlotKey, requireInject } from "./shared.js";

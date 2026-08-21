@@ -1,3 +1,4 @@
+import "../tabs.js";
 import type { PropType } from "vue";
 import { computed, defineComponent, h, provide, reactive, toRef, useId } from "vue";
 import { buildId, requireInject, TabsKey } from "./shared.js";

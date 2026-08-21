@@ -1,3 +1,4 @@
+import "../popover.js";
 import { createContext, createElement, type ReactElement, useContext, useId } from "react";
 import type { BaseProps } from "./shared.js";
 

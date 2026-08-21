@@ -1,3 +1,4 @@
+import "../accordion.js";
 import { defineComponent, h, provide, reactive, toRef, useId } from "vue";
 import { AccordionKey, requireInject } from "./shared.js";
 

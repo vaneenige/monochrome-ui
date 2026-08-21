@@ -1,3 +1,4 @@
+import "../menu.js";
 import { defineComponent, h, provide, useId } from "vue";
 import { MenuKey, requireInject } from "./shared.js";
 

@@ -55,6 +55,17 @@ const ssrExternal = [
   "monochrome/vue",
 ];
 
+// The wrappers side-effect-import their core as `../{name}.js`.
+// Client bundles keep those external, rewritten to the absolute
+// `/{name}.js` URLs the page-level `/index.js` shim also imports,
+// so the browser loads one module instance per core file — exactly
+// like a bundler deduping the published package.
+const coreExternal: Plugin = {
+  name: "core-external",
+  resolveId: (id) =>
+    /^\.\.\/[a-z]+\.js$/.test(id) ? { id: `/${id.slice(3)}`, external: "absolute" as const } : null,
+};
+
 const clientCache = new Map<string, string>();
 const ssrPathCache = new Map<string, string>();
 
@@ -63,7 +74,7 @@ const bundleForClient = async (filePath: string): Promise<string> => {
   if (cached) return cached;
   const bundle = await rolldown({
     input: filePath,
-    plugins: [vuePlugin],
+    plugins: [vuePlugin, coreExternal],
     resolve: { alias },
   });
   const { output } = await bundle.generate({ format: "es" });
@@ -97,7 +108,7 @@ const page = (title: string, body: string): string =>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${title}</title>
   <link rel="stylesheet" href="/test.css">
-  <script src="/index.js"></script>
+  <script type="module" src="/index.js"></script>
 </head>
 <body>
   ${body}
@@ -129,7 +140,17 @@ type Reply = { status: number; type?: string; body: string; location?: string };
 const cache = new Map<string, Reply>();
 
 const resolve = async (pathname: string): Promise<Reply | null> => {
-  if (pathname === "/index.js" || pathname === "/router.js") {
+  // `dist/index.js` is the flat standalone build; serving it next to
+  // the granular files the fixture bundles import would register
+  // every listener twice. Pages get a shim over the granular modules
+  // instead — the same graph a bundler resolves for the package.
+  if (pathname === "/index.js") {
+    const shim = ["accordion", "collapsible", "dialog", "menu", "popover", "tabs", "tooltip"]
+      .map((name) => `import "/${name}.js";`)
+      .join("\n");
+    return { status: 200, type: "application/javascript", body: shim };
+  }
+  if (/^\/[a-z]+\.js$/.test(pathname)) {
     const path = `${distDir}${pathname}`;
     if (existsSync(path)) {
       return { status: 200, type: "application/javascript", body: readFileSync(path, "utf8") };

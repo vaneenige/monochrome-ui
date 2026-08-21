@@ -1,3 +1,4 @@
+import "../tabs.js";
 import { createContext, createElement, type ReactElement, useContext, useId } from "react";
 import { type BaseProps, buildId } from "./shared.js";
 

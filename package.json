@@ -103,73 +103,9 @@
       "types": "./dist/react/index.d.ts",
       "default": "./dist/react/index.js"
     },
-    "./react/accordion": {
-      "types": "./dist/react/accordion.d.ts",
-      "default": "./dist/react/accordion.js"
-    },
-    "./react/collapsible": {
-      "types": "./dist/react/collapsible.d.ts",
-      "default": "./dist/react/collapsible.js"
-    },
-    "./react/dialog": {
-      "types": "./dist/react/dialog.d.ts",
-      "default": "./dist/react/dialog.js"
-    },
-    "./react/menu": {
-      "types": "./dist/react/menu.d.ts",
-      "default": "./dist/react/menu.js"
-    },
-    "./react/menubar": {
-      "types": "./dist/react/menubar.d.ts",
-      "default": "./dist/react/menubar.js"
-    },
-    "./react/popover": {
-      "types": "./dist/react/popover.d.ts",
-      "default": "./dist/react/popover.js"
-    },
-    "./react/tabs": {
-      "types": "./dist/react/tabs.d.ts",
-      "default": "./dist/react/tabs.js"
-    },
-    "./react/tooltip": {
-      "types": "./dist/react/tooltip.d.ts",
-      "default": "./dist/react/tooltip.js"
-    },
     "./vue": {
       "types": "./dist/vue/index.d.ts",
       "default": "./dist/vue/index.js"
-    },
-    "./vue/accordion": {
-      "types": "./dist/vue/accordion.d.ts",
-      "default": "./dist/vue/accordion.js"
-    },
-    "./vue/collapsible": {
-      "types": "./dist/vue/collapsible.d.ts",
-      "default": "./dist/vue/collapsible.js"
-    },
-    "./vue/dialog": {
-      "types": "./dist/vue/dialog.d.ts",
-      "default": "./dist/vue/dialog.js"
-    },
-    "./vue/menu": {
-      "types": "./dist/vue/menu.d.ts",
-      "default": "./dist/vue/menu.js"
-    },
-    "./vue/menubar": {
-      "types": "./dist/vue/menubar.d.ts",
-      "default": "./dist/vue/menubar.js"
-    },
-    "./vue/popover": {
-      "types": "./dist/vue/popover.d.ts",
-      "default": "./dist/vue/popover.js"
-    },
-    "./vue/tabs": {
-      "types": "./dist/vue/tabs.d.ts",
-      "default": "./dist/vue/tabs.js"
-    },
-    "./vue/tooltip": {
-      "types": "./dist/vue/tooltip.d.ts",
-      "default": "./dist/vue/tooltip.js"
     }
   },
   "files": [
@@ -223,52 +159,52 @@
     "gzipSize": 3318,
     "gzipSizes": {
       "accordion": {
-        "core": 687,
-        "react": 501,
-        "vue": 540
+        "core": 989,
+        "react": 511,
+        "vue": 760
       },
       "collapsible": {
-        "core": 336,
-        "react": 409,
-        "vue": 443
+        "core": 711,
+        "react": 417,
+        "vue": 650
       },
       "dialog": {
-        "core": 417,
-        "react": 522,
-        "vue": 574
+        "core": 856,
+        "react": 531,
+        "vue": 786
       },
       "index": {
         "core": 3318,
-        "react": 2000,
-        "vue": 1939
+        "react": 2047,
+        "vue": 2366
       },
       "menu": {
-        "core": 2200,
-        "react": 668,
-        "vue": 703
+        "core": 2406,
+        "react": 678,
+        "vue": 920
       },
       "menubar": {
-        "core": 2200,
-        "react": 920,
-        "vue": 961
+        "core": 2406,
+        "react": 958,
+        "vue": 1253
       },
       "popover": {
-        "core": 723,
-        "react": 511,
-        "vue": 569
+        "core": 1032,
+        "react": 520,
+        "vue": 780
       },
       "router": {
         "core": 1218
       },
       "tabs": {
-        "core": 728,
-        "react": 557,
-        "vue": 659
+        "core": 1034,
+        "react": 565,
+        "vue": 857
       },
       "tooltip": {
-        "core": 741,
-        "react": 356,
-        "vue": 364
+        "core": 1075,
+        "react": 366,
+        "vue": 573
       }
     },
     "tests": {

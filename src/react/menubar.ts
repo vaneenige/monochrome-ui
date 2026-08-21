@@ -1,3 +1,4 @@
+import "../menu.js";
 import { createContext, createElement, type ReactElement, useContext, useId, useRef } from "react";
 import { Menu } from "./menu.js";
 import type { BaseProps } from "./shared.js";
