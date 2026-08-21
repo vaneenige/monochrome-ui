@@ -37,6 +37,7 @@
     "tabs",
     "tooltip"
   ],
+  "packageManager": "bun@1.4.0",
   "type": "module",
   "sideEffects": [
     "./src/index.ts",
@@ -112,14 +113,14 @@
     "dist"
   ],
   "scripts": {
-    "build": "NODE_ENV=production node build.ts",
-    "test": "playwright test",
+    "build": "NODE_ENV=production bun build.ts",
+    "test": "bun --bun playwright test",
     "lint": "oxlint src tests build.ts && oxfmt --check src tests build.ts",
     "lint:fix": "oxlint --fix src tests build.ts && oxfmt src tests build.ts",
     "format": "oxfmt src tests build.ts",
     "typecheck": "tsc --noEmit",
     "prepare": "git config core.hooksPath scripts/git-hooks",
-    "prepublishOnly": "npm run build && npm run typecheck && npm run test"
+    "prepublishOnly": "bun run build && bun run typecheck && bun run test"
   },
   "peerDependencies": {
     "react": ">=19",
@@ -156,53 +157,53 @@
     "playwright-core": "1.61.1"
   },
   "versionMeta": {
-    "gzipSize": 3318,
+    "gzipSize": 3324,
     "gzipSizes": {
       "accordion": {
-        "core": 989,
-        "react": 511,
+        "core": 995,
+        "react": 512,
         "vue": 760
       },
       "collapsible": {
-        "core": 711,
-        "react": 417,
+        "core": 713,
+        "react": 418,
         "vue": 650
       },
       "dialog": {
-        "core": 856,
-        "react": 531,
-        "vue": 786
+        "core": 859,
+        "react": 535,
+        "vue": 788
       },
       "index": {
-        "core": 3318,
-        "react": 2047,
-        "vue": 2366
+        "core": 3324,
+        "react": 2050,
+        "vue": 2382
       },
       "menu": {
-        "core": 2406,
-        "react": 678,
-        "vue": 920
+        "core": 2410,
+        "react": 679,
+        "vue": 923
       },
       "menubar": {
-        "core": 2406,
-        "react": 958,
-        "vue": 1253
+        "core": 2410,
+        "react": 960,
+        "vue": 1254
       },
       "popover": {
-        "core": 1032,
+        "core": 1036,
         "react": 520,
-        "vue": 780
+        "vue": 781
       },
       "router": {
-        "core": 1218
+        "core": 1223
       },
       "tabs": {
-        "core": 1034,
-        "react": 565,
+        "core": 1039,
+        "react": 566,
         "vue": 857
       },
       "tooltip": {
-        "core": 1075,
+        "core": 1080,
         "react": 366,
         "vue": 573
       }

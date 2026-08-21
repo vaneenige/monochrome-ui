@@ -62,7 +62,7 @@ const builds = [
   },
 ];
 
-execSync("npm run lint", { stdio: "inherit" });
+execSync("bun run lint", { stdio: "inherit" });
 rmSync("dist", { recursive: true, force: true });
 
 await Promise.all(
@@ -88,7 +88,7 @@ await Promise.all(
 );
 
 try {
-  execSync("npx tsc -p tsconfig.build.json", { stdio: "pipe" });
+  execSync("bunx tsc -p tsconfig.build.json", { stdio: "pipe" });
 } catch (error) {
   const { stdout, stderr } = error as { stdout?: Buffer; stderr?: Buffer };
   console.error((stdout?.toString() ?? "") + (stderr?.toString() ?? ""));
@@ -137,7 +137,7 @@ const gzipSizes: Record<string, Record<string, number>> = Object.fromEntries(
   ).sort(([a], [b]) => a.localeCompare(b)),
 );
 
-const listing = execSync("npx playwright test --list --project=html --reporter=line", {
+const listing = execSync("bun --bun playwright test --list --project=html --reporter=line", {
   encoding: "utf8",
 });
 const testCounts: Record<string, number> = {};

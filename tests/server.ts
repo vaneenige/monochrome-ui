@@ -66,38 +66,42 @@ const coreExternal: Plugin = {
     /^\.\.\/[a-z]+\.js$/.test(id) ? { id: `/${id.slice(3)}`, external: "absolute" as const } : null,
 };
 
-const clientCache = new Map<string, string>();
-const ssrPathCache = new Map<string, string>();
+const clientCache = new Map<string, Promise<string>>();
+const ssrPathCache = new Map<string, Promise<string>>();
 
-const bundleForClient = async (filePath: string): Promise<string> => {
+const bundleForClient = (filePath: string): Promise<string> => {
   const cached = clientCache.get(filePath);
   if (cached) return cached;
-  const bundle = await rolldown({
-    input: filePath,
-    plugins: [vuePlugin, coreExternal],
-    resolve: { alias },
-  });
-  const { output } = await bundle.generate({ format: "es" });
-  await bundle.close();
-  const code = output[0]!.code;
-  clientCache.set(filePath, code);
-  return code;
+  const pending = (async () => {
+    const bundle = await rolldown({
+      input: filePath,
+      plugins: [vuePlugin, coreExternal],
+      resolve: { alias },
+    });
+    const { output } = await bundle.generate({ format: "es" });
+    await bundle.close();
+    return output[0]!.code;
+  })();
+  clientCache.set(filePath, pending);
+  return pending;
 };
 
-const bundleForSSR = async (name: string, filePath: string): Promise<string> => {
+const bundleForSSR = (name: string, filePath: string): Promise<string> => {
   const cached = ssrPathCache.get(name);
   if (cached) return cached;
-  const entryFileNames = `${name.replace(/[/\\]/g, "_")}.mjs`;
-  const bundle = await rolldown({
-    input: filePath,
-    plugins: [vuePlugin],
-    external: ssrExternal,
-  });
-  await bundle.write({ dir: ssrDir, entryFileNames, format: "es" });
-  await bundle.close();
-  const path = `${ssrDir}/${entryFileNames}`;
-  ssrPathCache.set(name, path);
-  return path;
+  const pending = (async () => {
+    const entryFileNames = `${name.replace(/[/\\]/g, "_")}.mjs`;
+    const bundle = await rolldown({
+      input: filePath,
+      plugins: [vuePlugin],
+      external: ssrExternal,
+    });
+    await bundle.write({ dir: ssrDir, entryFileNames, format: "es" });
+    await bundle.close();
+    return `${ssrDir}/${entryFileNames}`;
+  })();
+  ssrPathCache.set(name, pending);
+  return pending;
 };
 
 const page = (title: string, body: string): string =>
@@ -137,7 +141,7 @@ const ssr = async (name: string, filePath: string): Promise<string> => {
 };
 
 type Reply = { status: number; type?: string; body: string; location?: string };
-const cache = new Map<string, Reply>();
+const cache = new Map<string, Promise<Reply | null>>();
 
 const resolve = async (pathname: string): Promise<Reply | null> => {
   // `dist/index.js` is the flat standalone build; serving it next to
@@ -223,16 +227,14 @@ const send = (res: ServerResponse, reply: Reply): void => {
 
 createServer((req, res) => {
   const pathname = new URL(req.url ?? "/", "http://localhost").pathname;
-  const cached = cache.get(pathname);
-  if (cached) {
-    send(res, cached);
-    return;
+  let pending = cache.get(pathname);
+  if (!pending) {
+    pending = resolve(pathname);
+    cache.set(pathname, pending);
   }
-  void resolve(pathname).then((reply) => {
-    if (reply) {
-      cache.set(pathname, reply);
-      send(res, reply);
-    } else {
+  void pending.then((reply) => {
+    if (reply) send(res, reply);
+    else {
       res.writeHead(404);
       res.end("Not found");
     }

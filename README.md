@@ -62,7 +62,9 @@ element. No polyfills shipped.
 
 ## Contributing
 
-See [AGENTS.md](./AGENTS.md) for architecture, invariants, and code style.
+Library development uses Bun 1.4 (`bun install`, `bun run build`,
+`bun run test`). See [AGENTS.md](./AGENTS.md) for architecture,
+invariants, and code style.
 
 ## License
 

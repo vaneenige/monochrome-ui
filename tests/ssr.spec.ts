@@ -1,12 +1,12 @@
 import { expect, test } from "./fixtures";
 
-// These tests run in the Playwright worker process (Node), not in a
+// These tests run in the Playwright worker process, not in a
 // browser: importing the built bundles where `document` is undefined
 // IS the assertion. The SSR guard in both entry points must make the
 // import a silent no-op instead of a crash.
 test.describe("SSR", () => {
   test.beforeEach(({ renderer }) => {
-    test.skip(renderer !== "html", "Node-side import; renderer-independent");
+    test.skip(renderer !== "html", "Worker-side import; renderer-independent");
   });
 
   test("core imports without a DOM", async () => {

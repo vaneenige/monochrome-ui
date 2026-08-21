@@ -12,19 +12,18 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - uses: actions/setup-node@v6
+      - uses: oven-sh/setup-bun@v2
         with:
-          node-version: 24.18.0
-          cache: npm
+          bun-version-file: .bun-version
 
-      - run: npm ci
+      - run: bun install --frozen-lockfile
 
-      - run: npm run lint
+      - run: bun run lint
 
-      - run: npm run build
+      - run: bun run build
 
-      - run: npm run typecheck
+      - run: bun run typecheck
 
-      - run: npx playwright install chromium
+      - run: bunx playwright install chromium
 
-      - run: npm run test
+      - run: bun run test

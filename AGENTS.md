@@ -311,7 +311,7 @@ Rules only. Rationale lives in "Why the core looks weird" and
 - oxfmt defaults (`.oxfmtrc.json`, no overrides beyond ignoring
   `.html`/`.vue`/`.css`): 2-space indent, semicolons, double quotes,
   80-char line width. oxlint (`.oxlintrc.json`) runs its default
-  `correctness` rules with the default plugins. `npm run lint` runs
+  `correctness` rules with the default plugins. `bun run lint` runs
   `oxlint` then `oxfmt --check`, covering both lint and format, and
   runs first in the pre-commit hook.
 - `.js` extensions on value imports (NodeNext resolution).
@@ -505,21 +505,27 @@ router's comments never reach the published bundles.
 
 ## Build pipeline
 
-`npm run build` (`node build.ts`) lints, bundles to `dist/` with
+`bun run build` (`bun build.ts`) lints, bundles to `dist/` with
 rolldown, emits `.d.ts` via `tsc`, and rewrites `package.json`'s
 `versionMeta` from the current source: `gzipSize` is the combined
 core (headline / badge), `gzipSizes` has one entry per export
 (each component plus `index` and `router`), each an object with
 a gzip number per published flavour (`core` / `react` / `vue`;
 `router` is core-only), and `tests` is Playwright counts. The
-numbers are generated, never hand-edited.
+numbers are generated, never hand-edited. Dist bytes match a Node
+build of the same tree; `gzipSync` numbers can differ by a few
+bytes from Node's zlib, so the gate always restamps from Bun.
 
-**Requires Node >= 24.** `build.ts` and the SSR test server
-(`tests/server.ts`) are run directly as TypeScript via Node's native
-type stripping, so an older Node fails to start them. CI pins
-`24.18.0`; the published package itself has no runtime Node
-requirement (it ships browser ESM), which is why there is no
-`engines` field constraining consumers.
+**Requires Bun >= 1.4.** `build.ts` and the SSR test server
+(`tests/server.ts`) are run directly as TypeScript. CI pins
+`1.4.0` via `.bun-version`; the published package itself has no
+runtime Bun or Node requirement (it ships browser ESM), which
+is why there is no `engines` field constraining consumers.
+Install with `bun install` (`bun.lock`); do not add a
+`package-lock.json`. A parent npm workspace (this tree nested
+as a docs-site submodule) will capture `bun install`; generate
+and verify the lockfile from a standalone clone, which is what
+CI does.
 
 **Every commit runs the full gate.** The pre-commit hook runs
 lint, typecheck, build, and the complete test suite, then stages
