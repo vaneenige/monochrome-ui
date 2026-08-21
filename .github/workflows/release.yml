@@ -63,7 +63,9 @@ jobs:
           echo "VERSION=$VERSION" >> "$GITHUB_ENV"
 
       - name: Publish to npm
-        run: bun publish --access public --ignore-scripts --provenance
+        run: |
+          echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc
+          bun publish --access public --ignore-scripts --provenance
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
