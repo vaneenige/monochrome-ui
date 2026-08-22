@@ -104,23 +104,27 @@ NodeList and run a selector parser for structure we already know
 (Accordion items are direct children of the root; Tab buttons are
 direct children of the List). A sibling-pointer walk costs
 nothing, makes iteration order explicit (single-mode Accordion
-needs close-before-open, Tabs toggles off-and-on in one pass), and
-lets a single traversal do work that a list plus follow-up would
-split in two.
+closes others before toggling the trigger, Tabs toggles off-and-on
+in one pass), and lets a single traversal do work that a list plus
+follow-up would split in two.
 
 **Walk-up then walk-down for click dispatch.** Single-prefix
-clicks (Collapsible, Accordion, Tabs) use `findAncestor` from
-the event target. Overlay components keep a hand-rolled walk:
-several prefixes plus "inside content, stop". Menu open/dismiss
-lives on `pointerdown` and item activation on `pointerup`. A
-menu pointer session arms a capture-phase `click` that marks
-the event (`suppressedClicks`); other components skip that
+clicks (Collapsible, Accordion, Tabs, Tooltip suppress) use
+`findAncestor` from the event target. Dialog open/close and
+Popover toggle/outside use it too: the nearest matching
+prefix is the whole decision, and a content ancestor is the
+"inside, stop" / "not outside" check. Overlay components keep
+a hand-rolled walk where one pass mixes prefixes with roles
+(Menu `pointerup` activation, href `click`, `pointermove`
+hover path). Menu open/dismiss lives on `pointerdown` and
+item activation on `pointerup`. A menu pointer session
+arms a capture-phase `click` that marks the event
+(`suppressedClicks`); other components skip that
 gesture via `suppressedClicks.has`. The event is not stopped,
-so user listeners still fire. Popover's fall-through (walk
-reached the document root without matching) is its outside-click
-detector; it also dismisses on outside `pointerdown` so a Menu
-opening on pointerdown closes it without either file naming the
-other.
+so user listeners still fire. Popover dismisses on outside
+click when `findAncestor` finds neither trigger nor content,
+and on outside `pointerdown` so a Menu opening on
+pointerdown closes it without either file naming the other.
 
 **`findAncestor` over `closest()`.** `findAncestor(el, prefix)`
 walks `parentElement` up checking `id.startsWith(prefix)`.
@@ -140,9 +144,14 @@ distinguish "walked past the end and wrapped" from "kept going
 past the start". On an all-disabled list the naive walker loops
 forever. `rovingBoundary` remembers the first candidate the walker
 rejected; if we ever see it again we give up. One pointer, zero
-counters, zero extra passes. Cleared at the top of every
-`keydown`, `click`, and `pointerup` (all three listeners drive
-walks) so each interaction starts with a fresh boundary.
+counters, zero extra passes. Accordion and Tabs also
+`preventDefault` when the walker gives up, so an all-disabled
+list does not scroll. Menu uses the same give-up
+`preventDefault` so Home / End / typeahead on an empty or
+all-disabled menu do not scroll either. Cleared at the top
+of every `keydown`, `click`, and `pointerup` (all three
+listeners drive walks) so each interaction starts with a
+fresh boundary.
 
 **Radio sweep reuses the navigation walker.** Activating a
 `menuitemradio` must clear `aria-checked` on every adjacent radio
@@ -160,7 +169,7 @@ triggers still rely on the browser's synthesized `click` for
 Enter/Space. Menu cannot: `pointerdown` already opened or
 dismissed the menu, and the following click is swallowed by the
 capture-phase suppressor. Keyboard activation therefore lives in
-`keydown` (`menuOpen` / `menuRoveIn` / `menuActivate`) with
+`keydown` (`menuOpen` / `menu` / `menuActivate`) with
 `preventDefault` so Space does not scroll. After `menuActivate`
 on a non-href item, `keydown` dispatches `target.click()` so
 keyboard activation produces the same click a pointer session
@@ -170,11 +179,13 @@ without Menu naming that component. When the menu stays open
 (checkbox, radio), the one-shot suppressor is armed first, so
 that click is marked exactly like a pointer session's trailing
 click and other monochrome components skip it. Enter/Space on a
-submenu trigger use `menuRoveIn`, so an already-open submenu
-moves focus to the first item. Root menu buttons still
-`menuOpen` (toggle closed if already the stack root).
-Menubar items use `menuRoveIn`, so Enter on an open trigger
-moves into the menu instead of closing it. Enter on an href
+submenu trigger call `menu` with `Focus.First`, so an
+already-open submenu moves focus to the first item. Root menu
+buttons still `menuOpen` (toggle closed if already the stack
+root). Menubar items also call `menu` with `Focus.First`, so
+Enter on an open trigger moves into the menu instead of
+closing it. `menu` treats `Focus.First` / `Focus.Last` on an
+already-open menu as rove-in, not close. Enter on an href
 menuitem is the exception: no `preventDefault`, so the
 synthesized `click` navigates and the click listener closes
 the menu. Tab / Shift+Tab
@@ -215,7 +226,7 @@ not name those components.
 **Sibling submenu replace.** Opening a menu closes every stack
 entry whose content does not contain the new trigger
 (`menuTrim`). Pointer hover already did this via
-`triggerPath`. Keyboard `menu` / `menuRoveIn` share that
+`triggerPath`. Keyboard `menu` shares that
 walk, so hover-open A then ArrowRight on sibling B cannot
 leave both open. Menu `keydown` then trims the same way
 against `document.activeElement`, except when focus is still
@@ -227,6 +238,20 @@ parent item keeps its highlight. `Focus.Trigger` close
 (`ArrowLeft` / Escape) paints a menuitem trigger, so
 leaving a submenu is not an empty slot. `Focus.None`
 does not, so sibling hover is not overwritten.
+
+**Menubar tab-stop claim.** The first `Menubar.Menu` claims
+`tabindex=0`; every other trigger gets `-1` and is reached
+via arrow keys. Bare `Menubar.Item`s must come after the
+first `Menubar.Menu`, or initial tab focus lands past the
+visually first item. React keys the claim by the claimer's
+id so a Menu that re-renders alone re-claims its slot, and
+StrictMode double-render agrees. Root resets the claim
+during render because a children change re-renders Root, and
+the next pass re-claims in document order. Vue holds the
+claimer id in a ref: claiming is idempotent per id,
+unmounting releases, and each Menu tracks the ref through a
+`watchEffect` so the earliest surviving Menu becomes the tab
+stop.
 
 **Popover API with CSS-variable positioning.** The core publishes
 the trigger rect (`--top`, `--right`, `--bottom`, `--left`, in
@@ -330,7 +355,7 @@ Rules only. Rationale lives in "Why the core looks weird" and
   contract; unused generality is negative value here.
 - Extract a helper at the second verbatim repetition of a
   multi-line pattern when it saves minified bytes
-  (`tooltipSuppress`, `menubarStep`, `menuRoveIn`, `menuTrim`,
+  (`tooltipSuppress`, `menubarStep`, `menuTrim`,
   `toggleDisclosure`).
 
 ### Control flow

@@ -9,7 +9,11 @@ export function requireInject<T>(key: InjectionKey<T>, component: string): T {
 
 export const buildId = (base: string, id?: string) => (id ? `${base}:${id}` : base);
 
-export type CollapsibleContext = { baseId: string; open: boolean };
+export type CollapsibleContext = {
+  baseId: string;
+  open: boolean;
+  disabled: boolean;
+};
 export const CollapsibleKey: InjectionKey<CollapsibleContext> = Symbol("CollapsibleContext");
 
 export type AccordionContext = {

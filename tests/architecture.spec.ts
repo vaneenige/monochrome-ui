@@ -15,6 +15,11 @@ const components = readdirSync("src")
   .sort()
   .map((name) => [name, readFileSync(`src/${name}`, "utf8")] as const);
 
+const reactWrappers = readdirSync("src/react")
+  .filter((name) => name.endsWith(".ts"))
+  .sort()
+  .map((name) => [name, readFileSync(`src/react/${name}`, "utf8")] as const);
+
 const cores = [helper, combined, ...components.map(([, source]) => source)];
 const timers = ["setTimeout(", "setInterval(", "requestAnimationFrame(", "queueMicrotask("];
 
@@ -70,6 +75,13 @@ test.describe("Architecture invariants", () => {
   test("components import only shared helpers", () => {
     for (const [name, source] of components) {
       expect(importsFrom(source), name).toEqual(["./dom.js"]);
+    }
+  });
+
+  test("React wrappers provide context without `.Provider` or `useContext`", () => {
+    for (const [name, source] of reactWrappers) {
+      expect(source, name).not.toContain(".Provider");
+      expect(source, name).not.toContain("useContext");
     }
   });
 

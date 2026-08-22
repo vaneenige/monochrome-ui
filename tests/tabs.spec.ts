@@ -325,6 +325,22 @@ test.describe("Tabs", () => {
       await page.keyboard.press("Home");
       await expect(page.getByTestId("dtab-1")).toBeFocused();
     });
+
+    test("ArrowRight does not scroll when every tab is disabled", async ({ page }) => {
+      await page.evaluate(() => {
+        document.body.style.width = "3000px";
+        for (const id of ["dtab-1", "dtab-2", "dtab-3"]) {
+          const el = document.querySelector(`[data-testid="${id}"]`);
+          if (el instanceof HTMLElement) el.ariaDisabled = "true";
+        }
+      });
+      await scrollAndSettle(page, 500, 0);
+      await page.getByTestId("dtab-1").focus();
+      const before = await page.evaluate(() => window.scrollX);
+      await page.keyboard.press("ArrowRight");
+      expect(await page.evaluate(() => window.scrollX)).toBe(before);
+      await expect(page.getByTestId("dtab-1")).toBeFocused();
+    });
   });
 
   test.describe("Structure independence", () => {

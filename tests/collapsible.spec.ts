@@ -152,9 +152,18 @@ test.describe("Collapsible", () => {
   });
 
   test.describe("Disabled", () => {
-    test("ignores activation via mouse, Enter, and Space", async ({ page, renderer }) => {
-      test.skip(renderer !== "html", "Wrappers do not emit disabled collapsibles");
-      await page.goto("/html/collapsible/disabled");
+    test.beforeEach(async ({ page, renderer }) => {
+      await page.goto(`/${renderer}/collapsible/disabled`);
+    });
+
+    test("publishes `aria-disabled` on a disabled trigger", async ({ page }) => {
+      await expect(page.getByTestId("collapsible-trigger")).toHaveAttribute(
+        "aria-disabled",
+        "true",
+      );
+    });
+
+    test("ignores activation via mouse, Enter, and Space", async ({ page }) => {
       const trigger = page.getByTestId("collapsible-trigger");
       const content = page.getByTestId("collapsible-content");
       await trigger.click({ force: true });
@@ -236,6 +245,17 @@ test.describe("Collapsible", () => {
       await page.keyboard.press("Space");
       const after = await page.evaluate(() => window.scrollY);
       expect(after).toBe(before);
+    });
+  });
+
+  test.describe("React", () => {
+    test("`ref` attaches to the trigger host", async ({ page, renderer }) => {
+      test.skip(renderer !== "react", "Ref as a prop is a React wrapper API");
+      await page.goto("/react/collapsible/ref");
+      await expect(page.getByTestId("collapsible-trigger")).toHaveAttribute(
+        "data-ref-attached",
+        "true",
+      );
     });
   });
 });

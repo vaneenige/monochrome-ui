@@ -1,5 +1,5 @@
 import "../accordion.js";
-import { createContext, createElement, type ReactElement, useContext, useId } from "react";
+import { createContext, createElement, type ReactElement, use, useId } from "react";
 import type { BaseProps } from "./shared.js";
 
 type AccordionContextValue = {
@@ -10,7 +10,7 @@ type AccordionContextValue = {
 const AccordionContext = createContext<AccordionContextValue | null>(null);
 
 function useAccordionContext() {
-  const context = useContext(AccordionContext);
+  const context = use(AccordionContext);
   if (!context) throw new Error("Accordion components must be used within Accordion.Item");
   return context;
 }
@@ -36,7 +36,7 @@ function Item({
 }: BaseProps & { open?: boolean; disabled?: boolean }): ReactElement {
   const baseId = useId();
   return createElement(
-    AccordionContext.Provider,
+    AccordionContext,
     { value: { baseId, open: open ?? false, disabled: disabled ?? false } },
     createElement("div", props, children),
   );

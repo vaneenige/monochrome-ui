@@ -52,6 +52,18 @@ test.describe("Tooltip", () => {
       await page.getByTestId("tooltip-content").dispatchEvent("pointermove");
       await expect(page.getByTestId("tooltip-content")).toBeVisible();
     });
+
+    test("touch pointermove does not show the tooltip", async ({ page }) => {
+      await page.getByTestId("tooltip-trigger").dispatchEvent("pointermove", {
+        pointerType: "touch",
+      });
+      await expect(page.getByTestId("tooltip-content")).not.toBeVisible();
+    });
+
+    test("shows on pointermove over a nested SVG inside the trigger", async ({ page }) => {
+      await page.getByTestId("svg-icon").dispatchEvent("pointermove");
+      await expect(page.getByTestId("tooltip-content")).toBeVisible();
+    });
   });
 
   test.describe("Focus", () => {
@@ -192,6 +204,17 @@ test.describe("Tooltip", () => {
       await page.getByTestId("tooltip-trigger").hover();
       await expect(page.getByTestId("tooltip-content")).toBeVisible();
     });
+  });
+});
+
+test.describe("Click handler", () => {
+  test.beforeEach(async ({ page, renderer }) => {
+    await page.goto(`/${renderer}/tooltip/basic`);
+  });
+
+  test("fires on trigger click", async ({ page }) => {
+    await page.getByTestId("tooltip-trigger").click();
+    await expect(page.getByTestId("output")).toHaveText("trigger-clicked");
   });
 });
 

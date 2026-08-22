@@ -8,7 +8,12 @@ export default () => (
     </button>
 
     <Dialog.Root>
-      <Dialog.Trigger data-testid="primary-trigger">Open primary</Dialog.Trigger>
+      <Dialog.Trigger data-testid="primary-trigger" data-action="trigger-clicked">
+        <svg data-testid="svg-icon" aria-hidden="true" width="16" height="16" viewBox="0 0 16 16">
+          <path d="M4 6l4 4 4-4" />
+        </svg>
+        Open primary
+      </Dialog.Trigger>
       <Dialog.Content data-testid="primary-content">
         <Dialog.Title data-testid="primary-title">Confirm action</Dialog.Title>
         <Dialog.Description data-testid="primary-desc">This cannot be undone.</Dialog.Description>

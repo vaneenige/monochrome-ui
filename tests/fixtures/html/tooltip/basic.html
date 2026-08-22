@@ -1,3 +1,4 @@
+<div id="output" data-testid="output"></div>
 <button type="button" data-testid="focus-before">Focus before</button>
 <div class="tooltip">
   <button
@@ -6,7 +7,12 @@
     type="button"
     id="mct:tooltip:1"
     aria-describedby="mcc:tooltip:1"
-  >Hover me</button>
+  >
+    <svg data-testid="svg-icon" aria-hidden="true" width="16" height="16" viewBox="0 0 16 16">
+      <path d="M4 6l4 4 4-4"></path>
+    </svg>
+    Hover me
+  </button>
   <div
     data-testid="tooltip-content"
     id="mcc:tooltip:1"

@@ -91,6 +91,14 @@ test.describe("Popover", () => {
       await page.keyboard.press("Enter");
       await expect(page.getByTestId("disabled-content")).not.toBeVisible();
     });
+
+    test("activates via a click on a nested SVG inside the trigger", async ({ page }) => {
+      const svg = page.getByTestId("svg-icon");
+      await svg.click();
+      await expect(page.getByTestId("click-content")).toBeVisible();
+      await svg.click();
+      await expect(page.getByTestId("click-content")).not.toBeVisible();
+    });
   });
 
   test.describe("Content interaction", () => {
@@ -219,6 +227,25 @@ test.describe("Popover", () => {
       await expect(page.getByTestId("click-content")).toBeVisible();
     });
   });
+});
+
+test.describe("Click handler", () => {
+  test.beforeEach(async ({ page, renderer }) => {
+    await page.goto(`/${renderer}/popover/basic`);
+  });
+
+  for (const trigger of ["click", "Enter", "Space"] as const) {
+    test(`fires on trigger ${trigger}`, async ({ page }) => {
+      const target = page.getByTestId("click-trigger");
+      if (trigger === "click") {
+        await target.click();
+      } else {
+        await target.focus();
+        await page.keyboard.press(trigger);
+      }
+      await expect(page.getByTestId("output")).toHaveText("trigger-clicked");
+    });
+  }
 });
 
 test.describe("Positioning", () => {

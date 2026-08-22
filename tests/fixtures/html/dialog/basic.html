@@ -1,8 +1,13 @@
+<div id="output" data-testid="output"></div>
 <button type="button" data-testid="focus-before">Focus before</button>
 
 <div>
-  <button data-testid="primary-trigger" type="button"
-    id="mct:dialog-open:1" aria-haspopup="dialog" aria-controls="mcc:dialog:1">Open primary</button>
+  <button data-testid="primary-trigger" data-action="trigger-clicked" type="button"
+    id="mct:dialog-open:1" aria-haspopup="dialog" aria-controls="mcc:dialog:1">
+    <svg data-testid="svg-icon" aria-hidden="true" width="16" height="16" viewBox="0 0 16 16">
+      <path d="M4 6l4 4 4-4"></path>
+    </svg>
+    Open primary</button>
   <dialog data-testid="primary-content"
     id="mcc:dialog:1"
     aria-labelledby="mcc:dialog-title:1" aria-describedby="mcc:dialog-description:1"

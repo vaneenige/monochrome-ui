@@ -354,6 +354,22 @@ test.describe("Accordion", () => {
       await expect(page.getByTestId("disabled-content-3")).toBeVisible();
       await expect(page.getByTestId("disabled-content-1")).not.toBeVisible();
     });
+
+    test("ArrowDown does not scroll when every trigger is disabled", async ({ page }) => {
+      await page.evaluate(() => {
+        document.body.style.height = "3000px";
+        for (const id of ["disabled-trigger-1", "disabled-trigger-2", "disabled-trigger-3"]) {
+          const el = document.querySelector(`[data-testid="${id}"]`);
+          if (el instanceof HTMLElement) el.ariaDisabled = "true";
+        }
+      });
+      await scrollAndSettle(page, 0, 500);
+      await page.getByTestId("disabled-trigger-1").focus();
+      const before = await page.evaluate(() => window.scrollY);
+      await page.keyboard.press("ArrowDown");
+      expect(await page.evaluate(() => window.scrollY)).toBe(before);
+      await expect(page.getByTestId("disabled-trigger-1")).toBeFocused();
+    });
   });
 });
 

@@ -1,5 +1,5 @@
 import "../tabs.js";
-import { createContext, createElement, type ReactElement, useContext, useId } from "react";
+import { createContext, createElement, type ReactElement, use, useId } from "react";
 import { type BaseProps, buildId } from "./shared.js";
 
 type TabsContextValue = {
@@ -10,7 +10,7 @@ type TabsContextValue = {
 const TabsContext = createContext<TabsContextValue | null>(null);
 
 function useTabsContext() {
-  const context = useContext(TabsContext);
+  const context = use(TabsContext);
   if (!context) throw new Error("Tabs components must be used within Tabs.Root");
   return context;
 }
@@ -27,7 +27,7 @@ function Root({
   const baseId = useId();
   const dir = orientation ?? "horizontal";
   return createElement(
-    TabsContext.Provider,
+    TabsContext,
     { value: { baseId, selected: defaultValue, orientation: dir } },
     createElement("div", { ...props, id: `mcr:tabs:${baseId}` }, children),
   );

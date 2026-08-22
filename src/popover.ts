@@ -36,36 +36,26 @@ if (hasDocument) {
 
   addEventListener("pointerdown", (event: PointerEvent) => {
     if (event.button !== 0 || !popoverShown) return;
-    let el = getTarget(event);
-    while (el) {
-      const id = el.id;
-      if (id.startsWith(Prefix.TriggerPopover) || id.startsWith(Prefix.ContentPopover)) return;
-      el = el.parentElement;
+    const el = getTarget(event);
+    if (!findAncestor(el, Prefix.TriggerPopover) && !findAncestor(el, Prefix.ContentPopover)) {
+      popover(popoverShown, false);
     }
-    popover(popoverShown, false);
   });
 
   addEventListener("click", (event: MouseEvent) => {
     if (suppressedClicks.has(event)) return;
     const start = getTarget(event);
-    if (start) {
-      let el: HTMLElement | null = start;
-      while (el) {
-        const id = el.id;
-        if (id.startsWith(Prefix.TriggerPopover) && el.ariaDisabled !== "true") {
-          const isOpen = el.ariaExpanded === "true";
-          popover(el, !isOpen);
-          if (isOpen) {
-            el.focus();
-          } else {
-            getLinked(el, "aria-controls")?.focus();
-          }
-          break;
+    if (start && !findAncestor(start, Prefix.ContentPopover)) {
+      const trigger = findAncestor(start, Prefix.TriggerPopover);
+      if (trigger && trigger.ariaDisabled !== "true") {
+        const isOpen = trigger.ariaExpanded === "true";
+        popover(trigger, !isOpen);
+        if (isOpen) {
+          trigger.focus();
+        } else {
+          getLinked(trigger, "aria-controls")?.focus();
         }
-        if (id.startsWith(Prefix.ContentPopover)) break;
-        el = el.parentElement;
-      }
-      if (!el && popoverShown) popover(popoverShown, false);
+      } else if (popoverShown) popover(popoverShown, false);
     }
   });
 

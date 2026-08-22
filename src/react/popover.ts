@@ -1,23 +1,19 @@
 import "../popover.js";
-import { createContext, createElement, type ReactElement, useContext, useId } from "react";
+import { createContext, createElement, type ReactElement, use, useId } from "react";
 import type { BaseProps } from "./shared.js";
 
 type PopoverContextValue = { id: string };
 const PopoverContext = createContext<PopoverContextValue | null>(null);
 
 function usePopoverContext() {
-  const context = useContext(PopoverContext);
+  const context = use(PopoverContext);
   if (!context) throw new Error("Popover components must be used within Popover.Root");
   return context;
 }
 
 function Root({ children, ...props }: BaseProps): ReactElement {
   const id = useId();
-  return createElement(
-    PopoverContext.Provider,
-    { value: { id } },
-    createElement("div", props, children),
-  );
+  return createElement(PopoverContext, { value: { id } }, createElement("div", props, children));
 }
 
 function Trigger({

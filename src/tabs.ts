@@ -21,7 +21,10 @@ if (hasDocument) {
 
   const tabsRoving: RovingFocusCallback = (node, fallback) => {
     if (isElement(node)) {
-      if (rovingBoundary === node) return null;
+      if (rovingBoundary === node) {
+        shouldPreventDefault = true;
+        return null;
+      }
       if (!rovingBoundary) rovingBoundary = node;
       if (isTrigger(node, Prefix.TriggerTabs) && node.ariaDisabled !== "true") {
         shouldPreventDefault = true;
@@ -40,7 +43,7 @@ if (hasDocument) {
         if (isElement(tab) && (tab === trigger || tab.ariaSelected === "true")) {
           const content = getLinked(tab, "aria-controls");
           if (content) {
-            const willSelect = tab.ariaSelected !== "true";
+            const willSelect = tab === trigger;
             tab.ariaSelected = `${willSelect}`;
             tab.tabIndex = willSelect ? 0 : -1;
             content.ariaHidden = `${!willSelect}`;

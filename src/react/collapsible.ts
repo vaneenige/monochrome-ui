@@ -1,21 +1,26 @@
 import "../collapsible.js";
-import { createContext, createElement, type ReactElement, useContext, useId } from "react";
+import { createContext, createElement, type ReactElement, use, useId } from "react";
 import type { BaseProps } from "./shared.js";
 
-type CollapsibleContextValue = { baseId: string; open: boolean };
+type CollapsibleContextValue = { baseId: string; open: boolean; disabled: boolean };
 const CollapsibleContext = createContext<CollapsibleContextValue | null>(null);
 
 function useCollapsibleContext() {
-  const context = useContext(CollapsibleContext);
+  const context = use(CollapsibleContext);
   if (!context) throw new Error("Collapsible components must be used within Collapsible.Root");
   return context;
 }
 
-function Root({ children, open, ...props }: BaseProps & { open?: boolean }): ReactElement {
+function Root({
+  children,
+  open,
+  disabled,
+  ...props
+}: BaseProps & { open?: boolean; disabled?: boolean }): ReactElement {
   const baseId = useId();
   return createElement(
-    CollapsibleContext.Provider,
-    { value: { baseId, open: open ?? false } },
+    CollapsibleContext,
+    { value: { baseId, open: open ?? false, disabled: disabled ?? false } },
     createElement("div", props, children),
   );
 }
@@ -32,6 +37,7 @@ function Trigger({ children, ...props }: BaseProps): ReactElement {
       id: `mct:collapsible:${fullId}`,
       "aria-expanded": isOpen,
       "aria-controls": `mcc:collapsible:${fullId}`,
+      "aria-disabled": context.disabled || undefined,
     },
     children,
   );

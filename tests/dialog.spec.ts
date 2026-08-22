@@ -74,6 +74,11 @@ test.describe("Dialog", () => {
       await page.getByTestId("disabled-trigger").click({ force: true });
       await expect(page.getByTestId("disabled-content")).not.toBeVisible();
     });
+
+    test("opens via a click on a nested SVG inside the trigger", async ({ page }) => {
+      await page.getByTestId("svg-icon").click();
+      await expect(page.getByTestId("primary-content")).toBeVisible();
+    });
   });
 
   test.describe("Modality", () => {
@@ -221,6 +226,25 @@ test.describe("Dialog", () => {
       await expect(page.getByTestId("tooltip-content")).not.toBeVisible();
     });
   });
+});
+
+test.describe("Click handler", () => {
+  test.beforeEach(async ({ page, renderer }) => {
+    await page.goto(`/${renderer}/dialog/basic`);
+  });
+
+  for (const trigger of ["click", "Enter", "Space"] as const) {
+    test(`fires on trigger ${trigger}`, async ({ page }) => {
+      const target = page.getByTestId("primary-trigger");
+      if (trigger === "click") {
+        await target.click();
+      } else {
+        await target.focus();
+        await page.keyboard.press(trigger);
+      }
+      await expect(page.getByTestId("output")).toHaveText("trigger-clicked");
+    });
+  }
 });
 
 test.describe("Edge cases", () => {

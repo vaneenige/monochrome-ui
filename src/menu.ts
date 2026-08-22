@@ -55,7 +55,7 @@ if (hasDocument) {
   const menuRoving: RovingFocusCallback = (node, fallback) => {
     if (isElement(node)) {
       if (rovingBoundary === node) {
-        rovingBoundary = null;
+        shouldPreventDefault = true;
         return null;
       }
       if (!rovingBoundary) rovingBoundary = node;
@@ -104,17 +104,23 @@ if (hasDocument) {
       const content = getLinked(trigger, "aria-controls");
       if (content) {
         if (trigger.ariaExpanded === "true") {
-          if (mode === Focus.Trigger && trigger.role?.startsWith("menuitem")) {
-            menuHighlight(trigger);
+          if (mode === Focus.First) {
+            menuRoving(content.firstElementChild, menuNext);
+          } else if (mode === Focus.Last) {
+            menuRoving(content.lastElementChild, menuPrevious);
           } else {
-            if (mode !== Focus.None || content.contains(document.activeElement)) {
-              trigger.focus();
+            if (mode === Focus.Trigger && trigger.role?.startsWith("menuitem")) {
+              menuHighlight(trigger);
+            } else {
+              if (mode !== Focus.None || content.contains(document.activeElement)) {
+                trigger.focus();
+              }
+              if (content.contains(menuHighlighted)) menuHighlight(null);
             }
-            if (content.contains(menuHighlighted)) menuHighlight(null);
+            content.hidePopover();
+            trigger.ariaExpanded = "false";
+            content.ariaHidden = "true";
           }
-          content.hidePopover();
-          trigger.ariaExpanded = "false";
-          content.ariaHidden = "true";
         } else if (trigger.ariaDisabled !== "true") {
           menuTrim(trigger);
           menuStack.push(trigger);
@@ -177,21 +183,6 @@ if (hasDocument) {
     }
   };
 
-  const menuRoveIn = (trigger: HTMLElement, mode: Focus) => {
-    if (trigger.ariaExpanded !== "true") {
-      menu(trigger, mode);
-    } else {
-      const content = getLinked(trigger, "aria-controls");
-      if (content) {
-        if (mode === Focus.First) {
-          menuRoving(content.firstElementChild, menuNext);
-        } else {
-          menuRoving(content.lastElementChild, menuPrevious);
-        }
-      }
-    }
-  };
-
   const menuTrim = (el: HTMLElement) => {
     while (menuStack[0] && !getLinked(menuStack.at(-1) || el, "aria-controls")?.contains(el))
       menu(menuStack.pop(), Focus.None);
@@ -205,56 +196,41 @@ if (hasDocument) {
   addEventListener("pointerdown", (event: PointerEvent) => {
     removeEventListener("click", menuSuppressClick, true);
     if (event.button !== 0) return;
-    let el = getTarget(event);
+    const el = getTarget(event);
     if (!el) return;
-    while (el) {
-      const id = el.id;
-      if (id.startsWith(Prefix.TriggerMenu)) {
-        addEventListener("click", menuSuppressClick, true);
-        menuOpen(el, Focus.None);
-        return;
-      }
-      if (id.startsWith(Prefix.ContentMenu) && menuStack[0]) {
-        addEventListener("click", menuSuppressClick, true);
-        return;
-      }
-      el = el.parentElement;
-    }
-    if (menuStack[0]) menuCloseAll();
+    const trigger = findAncestor(el, Prefix.TriggerMenu);
+    if (trigger) {
+      addEventListener("click", menuSuppressClick, true);
+      menuOpen(trigger, Focus.None);
+    } else if (findAncestor(el, Prefix.ContentMenu) && menuStack[0]) {
+      addEventListener("click", menuSuppressClick, true);
+    } else if (menuStack[0]) menuCloseAll();
   });
 
   addEventListener("pointerup", (event: PointerEvent) => {
     rovingBoundary = null;
     if (event.button !== 0 || !menuStack[0]) return;
     let el = getTarget(event);
-    while (el) {
+    while (el && !el.id.startsWith(Prefix.ContentMenu)) {
       if (isMenuItem(el) && !isTrigger(el, Prefix.TriggerMenu)) {
         if (el.tagName === "A") el.click();
         menuActivate(el);
         if (!menuStack[0]) removeEventListener("click", menuSuppressClick, true);
         return;
       }
-      if (el.id.startsWith(Prefix.ContentMenu)) return;
       el = el.parentElement;
     }
   });
 
   addEventListener("click", (event: MouseEvent) => {
     if (suppressedClicks.has(event)) return;
-    const start = getTarget(event);
-    if (start) {
-      let el: HTMLElement | null = start;
-      while (el) {
-        const id = el.id;
-        if (id.startsWith(Prefix.TriggerMenu)) break;
-        else if (isMenuItem(el) && el.tagName === "A") {
-          menuActivate(el);
-          break;
-        } else if (id.startsWith(Prefix.ContentMenu)) {
-          break;
-        }
-        el = el.parentElement;
+    let el = getTarget(event);
+    while (el && !el.id.startsWith(Prefix.TriggerMenu) && !el.id.startsWith(Prefix.ContentMenu)) {
+      if (isMenuItem(el) && el.tagName === "A") {
+        menuActivate(el);
+        break;
       }
+      el = el.parentElement;
     }
   });
 
@@ -363,41 +339,41 @@ if (hasDocument) {
           if (isRootTrigger && target.role === "button") {
             menuOpen(target, Focus.First);
           } else {
-            menuRoveIn(target, Focus.First);
+            menu(target, Focus.First);
           }
           shouldPreventDefault = true;
           break;
         case "ArrowDown":
           if (isRootTrigger) {
-            menuRoveIn(target, Focus.First);
+            menu(target, Focus.First);
             shouldPreventDefault = true;
           }
           break;
         case "ArrowUp":
           if (isRootTrigger) {
-            menuRoveIn(target, Focus.Last);
+            menu(target, Focus.Last);
             shouldPreventDefault = true;
           }
           break;
         case "ArrowRight":
-          if (!isRootTrigger) menuRoveIn(target, Focus.First);
+          if (!isRootTrigger) menu(target, Focus.First);
           break;
         case "Home":
           if (isOpenMenuButton) {
-            menuRoveIn(target, Focus.First);
+            menu(target, Focus.First);
             shouldPreventDefault = true;
           }
           break;
         case "End":
           if (isOpenMenuButton) {
-            menuRoveIn(target, Focus.Last);
+            menu(target, Focus.Last);
             shouldPreventDefault = true;
           }
           break;
         default:
           if (isOpenMenuButton && /^[a-z]$/i.test(key)) {
             shouldMatchLetter = key.toLowerCase();
-            menuRoveIn(target, Focus.First);
+            menu(target, Focus.First);
           }
       }
     }

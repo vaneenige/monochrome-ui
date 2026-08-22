@@ -19,6 +19,15 @@ import { Menu, Popover, Tooltip } from "monochrome/vue"
         data-testid="tooltip-trigger"
         data-action="trigger-clicked"
       >
+        <svg
+          data-testid="svg-icon"
+          aria-hidden="true"
+          width="16"
+          height="16"
+          viewBox="0 0 16 16"
+        >
+          <path d="M4 6l4 4 4-4" />
+        </svg>
         Hover me
       </Tooltip.Trigger>
       <Tooltip.Content data-testid="tooltip-content">

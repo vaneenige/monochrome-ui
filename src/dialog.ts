@@ -1,7 +1,6 @@
-import { getLinked, getTarget, hasDocument, suppressedClicks } from "./dom.js";
+import { findAncestor, getLinked, getTarget, hasDocument, suppressedClicks } from "./dom.js";
 
 enum Prefix {
-  ContentDialog = "mcc:dialog:",
   TriggerDialogClose = "mct:dialog-close:",
   TriggerDialogOpen = "mct:dialog-open:",
 }
@@ -31,19 +30,11 @@ if (hasDocument) {
 
   addEventListener("click", (event: MouseEvent) => {
     if (suppressedClicks.has(event)) return;
-    let el = getTarget(event);
-    while (el) {
-      const id = el.id;
-      if (id.startsWith(Prefix.TriggerDialogClose)) {
-        dialogClose();
-        break;
-      }
-      if (id.startsWith(Prefix.TriggerDialogOpen) && el.ariaDisabled !== "true") {
-        dialogOpen(el);
-        break;
-      }
-      if (id.startsWith(Prefix.ContentDialog)) break;
-      el = el.parentElement;
+    const target = getTarget(event);
+    if (findAncestor(target, Prefix.TriggerDialogClose)) dialogClose();
+    else {
+      const trigger = findAncestor(target, Prefix.TriggerDialogOpen);
+      if (trigger && trigger.ariaDisabled !== "true") dialogOpen(trigger);
     }
   });
 

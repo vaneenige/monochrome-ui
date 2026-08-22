@@ -5,10 +5,18 @@ import { CollapsibleKey, requireInject } from "./shared.js";
 const Root = defineComponent({
   props: {
     open: { type: Boolean, default: false },
+    disabled: { type: Boolean, default: false },
   },
   setup(props, { slots }) {
     const baseId = useId();
-    provide(CollapsibleKey, reactive({ baseId, open: toRef(props, "open") }));
+    provide(
+      CollapsibleKey,
+      reactive({
+        baseId,
+        open: toRef(props, "open"),
+        disabled: toRef(props, "disabled"),
+      }),
+    );
     return () => h("div", null, slots.default?.());
   },
 });
@@ -24,6 +32,7 @@ const Trigger = defineComponent({
           id: `mct:collapsible:${ctx.baseId}`,
           "aria-expanded": ctx.open,
           "aria-controls": `mcc:collapsible:${ctx.baseId}`,
+          "aria-disabled": ctx.disabled || undefined,
         },
         slots.default?.(),
       );

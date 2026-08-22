@@ -1,23 +1,19 @@
 import "../dialog.js";
-import { createContext, createElement, type ReactElement, useContext, useId } from "react";
+import { createContext, createElement, type ReactElement, use, useId } from "react";
 import type { BaseProps } from "./shared.js";
 
 type DialogContextValue = { id: string };
 const DialogContext = createContext<DialogContextValue | null>(null);
 
 function useDialogContext() {
-  const context = useContext(DialogContext);
+  const context = use(DialogContext);
   if (!context) throw new Error("Dialog components must be used within Dialog.Root");
   return context;
 }
 
 function Root({ children, ...props }: BaseProps): ReactElement {
   const id = useId();
-  return createElement(
-    DialogContext.Provider,
-    { value: { id } },
-    createElement("div", props, children),
-  );
+  return createElement(DialogContext, { value: { id } }, createElement("div", props, children));
 }
 
 function Trigger({

@@ -1,12 +1,5 @@
 import "../menu.js";
-import {
-  createContext,
-  createElement,
-  type ReactElement,
-  type ReactNode,
-  useContext,
-  useId,
-} from "react";
+import { createContext, createElement, type ReactElement, type ReactNode, use, useId } from "react";
 import type { BaseProps } from "./shared.js";
 
 type MenuContextValue = {
@@ -18,14 +11,14 @@ type MenuContextValue = {
 const MenuContext = createContext<MenuContextValue | null>(null);
 
 function useMenuContext() {
-  const context = useContext(MenuContext);
+  const context = use(MenuContext);
   if (!context) throw new Error("Menu components must be used within Menu.Root");
   return context;
 }
 
 function Root({ children }: { children: ReactNode }): ReactElement {
   const id = useId();
-  return createElement(MenuContext.Provider, { value: { id, root: true } }, children);
+  return createElement(MenuContext, { value: { id, root: true } }, children);
 }
 
 function Trigger({
@@ -164,7 +157,7 @@ function Separator(props: Omit<BaseProps, "children">): ReactElement {
 function Group({ children, ...props }: BaseProps): ReactElement {
   const id = useId();
   return createElement(
-    MenuContext.Provider,
+    MenuContext,
     { value: { id, submenu: true } },
     createElement("li", { ...props, role: "none" }, children),
   );

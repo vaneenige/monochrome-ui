@@ -3,7 +3,6 @@ import {
   getLinked,
   getTarget,
   hasDocument,
-  isElement,
   isTrigger,
   position,
   suppressedClicks,
@@ -65,23 +64,15 @@ if (hasDocument) {
 
   addEventListener("click", (event: MouseEvent) => {
     if (suppressedClicks.has(event)) return;
-    let el = getTarget(event);
-    while (el) {
-      if (el.id.startsWith(Prefix.TriggerTooltip)) {
-        tooltipSuppress();
-        break;
-      }
-      if (el.id.startsWith(Prefix.ContentTooltip)) break;
-      el = el.parentElement;
-    }
+    if (findAncestor(getTarget(event), Prefix.TriggerTooltip)) tooltipSuppress();
   });
 
   addEventListener("pointermove", (event: PointerEvent) => {
-    if (event.pointerType === "touch") return;
-    if (event.target === pointerTarget) return;
+    if (event.pointerType === "touch" || event.target === pointerTarget) return;
     pointerTarget = event.target;
-    if (isElement(event.target) && !findAncestor(event.target, Prefix.ContentTooltip)) {
-      const nextHover = findAncestor(event.target, Prefix.TriggerTooltip);
+    const target = getTarget(event);
+    if (target && !findAncestor(target, Prefix.ContentTooltip)) {
+      const nextHover = findAncestor(target, Prefix.TriggerTooltip);
       if (nextHover !== tooltipHovered) {
         tooltipHovered = nextHover;
         tooltipSync();

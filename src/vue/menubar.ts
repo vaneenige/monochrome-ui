@@ -3,15 +3,6 @@ import { defineComponent, h, onUnmounted, provide, reactive, ref, useId, watchEf
 import { Menu } from "./menu.js";
 import { MenubarClaimKey, MenubarSlotKey, requireInject } from "./shared.js";
 
-// The first `Menubar.Menu` claims the keyboard tab-stop (`tabindex=0`);
-// every other trigger gets `-1` and is reached via arrow keys. Put any
-// bare `Menubar.Item`s after the first `Menubar.Menu`, otherwise the
-// initial tab focus lands past the visually-first item.
-//
-// The claim is a ref holding the claimer's id. Claiming is idempotent
-// per id, unmounting releases, and each Menu tracks the ref through a
-// `watchEffect`, so when the claimer leaves the earliest surviving
-// Menu re-claims and its trigger becomes the tab stop reactively.
 const Root = defineComponent({
   setup(_, { slots }) {
     const claimed = ref<string | null>(null);

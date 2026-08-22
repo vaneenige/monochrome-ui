@@ -1,23 +1,19 @@
 import "../tooltip.js";
-import { createContext, createElement, type ReactElement, useContext, useId } from "react";
+import { createContext, createElement, type ReactElement, use, useId } from "react";
 import type { BaseProps } from "./shared.js";
 
 type TooltipContextValue = { id: string };
 const TooltipContext = createContext<TooltipContextValue | null>(null);
 
 function useTooltipContext() {
-  const context = useContext(TooltipContext);
+  const context = use(TooltipContext);
   if (!context) throw new Error("Tooltip components must be used within Tooltip.Root");
   return context;
 }
 
 function Root({ children, ...props }: BaseProps): ReactElement {
   const id = useId();
-  return createElement(
-    TooltipContext.Provider,
-    { value: { id } },
-    createElement("div", props, children),
-  );
+  return createElement(TooltipContext, { value: { id } }, createElement("div", props, children));
 }
 
 function Trigger({ children, ...props }: BaseProps): ReactElement {
