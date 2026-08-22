@@ -62,12 +62,13 @@ jobs:
           ')
           echo "VERSION=$VERSION" >> "$GITHUB_ENV"
 
+      # bun publish can't do OIDC trusted publishing (oven-sh/bun#22423),
+      # so publish via the real npm CLI (>= 11.5.1) run through bun. With a
+      # trusted publisher configured on npm and `id-token: write` above, npm
+      # exchanges the GitHub OIDC token — no NPM_TOKEN — and auto-generates
+      # provenance.
       - name: Publish to npm
-        run: |
-          echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc
-          bun publish --access public --ignore-scripts --provenance
-        env:
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: bunx npm@latest publish --access public --ignore-scripts --provenance
 
       - name: Commit, tag, and push
         run: |
