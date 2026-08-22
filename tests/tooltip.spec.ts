@@ -114,6 +114,25 @@ test.describe("Tooltip", () => {
       await expect(page.getByTestId("tooltip-content")).not.toBeVisible();
     });
 
+    test("click suppression lasts while the pointer stays on the trigger", async ({ page }) => {
+      const trigger = page.getByTestId("tooltip-trigger");
+      await trigger.hover();
+      await trigger.click();
+      await expect(page.getByTestId("tooltip-content")).not.toBeVisible();
+      await trigger.dispatchEvent("pointermove");
+      await expect(page.getByTestId("tooltip-content")).not.toBeVisible();
+      await page.getByTestId("focus-before").click();
+      await trigger.hover();
+      await expect(page.getByTestId("tooltip-content")).toBeVisible();
+    });
+
+    test("a click on a nested SVG suppresses the tooltip", async ({ page }) => {
+      await page.getByTestId("tooltip-trigger").hover();
+      await expect(page.getByTestId("tooltip-content")).toBeVisible();
+      await page.getByTestId("svg-icon").click();
+      await expect(page.getByTestId("tooltip-content")).not.toBeVisible();
+    });
+
     test("Escape hides without moving focus (WCAG 1.4.13 Dismissable)", async ({ page }) => {
       await page.getByTestId("tooltip-trigger").focus();
       await expect(page.getByTestId("tooltip-content")).toBeVisible();
@@ -148,6 +167,32 @@ test.describe("Tooltip", () => {
       await page.getByTestId("tooltip-trigger").hover();
       await expect(page.getByTestId("tooltip-content")).toBeVisible();
       await page.evaluate(() => window.scrollTo(0, 200));
+      await expect(page.getByTestId("tooltip-content")).not.toBeVisible();
+    });
+
+    test("scroll then pointermove on the same trigger shows the tooltip again", async ({
+      page,
+    }) => {
+      await page.setViewportSize({ width: 800, height: 300 });
+      await page.evaluate(() => {
+        const div = document.createElement("div");
+        div.style.height = "2000px";
+        document.body.appendChild(div);
+      });
+      await page.getByTestId("tooltip-trigger").hover();
+      await expect(page.getByTestId("tooltip-content")).toBeVisible();
+      await page.evaluate(() => window.scrollTo(0, 200));
+      await expect(page.getByTestId("tooltip-content")).not.toBeVisible();
+      await page.getByTestId("tooltip-trigger").dispatchEvent("pointermove");
+      await expect(page.getByTestId("tooltip-content")).toBeVisible();
+    });
+
+    test("focusout without a relatedTarget hides a focus-shown tooltip", async ({ page }) => {
+      await page.getByTestId("tooltip-trigger").focus();
+      await expect(page.getByTestId("tooltip-content")).toBeVisible();
+      await page.getByTestId("tooltip-trigger").dispatchEvent("focusout", {
+        relatedTarget: null,
+      });
       await expect(page.getByTestId("tooltip-content")).not.toBeVisible();
     });
 

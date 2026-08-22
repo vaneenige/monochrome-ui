@@ -98,6 +98,7 @@ test.describe("Router", () => {
       await page.goto("/html/router/docs");
       await page.evaluate(() => {
         document.querySelector("[data-area='sidebar']")?.setAttribute("data-preserved", "yes");
+        document.querySelector("[data-area='root']")?.setAttribute("data-preserved-root", "yes");
       });
       await page.getByTestId("nav-docs-guide").click();
       await expect(page).toHaveURL("/html/router/docs-guide");
@@ -105,6 +106,17 @@ test.describe("Router", () => {
       expect(await page.locator("[data-area='sidebar']").getAttribute("data-preserved")).toBe(
         "yes",
       );
+      expect(await page.locator("[data-area='root']").getAttribute("data-preserved-root")).toBe(
+        "yes",
+      );
+    });
+
+    test("swaps an unkeyed area even when the root is preserved", async ({ page }) => {
+      await page.goto("/html/router/docs");
+      await expect(page.getByTestId("banner")).toHaveText("Docs banner");
+      await page.getByTestId("nav-docs-guide").click();
+      await expect(page).toHaveURL("/html/router/docs-guide");
+      await expect(page.getByTestId("banner")).toHaveText("Guide banner");
     });
 
     test("swaps an area whose `data-key` differs across pages", async ({ page }) => {
@@ -124,6 +136,76 @@ test.describe("Router", () => {
       await page.getByTestId("nav-about").click({ modifiers: ["ControlOrMeta"] });
       await expect(page).toHaveURL("/html/router/index");
       await expect(page.getByTestId("page-title")).toHaveText("Home");
+    });
+
+    test("ignores Alt-clicked links", async ({ page }) => {
+      await page.goto("/html/router/index");
+      await page.evaluate(() => {
+        window.__navCount = 0;
+        addEventListener("mc:navigate", () => {
+          window.__navCount = (window.__navCount ?? 0) + 1;
+        });
+      });
+      await page.getByTestId("nav-about").evaluate((el) => {
+        el.dispatchEvent(
+          new MouseEvent("click", { bubbles: true, cancelable: true, altKey: true, button: 0 }),
+        );
+      });
+      await page.waitForURL("**/html/router/about", { timeout: 200 }).catch(() => null);
+      expect(await page.evaluate(() => window.__navCount ?? 0)).toBe(0);
+    });
+
+    test("ignores Shift-clicked links", async ({ page }) => {
+      await page.goto("/html/router/index");
+      await page.evaluate(() => {
+        window.__navCount = 0;
+        addEventListener("mc:navigate", () => {
+          window.__navCount = (window.__navCount ?? 0) + 1;
+        });
+      });
+      await page.getByTestId("nav-about").evaluate((el) => {
+        el.dispatchEvent(
+          new MouseEvent("click", {
+            bubbles: true,
+            cancelable: true,
+            shiftKey: true,
+            button: 0,
+          }),
+        );
+      });
+      await page.waitForURL("**/html/router/about", { timeout: 200 }).catch(() => null);
+      expect(await page.evaluate(() => window.__navCount ?? 0)).toBe(0);
+    });
+
+    test("ignores non-primary button clicks", async ({ page }) => {
+      await page.goto("/html/router/index");
+      await page.getByTestId("nav-about").evaluate((el) => {
+        el.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true, button: 1 }));
+      });
+      await expect(page).toHaveURL("/html/router/index");
+      await expect(page.getByTestId("page-title")).toHaveText("Home");
+    });
+
+    test("handles `target=_self` as an in-page navigation", async ({ page }) => {
+      await page.goto("/html/router/ignored");
+      await page.evaluate(() => {
+        window.__sentinel = 1;
+      });
+      await page.getByTestId("self-target-link").click();
+      await expect(page).toHaveURL("/html/router/about");
+      const sentinel = await page.evaluate(() => window.__sentinel);
+      expect(sentinel).toBe(1);
+    });
+
+    test("handles a click on a nested element inside an anchor", async ({ page }) => {
+      await page.goto("/html/router/ignored");
+      await page.evaluate(() => {
+        window.__sentinel = 1;
+      });
+      await page.getByTestId("nested-link-text").click();
+      await expect(page).toHaveURL("/html/router/about");
+      const sentinel = await page.evaluate(() => window.__sentinel);
+      expect(sentinel).toBe(1);
     });
 
     test("ignores `target=_blank` links", async ({ page, context }) => {
@@ -200,6 +282,22 @@ test.describe("Router", () => {
       });
       await page.getByTestId("self-link").click();
       await expect(page).toHaveURL("/html/router/ignored");
+      const sentinel = await page.evaluate(() => window.__sentinel);
+      expect(sentinel).toBe(1);
+    });
+
+    test("treats a query-string change as a new page", async ({ page }) => {
+      await page.goto("/html/router/index");
+      await page.evaluate(() => {
+        window.__sentinel = 1;
+        const link = document.createElement("a");
+        link.href = "/html/router/about?from=home";
+        link.dataset.testid = "query-link";
+        document.body.append(link);
+        link.click();
+      });
+      await expect(page).toHaveURL("/html/router/about?from=home");
+      await expect(page.getByTestId("page-title")).toHaveText("About");
       const sentinel = await page.evaluate(() => window.__sentinel);
       expect(sentinel).toBe(1);
     });
@@ -308,6 +406,21 @@ test.describe("Router", () => {
       const sentinel = await page.evaluate(() => window.__sentinel);
       expect(sentinel).toBeUndefined();
     });
+
+    test("falls back to real navigation when fetch fails", async ({ page }) => {
+      await page.goto("/html/router/index");
+      await page.evaluate(() => {
+        window.__sentinel = 1;
+      });
+      await page.route("**/html/router/about", async (route) => {
+        if (route.request().resourceType() === "document") await route.continue();
+        else await route.abort();
+      });
+      await page.getByTestId("nav-about").click();
+      await page.waitForURL("**/html/router/about");
+      const sentinel = await page.evaluate(() => window.__sentinel);
+      expect(sentinel).toBeUndefined();
+    });
   });
 
   test.describe("Redirects", () => {
@@ -388,6 +501,20 @@ test.describe("Router", () => {
       await expect.poll(() => fetched.some((u) => u.endsWith("/html/router/about"))).toBe(true);
     });
 
+    test("does not refetch on a repeated mouseover of the same link", async ({ page }) => {
+      await page.goto("/html/router/index");
+      const fetched = await recordFetches(page);
+      await page.evaluate(() => {
+        const anchor = document.querySelector<HTMLAnchorElement>("[data-testid='nav-about']");
+        if (!anchor) return;
+        anchor.dispatchEvent(new MouseEvent("mouseover", { bubbles: true }));
+        anchor.dispatchEvent(new MouseEvent("mouseover", { bubbles: true }));
+      });
+      await expect
+        .poll(() => fetched.filter((u) => u.endsWith("/html/router/about")).length)
+        .toBe(1);
+    });
+
     test("prefetches a link on keyboard focus", async ({ page }) => {
       await page.goto("/html/router/index");
       const fetched = await recordFetches(page);
@@ -458,6 +585,22 @@ test.describe("Router", () => {
       });
       await page.getByTestId("nav-about").click();
       await expect(page).toHaveURL("/html/router/about");
+      const count = await page.evaluate(() => window.__navCount);
+      expect(count).toBe(1);
+    });
+
+    test("fires after back navigation", async ({ page }) => {
+      await page.goto("/html/router/index");
+      await page.getByTestId("nav-about").click();
+      await expect(page).toHaveURL("/html/router/about");
+      await page.evaluate(() => {
+        window.__navCount = 0;
+        addEventListener("mc:navigate", () => {
+          window.__navCount = (window.__navCount ?? 0) + 1;
+        });
+      });
+      await page.goBack();
+      await expect(page).toHaveURL("/html/router/index");
       const count = await page.evaluate(() => window.__navCount);
       expect(count).toBe(1);
     });

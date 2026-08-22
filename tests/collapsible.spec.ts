@@ -233,6 +233,17 @@ test.describe("Collapsible", () => {
     });
   });
 
+  test.describe("Edge cases", () => {
+    test("a missing `aria-controls` is a no-op", async ({ page, renderer }) => {
+      await page.goto(`/${renderer}/collapsible/basic`);
+      const trigger = page.getByTestId("collapsible-trigger");
+      await trigger.evaluate((el) => el.removeAttribute("aria-controls"));
+      await trigger.click();
+      await expect(trigger).toHaveAttribute("aria-expanded", "false");
+      await expect(page.getByTestId("collapsible-content")).not.toBeVisible();
+    });
+  });
+
   test.describe("Scroll prevention", () => {
     test("Space on the trigger does not scroll the page", async ({ page, renderer }) => {
       await page.goto(`/${renderer}/collapsible/basic`);

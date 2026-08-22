@@ -97,4 +97,43 @@ test.describe("Architecture invariants", () => {
       "./tooltip.js",
     ]);
   });
+
+  test("core `addEventListener` calls are bare, not per-element", () => {
+    for (const source of cores) {
+      expect(source).not.toMatch(/\.addEventListener\(/);
+      expect(source).not.toMatch(/\.removeEventListener\(/);
+    }
+  });
+
+  test("core contains no class declarations", () => {
+    for (const source of cores) {
+      expect(source).not.toMatch(/^export class /m);
+      expect(source).not.toMatch(/^class /m);
+    }
+  });
+
+  test("the combined core event set is the nine north-star events", () => {
+    const allowed = [
+      "pointerdown",
+      "pointerup",
+      "click",
+      "pointermove",
+      "keydown",
+      "scroll",
+      "resize",
+      "focusin",
+      "focusout",
+    ];
+    const used = new Set<string>();
+    for (const [name, source] of components) {
+      for (const match of source.matchAll(/addEventListener\(\s*"([^"]+)"/g)) {
+        const event = match[1];
+        if (event) {
+          expect(allowed, `${name} registers ${event}`).toContain(event);
+          used.add(event);
+        }
+      }
+    }
+    expect([...used].sort()).toEqual([...allowed].sort());
+  });
 });

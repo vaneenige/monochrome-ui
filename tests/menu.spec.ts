@@ -208,6 +208,33 @@ test.describe("Menu", () => {
       await page.getByTestId("root-trigger").press("Enter");
       await expect(page.getByTestId("root-list")).not.toBeVisible();
     });
+
+    test("ArrowLeft / ArrowRight on a closed root trigger do not open the menu", async ({
+      page,
+    }) => {
+      await page.getByTestId("root-trigger").focus();
+      await page.keyboard.press("ArrowLeft");
+      await expect(page.getByTestId("root-list")).not.toBeVisible();
+      await page.keyboard.press("ArrowRight");
+      await expect(page.getByTestId("root-list")).not.toBeVisible();
+    });
+
+    test("ArrowLeft / ArrowRight on an open root trigger stay on the trigger", async ({ page }) => {
+      await openRoot(page);
+      await expect(page.getByTestId("root-trigger")).toBeFocused();
+      await page.keyboard.press("ArrowLeft");
+      await expect(page.getByTestId("root-list")).toBeVisible();
+      await expect(page.getByTestId("root-trigger")).toBeFocused();
+      await page.keyboard.press("ArrowRight");
+      await expect(page.getByTestId("root-list")).toBeVisible();
+      await expect(page.getByTestId("root-trigger")).toBeFocused();
+    });
+
+    test("a letter on a closed trigger does not open the menu", async ({ page }) => {
+      await page.getByTestId("root-trigger").focus();
+      await page.keyboard.press("m");
+      await expect(page.getByTestId("root-list")).not.toBeVisible();
+    });
   });
 
   test.describe("Item keyboard", () => {
@@ -377,6 +404,14 @@ test.describe("Menu", () => {
       await expect(page.getByTestId("root-submenu-list")).not.toBeVisible();
       await expect(page.getByTestId("focus-before")).toBeFocused();
     });
+
+    test("a letter from a submenu item typeaheads the submenu", async ({ page }) => {
+      await openSubmenuViaKeyboard(page);
+      await expect(page.getByTestId("root-submenu-item-1")).toBeFocused();
+      await page.keyboard.press("s");
+      await expect(page.getByTestId("root-submenu-item-2")).toBeFocused();
+      await expect(page.getByTestId("root-submenu-list")).toBeVisible();
+    });
   });
 
   test.describe("Pointer session", () => {
@@ -391,6 +426,12 @@ test.describe("Menu", () => {
       await openRootViaPointer(page);
       await pointerDown(page.getByTestId("root-trigger"));
       await expect(page.getByTestId("root-list")).not.toBeVisible();
+    });
+
+    test("pointerdown on the open menu list keeps the menu open", async ({ page }) => {
+      await openRootViaPointer(page);
+      await pointerDown(page.getByTestId("root-list"));
+      await expect(page.getByTestId("root-list")).toBeVisible();
     });
 
     test("pointerdown outside dismisses the menu, including any open submenu", async ({ page }) => {
@@ -1988,6 +2029,11 @@ test.describe("Link items", () => {
     await expect(page).toHaveURL(/#menu-link-nav/);
     await expect(page.getByTestId("list")).not.toBeVisible();
     await expect(page.getByTestId("trigger")).toBeFocused();
+  });
+
+  test("a synthesized click on an href menuitem closes the menu", async ({ page }) => {
+    await page.getByTestId("item-link").dispatchEvent("click");
+    await expect(page.getByTestId("list")).not.toBeVisible();
   });
 });
 

@@ -146,6 +146,15 @@ test.describe("Accordion", () => {
       await expect(page.getByTestId("single-trigger-3")).toBeFocused();
     });
 
+    test("Home on the first trigger and End on the last stay put", async ({ page }) => {
+      await page.getByTestId("single-trigger-1").focus();
+      await page.keyboard.press("Home");
+      await expect(page.getByTestId("single-trigger-1")).toBeFocused();
+      await page.getByTestId("single-trigger-3").focus();
+      await page.keyboard.press("End");
+      await expect(page.getByTestId("single-trigger-3")).toBeFocused();
+    });
+
     test("ArrowLeft / ArrowRight are inert on the trigger", async ({ page }) => {
       const trigger = page.getByTestId("single-trigger-2");
       await trigger.focus();
@@ -273,6 +282,12 @@ test.describe("Accordion", () => {
       await page.keyboard.press("ArrowUp");
       await expect(page.getByTestId("nested-trigger-1")).toBeFocused();
     });
+
+    test("outer ArrowDown stays on the outer accordion", async ({ page }) => {
+      await page.getByTestId("outer-trigger-1").focus();
+      await page.keyboard.press("ArrowDown");
+      await expect(page.getByTestId("outer-trigger-2")).toBeFocused();
+    });
   });
 
   test.describe("Edge cases", () => {
@@ -290,6 +305,39 @@ test.describe("Accordion", () => {
       await trigger.press("ArrowUp");
       await expect(trigger).toBeFocused();
     });
+
+    test("a single-item accordion no-ops on Home / End", async ({ page, renderer }) => {
+      await page.goto(`/${renderer}/accordion/single-item`);
+      const trigger = page.getByTestId("only-trigger");
+      await trigger.focus();
+      await trigger.press("Home");
+      await expect(trigger).toBeFocused();
+      await trigger.press("End");
+      await expect(trigger).toBeFocused();
+    });
+
+    test("a missing `data-mode` does not close other items", async ({ page, renderer }) => {
+      await page.goto(`/${renderer}/accordion/single`);
+      await page
+        .getByTestId("single-trigger-1")
+        .locator("../../..")
+        .evaluate((el) => {
+          el.removeAttribute("data-mode");
+        });
+      await page.getByTestId("single-trigger-1").click();
+      await page.getByTestId("single-trigger-2").click();
+      await expect(page.getByTestId("single-content-1")).toBeVisible();
+      await expect(page.getByTestId("single-content-2")).toBeVisible();
+    });
+
+    test("a missing `aria-controls` is a no-op", async ({ page, renderer }) => {
+      await page.goto(`/${renderer}/accordion/single`);
+      const trigger = page.getByTestId("single-trigger-1");
+      await trigger.evaluate((el) => el.removeAttribute("aria-controls"));
+      await trigger.click();
+      await expect(trigger).toHaveAttribute("aria-expanded", "false");
+      await expect(page.getByTestId("single-content-1")).not.toBeVisible();
+    });
   });
 
   test.describe("Scroll prevention", () => {
@@ -301,7 +349,7 @@ test.describe("Accordion", () => {
       await scrollAndSettle(page, 0, 500);
     });
 
-    for (const key of ["Space", "ArrowDown"] as const) {
+    for (const key of ["Space", "ArrowDown", "Home"] as const) {
       test(`does not scroll the page when ${key} is pressed on the trigger`, async ({ page }) => {
         await page.getByTestId("single-trigger-1").focus();
         const before = await page.evaluate(() => window.scrollY);

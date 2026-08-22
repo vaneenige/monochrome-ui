@@ -128,6 +128,11 @@ test.describe("Dialog", () => {
       await expect(page.getByTestId("primary-content")).not.toBeVisible();
 
       await page.getByTestId("primary-trigger").click();
+      await page.getByTestId("primary-close").focus();
+      await page.keyboard.press("Space");
+      await expect(page.getByTestId("primary-content")).not.toBeVisible();
+
+      await page.getByTestId("primary-trigger").click();
       await page.keyboard.press("Escape");
       await expect(page.getByTestId("primary-content")).not.toBeVisible();
       const open = await page
@@ -248,6 +253,52 @@ test.describe("Click handler", () => {
 });
 
 test.describe("Edge cases", () => {
+  test("an already-open dialog ignores a second open trigger", async ({ page, renderer }) => {
+    await page.goto(`/${renderer}/dialog/basic`);
+    await page.getByTestId("primary-trigger").click();
+    await expect(page.getByTestId("primary-content")).toBeVisible();
+    await page.getByTestId("autofocus-trigger").evaluate((el) => {
+      if (el instanceof HTMLElement) el.click();
+    });
+    await expect(page.getByTestId("primary-content")).toBeVisible();
+    const autofocusOpen = await page.evaluate(() => {
+      const el = document.querySelector("[data-testid='autofocus-target']")?.closest("dialog");
+      return el instanceof HTMLDialogElement ? el.open : false;
+    });
+    expect(autofocusOpen).toBe(false);
+  });
+
+  test("a non-dialog `aria-controls` target is ignored", async ({ page, renderer }) => {
+    await page.goto(`/${renderer}/dialog/basic`);
+    await page.getByTestId("bare-trigger").evaluate((el) => {
+      const div = document.createElement("div");
+      div.id = "not-a-dialog";
+      document.body.append(div);
+      el.setAttribute("aria-controls", "not-a-dialog");
+    });
+    await page.getByTestId("bare-trigger").click();
+    await expect(page.getByTestId("bare-content")).not.toBeVisible();
+  });
+
+  test("Close is ignored when no dialog is open", async ({ page, renderer }) => {
+    await page.goto(`/${renderer}/dialog/basic`);
+    await page.getByTestId("primary-close").evaluate((el) => {
+      if (el instanceof HTMLElement) el.click();
+    });
+    await expect(page.getByTestId("primary-content")).not.toBeVisible();
+    await expect(page.getByTestId("primary-trigger")).not.toBeFocused();
+  });
+
+  test("Escape is ignored when no dialog is open", async ({ page, renderer }) => {
+    await page.goto(`/${renderer}/dialog/basic`);
+    await page.getByTestId("focus-before").focus();
+    await page.keyboard.press("Escape");
+    await expect(page.getByTestId("focus-before")).toBeFocused();
+    await expect(page.getByTestId("primary-content")).not.toBeVisible();
+  });
+});
+
+test.describe("Native close", () => {
   test.beforeEach(async ({ page, renderer }) => {
     test.skip(renderer !== "html", "Core-only path; fixture is plain HTML");
     await page.goto("/html/dialog/form");
@@ -262,5 +313,21 @@ test.describe("Edge cases", () => {
     await expect(page.getByTestId("content")).toBeVisible();
     await page.keyboard.press("Escape");
     await expect(page.getByTestId("content")).not.toBeVisible();
+  });
+
+  test("Escape after a native form close does not steal focus", async ({ page }) => {
+    await page.getByTestId("trigger").click();
+    await page.getByTestId("submit").click();
+    await expect(page.getByTestId("content")).not.toBeVisible();
+    await page.evaluate(() => {
+      const before = document.createElement("button");
+      before.dataset.testid = "after-native";
+      before.textContent = "After";
+      document.body.prepend(before);
+      before.focus();
+    });
+    await page.keyboard.press("Escape");
+    await expect(page.getByTestId("content")).not.toBeVisible();
+    await expect(page.getByTestId("after-native")).toBeFocused();
   });
 });

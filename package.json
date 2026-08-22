@@ -209,18 +209,18 @@
       }
     },
     "tests": {
-      "total": 457,
-      "a11y": 11,
-      "accordion": 34,
-      "architecture": 10,
-      "collapsible": 25,
-      "dialog": 22,
-      "menu": 221,
-      "popover": 29,
-      "router": 34,
+      "total": 505,
+      "a11y": 15,
+      "accordion": 40,
+      "architecture": 13,
+      "collapsible": 26,
+      "dialog": 27,
+      "menu": 227,
+      "popover": 35,
+      "router": 44,
       "ssr": 9,
-      "tabs": 41,
-      "tooltip": 21
+      "tabs": 44,
+      "tooltip": 25
     }
   }
 }

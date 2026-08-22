@@ -123,6 +123,15 @@ test.describe("Tabs", () => {
         await expect(page.getByTestId(layout.tabs[2])).toBeFocused();
       });
 
+      test("Home on the first tab and End on the last stay put", async ({ page }) => {
+        await page.getByTestId(layout.tabs[0]).focus();
+        await page.keyboard.press("Home");
+        await expect(page.getByTestId(layout.tabs[0])).toBeFocused();
+        await page.getByTestId(layout.tabs[2]).focus();
+        await page.keyboard.press("End");
+        await expect(page.getByTestId(layout.tabs[2])).toBeFocused();
+      });
+
       test(`${layout.inertNext} / ${layout.inertPrevious} are inert`, async ({ page }) => {
         await page.getByTestId(layout.tabs[0]).focus();
         await page.keyboard.press(layout.inertNext);
@@ -254,6 +263,16 @@ test.describe("Tabs", () => {
       await expect(page.getByTestId("single-panel")).toBeVisible();
       await tab.focus();
       await tab.press("ArrowRight");
+      await expect(tab).toBeFocused();
+    });
+
+    test("a single-tab tablist no-ops on Home / End", async ({ page, renderer }) => {
+      await page.goto(`/${renderer}/tabs/single`);
+      const tab = page.getByTestId("single-tab");
+      await tab.focus();
+      await tab.press("Home");
+      await expect(tab).toBeFocused();
+      await tab.press("End");
       await expect(tab).toBeFocused();
     });
   });

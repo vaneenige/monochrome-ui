@@ -1,4 +1,5 @@
 import { expect, test } from "./fixtures";
+import { pointerDown } from "./helpers";
 
 test.describe("Popover", () => {
   test.beforeEach(async ({ page, renderer }) => {
@@ -120,6 +121,30 @@ test.describe("Popover", () => {
       await page.getByTestId("focus-before").click();
       await expect(page.getByTestId("click-content")).not.toBeVisible();
     });
+
+    test("pointerdown outside dismisses the popover", async ({ page }) => {
+      await page.getByTestId("click-trigger").click();
+      await pointerDown(page.getByTestId("focus-before"));
+      await expect(page.getByTestId("click-content")).not.toBeVisible();
+    });
+
+    test("non-primary pointerdown outside does not dismiss the popover", async ({ page }) => {
+      await page.getByTestId("click-trigger").click();
+      await pointerDown(page.getByTestId("focus-before"), { button: 2 });
+      await expect(page.getByTestId("click-content")).toBeVisible();
+    });
+
+    test("pointerdown inside content does not dismiss the popover", async ({ page }) => {
+      await page.getByTestId("click-trigger").click();
+      await pointerDown(page.getByTestId("click-text"));
+      await expect(page.getByTestId("click-content")).toBeVisible();
+    });
+
+    test("pointerdown on the open trigger does not dismiss before click", async ({ page }) => {
+      await page.getByTestId("click-trigger").click();
+      await pointerDown(page.getByTestId("click-trigger"));
+      await expect(page.getByTestId("click-content")).toBeVisible();
+    });
   });
 
   test.describe("Focus management", () => {
@@ -158,6 +183,12 @@ test.describe("Popover", () => {
       await page.getByTestId("click-trigger").focus();
       await page.keyboard.press("Shift+Tab");
       await expect(page.getByTestId("click-content")).not.toBeVisible();
+    });
+
+    test("focusout without a relatedTarget does not dismiss the popover", async ({ page }) => {
+      await page.getByTestId("click-trigger").click();
+      await page.getByTestId("click-content").dispatchEvent("focusout", { relatedTarget: null });
+      await expect(page.getByTestId("click-content")).toBeVisible();
     });
   });
 
@@ -214,6 +245,14 @@ test.describe("Popover", () => {
       await page.getByTestId("second-trigger").click();
       await expect(page.getByTestId("click-content")).not.toBeVisible();
       await expect(page.getByTestId("second-content")).toBeVisible();
+    });
+
+    test("clicking a disabled trigger dismisses the open popover", async ({ page }) => {
+      await page.getByTestId("click-trigger").click();
+      await expect(page.getByTestId("click-content")).toBeVisible();
+      await page.getByTestId("disabled-trigger").click({ force: true });
+      await expect(page.getByTestId("click-content")).not.toBeVisible();
+      await expect(page.getByTestId("disabled-content")).not.toBeVisible();
     });
 
     test("popover and menu close each other on open", async ({ page }) => {

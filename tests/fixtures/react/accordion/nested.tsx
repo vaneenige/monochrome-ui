@@ -35,7 +35,7 @@ export default () => (
       </Accordion.Item>
       <Accordion.Item>
         <Accordion.Header>
-          <Accordion.Trigger>Outer Section 2</Accordion.Trigger>
+          <Accordion.Trigger data-testid="outer-trigger-2">Outer Section 2</Accordion.Trigger>
         </Accordion.Header>
         <Accordion.Panel>
           <p>Regular outer content</p>
