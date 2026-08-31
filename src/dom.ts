@@ -7,7 +7,7 @@ export type RovingFocusCallback = (
 
 export type Roving = (focus: RovingFocusCallback) => [RovingNavigator, RovingNavigator];
 
-export const suppressedClicks = new WeakSet<Event>();
+export const shouldSuppressClick = [false];
 
 export const hasDocument = typeof document !== "undefined";
 

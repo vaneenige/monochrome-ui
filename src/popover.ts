@@ -5,7 +5,7 @@ import {
   hasDocument,
   isElement,
   position,
-  suppressedClicks,
+  shouldSuppressClick,
 } from "./dom.js";
 
 enum Prefix {
@@ -43,7 +43,7 @@ if (hasDocument) {
   });
 
   addEventListener("click", (event: MouseEvent) => {
-    if (suppressedClicks.has(event)) return;
+    if (shouldSuppressClick[0]) return;
     const start = getTarget(event);
     if (start && !findAncestor(start, Prefix.ContentPopover)) {
       const trigger = findAncestor(start, Prefix.TriggerPopover);

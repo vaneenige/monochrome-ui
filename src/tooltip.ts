@@ -5,7 +5,7 @@ import {
   hasDocument,
   isTrigger,
   position,
-  suppressedClicks,
+  shouldSuppressClick,
 } from "./dom.js";
 
 enum Prefix {
@@ -63,7 +63,7 @@ if (hasDocument) {
   };
 
   addEventListener("click", (event: MouseEvent) => {
-    if (suppressedClicks.has(event)) return;
+    if (shouldSuppressClick[0]) return;
     if (findAncestor(getTarget(event), Prefix.TriggerTooltip)) tooltipSuppress();
   });
 

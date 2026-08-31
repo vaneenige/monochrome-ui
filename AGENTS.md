@@ -84,6 +84,9 @@ synchronous event cycle (cleared at the top of each listener), so
 there's no reentrancy to reason about. Saves real bytes on every
 function signature it removes, and it makes the "where does this
 side effect come from?" question one grep away.
+`shouldSuppressClick` lives in `src/dom.ts` for the same
+reason: click handlers in other files must read it, and
+components do not import each other.
 
 **Wrappers use `createElement` / `h`, not JSX / SFC.** Eliminates
 `react/jsx-runtime` from the React bundle and halves the Vue bundle
@@ -118,10 +121,9 @@ a hand-rolled walk where one pass mixes prefixes with roles
 (Menu `pointerup` activation, href `click`, `pointermove`
 hover path). Menu open/dismiss lives on `pointerdown` and
 item activation on `pointerup`. A menu pointer session
-arms a capture-phase `click` that marks the event
-(`suppressedClicks`); other components skip that
-gesture via `suppressedClicks.has`. The event is not stopped,
-so user listeners still fire. Popover dismisses on outside
+sets `shouldSuppressClick[0]` so other components skip the
+trailing `click`. The event is not stopped, so user
+listeners still fire. Popover dismisses on outside
 click when `findAncestor` finds neither trigger nor content,
 and on outside `pointerdown` so a Menu opening on
 pointerdown closes it without either file naming the other.
@@ -167,8 +169,8 @@ radio sweep), selected by which module-scope flag is non-null.
 **Menu Enter/Space in `keydown`.** Accordion, Tabs, and the other
 triggers still rely on the browser's synthesized `click` for
 Enter/Space. Menu cannot: `pointerdown` already opened or
-dismissed the menu, and the following click is swallowed by the
-capture-phase suppressor. Keyboard activation therefore lives in
+dismissed the menu, and the following click is skipped via
+`shouldSuppressClick`. Keyboard activation therefore lives in
 `keydown` (`menuOpen` / `menu` / `menuActivate`) with
 `preventDefault` so Space does not scroll. After `menuActivate`
 on a non-href item, `keydown` dispatches `target.click()` so
@@ -176,8 +178,8 @@ keyboard activation produces the same click a pointer session
 does: user `onclick` handlers fire, and a menuitem that is also
 another component's trigger (a `mct:dialog-open:` item) works
 without Menu naming that component. When the menu stays open
-(checkbox, radio), the one-shot suppressor is armed first, so
-that click is marked exactly like a pointer session's trailing
+(checkbox, radio), `shouldSuppressClick[0]` is set first, so
+that click is skipped exactly like a pointer session's trailing
 click and other monochrome components skip it. Enter/Space on a
 submenu trigger call `menu` with `Focus.First`, so an
 already-open submenu moves focus to the first item. Root menu
@@ -195,26 +197,30 @@ pointer-opened standalone trigger (`role="button"`); they do not
 `preventDefault` so empty and all-disabled menus do not
 scroll.
 
-**Pointer session and capture-phase click suppress.** A menu
+**Pointer session and `shouldSuppressClick`.** A menu
 gesture is a pointer session, not a click. `pointerdown` on a
 trigger opens or toggles; `pointerdown` outside dismisses;
 `pointerup` on a plain menuitem activates. Non-primary buttons
-(`button !== 0`) are ignored. After a menu `pointerdown`, a
-one-shot capture `click` listener marks the event
-(`suppressedClicks` in `src/dom.ts`). Other components skip
-that click via `suppressedClicks.has`. The event is not
+(`button !== 0`) are ignored. After a menu `pointerdown`,
+`shouldSuppressClick[0]` makes the trailing `click` a no-op
+so a press that started on the menu cannot also toggle a
+disclosure (or anything else) underneath. The event is not
 stopped, so user listeners still fire. Menu does not name
-Collapsible.
-The suppressor is removed at the start of `pointerdown` and
-`keydown`, so an abandoned press then Enter on a disclosure
-still works. It is also removed when a `pointerup` activation
-closes the menu: that trailing click is the activation itself,
-so it must reach every component (a `mct:dialog-open:` menuitem
-opens its dialog), not just user listeners. Playwright `.click()`
-still works: it fires `pointerdown`. `pointerup` on an href calls `el.click()` before
-activate so sticky-drag navigates: the browser does not
-synthesize click across elements. Same-element press then
-fires a real click too (hash navigation is idempotent).
+Collapsible. The flag lives in `src/dom.ts` as a one-slot
+array so split components can share the write (ES import
+bindings are const). Click handlers read `[0]` and do not
+clear it, so listener order does not matter. It is cleared
+at the start of `pointerdown` and `keydown`, so an abandoned
+press then Enter on a disclosure still works. It is also
+cleared when a `pointerup` activation closes the menu: that
+trailing click is the activation itself, so it must reach
+every component (a `mct:dialog-open:` menuitem opens its
+dialog), not just user listeners. Playwright `.click()`
+still works: it fires `pointerdown`. `pointerup` on an href
+calls `el.click()` before activate so sticky-drag navigates:
+the browser does not synthesize click across elements.
+Same-element press then fires a real click too (hash
+navigation is idempotent).
 
 **Tooltip Escape in capture.** When a tooltip is shown, its
 `keydown` listener runs in capture and
@@ -419,10 +425,10 @@ PropType<...>` where Vue's prop typing requires it.)
 - Custom events (`mc:navigate`) for cross-boundary signals the
   wrappers need. No callback props or event-emitter exports from
   the core.
-- Menu open/dismiss/activate on `pointerdown` / `pointerup`; a
-  capture-phase one-shot `click` marks the event so other
-  components skip it (user listeners still fire). Enter/Space
-  for menu are handled in `keydown` with `preventDefault`.
+- Menu open/dismiss/activate on `pointerdown` / `pointerup`.
+  `shouldSuppressClick` skips the trailing `click` in other
+  components (user listeners still fire). Enter/Space for
+  menu are handled in `keydown` with `preventDefault`.
   Tooltip Escape is capture-phase.
 - `void` on fire-and-forget promise expressions.
 
@@ -446,6 +452,8 @@ PropType<...>` where Vue's prop typing requires it.)
   `tooltip*` for tooltip state, `menu*` for menu state.
 - Boolean flags are plain `boolean` reset to `false`;
   value-carrying flags are `T | null` with null meaning "off".
+  `shouldSuppressClick` is the exception: a one-slot array in
+  `src/dom.ts` so split components can share the write.
 - Local booleans read as predicates or adjectives (`isOpen`,
   `wasOpen`, `vertical`, `safe`). `is*` is current DOM state;
   `will*` is the computed next state (`willOpen`, `willSelect`).
@@ -490,8 +498,8 @@ Fixed, non-alphabetical orders that stay fixed:
   (`--width`, `--height`).
 - `Focus` enum: the default member first (`Trigger` is `0`),
   then semantic order.
-- `src/dom.ts` declares `suppressedClicks` before `hasDocument`.
-  Swapping the two costs ~39 B combined gzip at the same raw
+- `src/dom.ts` declares `shouldSuppressClick` before `hasDocument`.
+  Swapping the two costs ~20 B combined gzip at the same raw
   size; leave that order.
 
 ## Prose style

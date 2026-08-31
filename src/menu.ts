@@ -8,8 +8,8 @@ import {
   position,
   type RovingFocusCallback,
   roving,
+  shouldSuppressClick,
   spatialKey,
-  suppressedClicks,
 } from "./dom.js";
 
 enum Focus {
@@ -188,22 +188,17 @@ if (hasDocument) {
       menu(menuStack.pop(), Focus.None);
   };
 
-  const menuSuppressClick = (event: Event) => {
-    suppressedClicks.add(event);
-    removeEventListener("click", menuSuppressClick, true);
-  };
-
   addEventListener("pointerdown", (event: PointerEvent) => {
-    removeEventListener("click", menuSuppressClick, true);
+    shouldSuppressClick[0] = false;
     if (event.button !== 0) return;
     const el = getTarget(event);
     if (!el) return;
     const trigger = findAncestor(el, Prefix.TriggerMenu);
     if (trigger) {
-      addEventListener("click", menuSuppressClick, true);
+      shouldSuppressClick[0] = true;
       menuOpen(trigger, Focus.None);
     } else if (findAncestor(el, Prefix.ContentMenu) && menuStack[0]) {
-      addEventListener("click", menuSuppressClick, true);
+      shouldSuppressClick[0] = true;
     } else if (menuStack[0]) menuCloseAll();
   });
 
@@ -215,7 +210,7 @@ if (hasDocument) {
       if (isMenuItem(el) && !isTrigger(el, Prefix.TriggerMenu)) {
         if (el.tagName === "A") el.click();
         menuActivate(el);
-        if (!menuStack[0]) removeEventListener("click", menuSuppressClick, true);
+        if (!menuStack[0]) shouldSuppressClick[0] = false;
         return;
       }
       el = el.parentElement;
@@ -223,7 +218,7 @@ if (hasDocument) {
   });
 
   addEventListener("click", (event: MouseEvent) => {
-    if (suppressedClicks.has(event)) return;
+    if (shouldSuppressClick[0]) return;
     let el = getTarget(event);
     while (el && !el.id.startsWith(Prefix.TriggerMenu) && !el.id.startsWith(Prefix.ContentMenu)) {
       if (isMenuItem(el) && el.tagName === "A") {
@@ -316,7 +311,7 @@ if (hasDocument) {
   addEventListener("keydown", (event: KeyboardEvent) => {
     shouldMatchLetter = null;
     shouldPreventDefault = false;
-    removeEventListener("click", menuSuppressClick, true);
+    shouldSuppressClick[0] = false;
     rovingBoundary = null;
     const key = spatialKey(event.key);
     let target = event.target;
@@ -394,7 +389,7 @@ if (hasDocument) {
             if (target.ariaDisabled !== "true" && shouldPreventDefault) {
               menuActivate(target);
               if (target.tagName !== "A") {
-                if (menuStack[0]) addEventListener("click", menuSuppressClick, true);
+                if (menuStack[0]) shouldSuppressClick[0] = true;
                 target.click();
               }
             }
