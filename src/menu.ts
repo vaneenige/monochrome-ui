@@ -9,7 +9,6 @@ import {
   type RovingFocusCallback,
   roving,
   spatialKey,
-  suppressedClicks,
 } from "./dom.js";
 
 enum Focus {
@@ -171,7 +170,7 @@ if (hasDocument) {
   };
 
   const menuOpen = (trigger: HTMLElement, mode: Focus) => {
-    const inPopover = findAncestor(trigger.parentElement, Prefix.ContentMenu);
+    const inPopover = findAncestor(trigger, Prefix.ContentMenu);
     if (inPopover) {
       if (!menuStack.includes(trigger)) menu(trigger, mode);
     } else if (menuStack[0]) {
@@ -188,23 +187,13 @@ if (hasDocument) {
       menu(menuStack.pop(), Focus.None);
   };
 
-  const menuSuppressClick = (event: Event) => {
-    suppressedClicks.add(event);
-    removeEventListener("click", menuSuppressClick, true);
-  };
-
   addEventListener("pointerdown", (event: PointerEvent) => {
-    removeEventListener("click", menuSuppressClick, true);
     if (event.button !== 0) return;
     const el = getTarget(event);
     if (!el) return;
     const trigger = findAncestor(el, Prefix.TriggerMenu);
-    if (trigger) {
-      addEventListener("click", menuSuppressClick, true);
-      menuOpen(trigger, Focus.None);
-    } else if (findAncestor(el, Prefix.ContentMenu) && menuStack[0]) {
-      addEventListener("click", menuSuppressClick, true);
-    } else if (menuStack[0]) menuCloseAll();
+    if (trigger) menuOpen(trigger, Focus.None);
+    else if (menuStack[0] && !findAncestor(el, Prefix.ContentMenu)) menuCloseAll();
   });
 
   addEventListener("pointerup", (event: PointerEvent) => {
@@ -215,7 +204,6 @@ if (hasDocument) {
       if (isMenuItem(el) && !isTrigger(el, Prefix.TriggerMenu)) {
         if (el.tagName === "A") el.click();
         menuActivate(el);
-        if (!menuStack[0]) removeEventListener("click", menuSuppressClick, true);
         return;
       }
       el = el.parentElement;
@@ -223,7 +211,6 @@ if (hasDocument) {
   });
 
   addEventListener("click", (event: MouseEvent) => {
-    if (suppressedClicks.has(event)) return;
     let el = getTarget(event);
     while (el && !el.id.startsWith(Prefix.TriggerMenu) && !el.id.startsWith(Prefix.ContentMenu)) {
       if (isMenuItem(el) && el.tagName === "A") {
@@ -316,7 +303,6 @@ if (hasDocument) {
   addEventListener("keydown", (event: KeyboardEvent) => {
     shouldMatchLetter = null;
     shouldPreventDefault = false;
-    removeEventListener("click", menuSuppressClick, true);
     rovingBoundary = null;
     const key = spatialKey(event.key);
     let target = event.target;
@@ -385,7 +371,7 @@ if (hasDocument) {
     ) {
       const parent = target.parentElement;
       const menubarRoot = menuStack[0]?.parentElement || parent;
-      const inPopover = findAncestor(target.parentElement, Prefix.ContentMenu);
+      const inPopover = findAncestor(target, Prefix.ContentMenu);
       switch (key) {
         case "Enter":
         case " ":
@@ -393,10 +379,7 @@ if (hasDocument) {
             shouldPreventDefault = key === " " || target.tagName !== "A";
             if (target.ariaDisabled !== "true" && shouldPreventDefault) {
               menuActivate(target);
-              if (target.tagName !== "A") {
-                if (menuStack[0]) addEventListener("click", menuSuppressClick, true);
-                target.click();
-              }
+              if (target.tagName !== "A") target.click();
             }
           }
           break;

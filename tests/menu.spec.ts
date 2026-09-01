@@ -472,9 +472,6 @@ test.describe("Menu", () => {
     });
 
     test("keyboard activation works after an abandoned pointer session", async ({ page }) => {
-      // A pointerdown with no trailing click (a cancelled touch
-      // gesture) must not leave the suppression flag armed for the
-      // next keyboard-synthesized click.
       await pointerDown(page.getByTestId("menu-trigger"));
       await expect(page.getByTestId("menu-list")).toBeVisible();
       await page.getByTestId("disclosure-trigger").focus();
@@ -492,18 +489,6 @@ test.describe("Menu", () => {
       await page.getByTestId("disclosure-trigger").click();
       await expect(page.getByTestId("disclosure-content")).toBeVisible();
       await expect(page.getByTestId("disclosure-trigger")).toHaveAttribute("aria-expanded", "true");
-    });
-
-    test("menu-owned pointerdown suppresses monochrome click on a disclosure", async ({ page }) => {
-      await pointerDown(page.getByTestId("menu-trigger"));
-      await expect(page.getByTestId("menu-list")).toBeVisible();
-      await page.getByTestId("disclosure-trigger").dispatchEvent("click");
-      await expect(page.getByTestId("disclosure-content")).not.toBeVisible();
-      await expect(page.getByTestId("disclosure-trigger")).toHaveAttribute(
-        "aria-expanded",
-        "false",
-      );
-      await expect(page.getByTestId("menu-list")).toBeVisible();
     });
   });
 

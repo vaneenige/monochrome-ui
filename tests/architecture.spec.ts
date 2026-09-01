@@ -97,4 +97,10 @@ test.describe("Architecture invariants", () => {
       "./tooltip.js",
     ]);
   });
+
+  test("core does not remove listeners", () => {
+    for (const source of cores) {
+      expect(source).not.toContain("removeEventListener");
+    }
+  });
 });
