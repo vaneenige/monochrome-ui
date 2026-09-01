@@ -110,19 +110,17 @@ follow-up would split in two.
 
 **Walk-up then walk-down for click dispatch.** Single-prefix
 clicks (Collapsible, Accordion, Tabs, Tooltip suppress) use
-`findAncestor` from the event target. Dialog open/close and
-Popover toggle/outside use it too: the nearest matching
-prefix is the whole decision, and a content ancestor is the
-"inside, stop" / "not outside" check. Overlay components keep
+`findAncestor` from the event target. Dialog open/close uses
+it too: the nearest matching prefix is the whole decision.
+Popover click only toggles a trigger. Overlay components keep
 a hand-rolled walk where one pass mixes prefixes with roles
 (Menu `pointerup` activation, href `click`, `pointermove`
 hover path). Menu open/dismiss lives on `pointerdown` and
 item activation on `pointerup`. Other components miss the
 trailing `click` because they dispatch on their own ID
-prefixes. Popover dismisses on outside
-click when `findAncestor` finds neither trigger nor content,
-and on outside `pointerdown` so a Menu opening on
-pointerdown closes it without either file naming the other.
+prefixes. Popover dismisses on outside `pointerdown` so a
+Menu opening on pointerdown closes it without either file
+naming the other.
 
 **`findAncestor` over `closest()`.** `findAncestor(el, prefix)`
 walks `parentElement` up checking `id.startsWith(prefix)`.
@@ -472,8 +470,9 @@ correct place. It applies to:
   clusters, and the functions within a cluster.
 - Dispatch chains (`else if` prefix ladders). One exception: a
   check that must short-circuit the ladder stays first. The menu
-  click walk breaks on `mct:menu:` before the href-item check so
-  a submenu trigger that is also a link never activates.
+  click and `pointerup` walks break on `mct:menu:` before item
+  activation so a submenu trigger that is also a link never
+  activates.
 
 Fixed, non-alphabetical orders that stay fixed:
 

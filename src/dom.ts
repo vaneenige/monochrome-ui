@@ -55,11 +55,13 @@ export const roving: Roving = (focus) => {
 };
 
 export const spatialKey = (key: string) =>
-  document.dir === "rtl" && key === "ArrowRight"
-    ? "ArrowLeft"
-    : document.dir === "rtl" && key === "ArrowLeft"
-      ? "ArrowRight"
-      : key;
+  document.dir === "rtl"
+    ? key === "ArrowRight"
+      ? "ArrowLeft"
+      : key === "ArrowLeft"
+        ? "ArrowRight"
+        : key
+    : key;
 
 export const toggleDisclosure = (trigger: HTMLElement) => {
   const content = getLinked(trigger, "aria-controls");

@@ -157,10 +157,10 @@
     "playwright-core": "1.61.1"
   },
   "versionMeta": {
-    "gzipSize": 3207,
+    "gzipSize": 3181,
     "gzipSizes": {
       "accordion": {
-        "core": 938,
+        "core": 936,
         "react": 506,
         "vue": 760
       },
@@ -170,27 +170,27 @@
         "vue": 670
       },
       "dialog": {
-        "core": 777,
+        "core": 775,
         "react": 528,
         "vue": 788
       },
       "index": {
-        "core": 3207,
+        "core": 3181,
         "react": 2019,
         "vue": 2377
       },
       "menu": {
-        "core": 2276,
+        "core": 2265,
         "react": 672,
         "vue": 923
       },
       "menubar": {
-        "core": 2276,
+        "core": 2265,
         "react": 952,
         "vue": 1254
       },
       "popover": {
-        "core": 974,
+        "core": 956,
         "react": 514,
         "vue": 781
       },
@@ -198,7 +198,7 @@
         "core": 1223
       },
       "tabs": {
-        "core": 1002,
+        "core": 1001,
         "react": 556,
         "vue": 857
       },

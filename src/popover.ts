@@ -35,18 +35,15 @@ if (hasDocument) {
   });
 
   addEventListener("click", (event: MouseEvent) => {
-    const start = getTarget(event);
-    if (start && !findAncestor(start, Prefix.ContentPopover)) {
-      const trigger = findAncestor(start, Prefix.TriggerPopover);
-      if (trigger && trigger.ariaDisabled !== "true") {
-        const isOpen = trigger.ariaExpanded === "true";
-        popover(trigger, !isOpen);
-        if (isOpen) {
-          trigger.focus();
-        } else {
-          getLinked(trigger, "aria-controls")?.focus();
-        }
-      } else if (popoverShown) popover(popoverShown, false);
+    const trigger = findAncestor(getTarget(event), Prefix.TriggerPopover);
+    if (trigger && trigger.ariaDisabled !== "true") {
+      const isOpen = trigger.ariaExpanded === "true";
+      popover(trigger, !isOpen);
+      if (isOpen) {
+        trigger.focus();
+      } else {
+        getLinked(trigger, "aria-controls")?.focus();
+      }
     }
   });
 

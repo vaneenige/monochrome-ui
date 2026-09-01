@@ -159,7 +159,7 @@ if (hasDocument) {
 
   const menubarStep = (trigger: HTMLElement | null) => {
     if (trigger) {
-      const wasOpen = !!menuStack[0];
+      const wasOpen = menuStack[0];
       menuCloseAll();
       if (wasOpen && isTrigger(trigger, Prefix.TriggerMenu)) menu(trigger, Focus.None);
     }
@@ -201,7 +201,7 @@ if (hasDocument) {
     if (event.button !== 0 || !menuStack[0]) return;
     let el = getTarget(event);
     while (el && !el.id.startsWith(Prefix.ContentMenu)) {
-      if (isMenuItem(el) && !isTrigger(el, Prefix.TriggerMenu)) {
+      if (isMenuItem(el) && !el.id.startsWith(Prefix.TriggerMenu)) {
         if (el.tagName === "A") el.click();
         menuActivate(el);
         return;
@@ -257,7 +257,7 @@ if (hasDocument) {
       }
     }
     if (!safe) {
-      const triggerPath: HTMLButtonElement[] = [];
+      const triggerPath: HTMLElement[] = [];
       let inContent = false;
       let foundItem = false;
       let el = getTarget(event);
@@ -274,7 +274,7 @@ if (hasDocument) {
           inContent = true;
           break;
         }
-        if (isTrigger(el, Prefix.TriggerMenu)) {
+        if (el.id.startsWith(Prefix.TriggerMenu)) {
           triggerPath.unshift(el);
         } else if (el.id.startsWith(Prefix.ContentMenu)) {
           const trigger = getLinked(el, "aria-labelledby");
@@ -306,13 +306,7 @@ if (hasDocument) {
     rovingBoundary = null;
     const key = spatialKey(event.key);
     let target = event.target;
-    if (
-      menuStack[0] &&
-      isElement(target) &&
-      !isTrigger(target, Prefix.TriggerMenu) &&
-      !target.role?.startsWith("menuitem") &&
-      findAncestor(target, Prefix.ContentMenu)
-    ) {
+    if (menuStack[0] && isElement(target) && target.id.startsWith(Prefix.ContentMenu)) {
       target = menuHighlighted || menuStack.at(-1) || target;
     }
     if (isTrigger(target, Prefix.TriggerMenu)) {
