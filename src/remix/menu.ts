@@ -12,7 +12,7 @@ function menuContext<P>(handle: Handle<P>) {
   return requireContext(handle.context.get(Group) || handle.context.get(Root), "Menu");
 }
 
-function Root(handle: Handle<BaseProps, MenuContext>) {
+function Root(handle: Handle<Pick<BaseProps, "children">, MenuContext>) {
   handle.context.set({ id: handle.id, root: true });
   return () => handle.props.children;
 }

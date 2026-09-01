@@ -25,6 +25,14 @@ const remixWrappers = readdirSync("src/remix")
   .sort()
   .map((name) => [name, readFileSync(`src/remix/${name}`, "utf8")] as const);
 
+const remixFixtures = readdirSync("tests/fixtures/remix", { recursive: true })
+  .filter((name) => String(name).endsWith(".tsx"))
+  .sort()
+  .map((name) => {
+    const rel = String(name);
+    return [rel, readFileSync(`tests/fixtures/remix/${rel}`, "utf8")] as const;
+  });
+
 const cores = [helper, combined, ...components.map(([, source]) => source)];
 const timers = ["setTimeout(", "setInterval(", "requestAnimationFrame(", "queueMicrotask("];
 
@@ -93,10 +101,19 @@ test.describe("Architecture invariants", () => {
   test("Remix wrappers use Handle factories and `createElement`", () => {
     for (const [name, source] of remixWrappers) {
       expect(source, name).not.toContain("jsx");
+      expect(source, name).not.toContain("className");
+      expect(source, name).not.toContain("onClick");
+      expect(source, name).not.toContain("useState");
       if (name !== "index.ts" && name !== "shared.ts") {
         expect(source, name).toContain("createElement");
         expect(source, name).toContain("handle: Handle");
       }
+    }
+  });
+
+  test("Remix fixtures declare `@jsxImportSource remix/ui`", () => {
+    for (const [name, source] of remixFixtures) {
+      expect(source.split("\n")[0], name).toBe("/** @jsxImportSource remix/ui */");
     }
   });
 

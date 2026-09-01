@@ -41,7 +41,7 @@ import { Accordion, Menu } from "monochrome/react"
 // Vue wrappers, same shape
 import { Accordion, Menu } from "monochrome/vue"
 
-// Remix wrappers, same shape. Handle factories, createElement,
+// Remix 3 (`remix/ui`), not Remix 2. Handle factories,
 // `class` instead of `className`, `mix`/`on` for events
 import { Accordion, Menu } from "monochrome/remix"
 ```
@@ -61,6 +61,32 @@ import { Accordion, Menu } from "monochrome/remix"
 
 The React, Vue, and Remix wrappers generate the same HTML and ARIA;
 all interactivity comes from the core.
+
+Remix wrappers target Remix 3 (`remix/ui`). Remix 2 is a React
+app and should import `monochrome/react`.
+
+```tsx
+/** @jsxImportSource remix/ui */
+import { on, type Handle } from "remix/ui"
+import { Collapsible } from "monochrome/remix"
+
+function Details(handle: Handle) {
+  let clicks = 0
+  return () => (
+    <Collapsible.Root class="details">
+      <Collapsible.Trigger
+        mix={on("click", () => {
+          clicks++
+          void handle.update()
+        })}
+      >
+        Show details ({clicks})
+      </Collapsible.Trigger>
+      <Collapsible.Panel>Hidden by default.</Collapsible.Panel>
+    </Collapsible.Root>
+  )
+}
+```
 
 ## Browser support
 

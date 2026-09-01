@@ -1,7 +1,8 @@
-import type { MixInput, Props } from "remix/ui";
+import type { MixInput, Props, RemixNode } from "remix/ui";
 
-export type BaseProps = Omit<Props<"div">, "mix"> & {
+export type BaseProps = Omit<Props<"div">, "mix" | "children"> & {
   mix?: MixInput<HTMLElement>;
+  children: RemixNode;
 };
 
 export const buildId = (base: string, id?: string) => (id ? `${base}:${id}` : base);

@@ -228,10 +228,10 @@
       }
     },
     "tests": {
-      "total": 458,
+      "total": 459,
       "a11y": 11,
       "accordion": 34,
-      "architecture": 11,
+      "architecture": 12,
       "collapsible": 25,
       "dialog": 22,
       "menu": 221,

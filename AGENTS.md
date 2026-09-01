@@ -254,6 +254,25 @@ unmounting releases, and each Menu tracks the ref through a
 `watchEffect` so the earliest surviving Menu becomes the tab
 stop.
 
+**Remix wrapper contract.** `src/remix/shared.ts` owns
+`BaseProps`, `requireContext`, and `buildId`. `BaseProps`
+requires `children` (Separator omits it) and types `mix` as
+`MixInput<HTMLElement>`. `Menu.Root` is children-only and
+renders no host, matching React.
+
+ARIA enumerations are the strings `"true"` and `"false"`.
+Remix SSR emits a valueless attribute for boolean `true` and
+omits boolean `false`, so React-style
+`aria-expanded={isOpen}` would drop the closed state from
+the markup.
+
+`handle.context.set` for identity (`id`, `root`, `submenu`)
+runs in the factory (once). Values that track props (`open`,
+`disabled`, `first`) are set in the render function so a
+re-render sees the new props. Nested menus resolve the
+nearest ancestor with `get(Group) || get(Root)`, keyed by
+factory identity.
+
 **Popover API with CSS-variable positioning.** The core publishes
 the trigger rect (`--top`, `--right`, `--bottom`, `--left`, in
 TRBL order) and the content's own size (`--width`, `--height`)
