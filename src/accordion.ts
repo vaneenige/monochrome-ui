@@ -6,7 +6,6 @@ import {
   isTrigger,
   type RovingFocusCallback,
   roving,
-  shouldSuppressClick,
   toggleDisclosure,
 } from "./dom.js";
 
@@ -57,7 +56,6 @@ if (hasDocument) {
   };
 
   addEventListener("click", (event: MouseEvent) => {
-    if (shouldSuppressClick[0]) return;
     const trigger = findAncestor(getTarget(event), Prefix.TriggerAccordion);
     if (trigger) accordion(trigger);
   });

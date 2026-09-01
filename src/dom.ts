@@ -7,8 +7,6 @@ export type RovingFocusCallback = (
 
 export type Roving = (focus: RovingFocusCallback) => [RovingNavigator, RovingNavigator];
 
-export const shouldSuppressClick = [false];
-
 export const hasDocument = typeof document !== "undefined";
 
 export const isElement = (el: unknown): el is HTMLElement => el instanceof HTMLElement;

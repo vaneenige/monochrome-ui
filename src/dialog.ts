@@ -1,4 +1,4 @@
-import { findAncestor, getLinked, getTarget, hasDocument, shouldSuppressClick } from "./dom.js";
+import { findAncestor, getLinked, getTarget, hasDocument } from "./dom.js";
 
 enum Prefix {
   TriggerDialogClose = "mct:dialog-close:",
@@ -29,7 +29,6 @@ if (hasDocument) {
   };
 
   addEventListener("click", (event: MouseEvent) => {
-    if (shouldSuppressClick[0]) return;
     const target = getTarget(event);
     if (findAncestor(target, Prefix.TriggerDialogClose)) dialogClose();
     else {

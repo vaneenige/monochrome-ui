@@ -7,7 +7,6 @@ import {
   isTrigger,
   type RovingFocusCallback,
   roving,
-  shouldSuppressClick,
   spatialKey,
 } from "./dom.js";
 
@@ -57,7 +56,6 @@ if (hasDocument) {
   };
 
   addEventListener("click", (event: MouseEvent) => {
-    if (shouldSuppressClick[0]) return;
     const trigger = findAncestor(getTarget(event), Prefix.TriggerTabs);
     if (trigger) tabs(trigger);
   });

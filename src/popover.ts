@@ -1,12 +1,4 @@
-import {
-  findAncestor,
-  getLinked,
-  getTarget,
-  hasDocument,
-  isElement,
-  position,
-  shouldSuppressClick,
-} from "./dom.js";
+import { findAncestor, getLinked, getTarget, hasDocument, isElement, position } from "./dom.js";
 
 enum Prefix {
   ContentPopover = "mcc:popover:",
@@ -43,7 +35,6 @@ if (hasDocument) {
   });
 
   addEventListener("click", (event: MouseEvent) => {
-    if (shouldSuppressClick[0]) return;
     const start = getTarget(event);
     if (start && !findAncestor(start, Prefix.ContentPopover)) {
       const trigger = findAncestor(start, Prefix.TriggerPopover);

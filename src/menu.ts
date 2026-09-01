@@ -8,7 +8,6 @@ import {
   position,
   type RovingFocusCallback,
   roving,
-  shouldSuppressClick,
   spatialKey,
 } from "./dom.js";
 
@@ -189,17 +188,12 @@ if (hasDocument) {
   };
 
   addEventListener("pointerdown", (event: PointerEvent) => {
-    shouldSuppressClick[0] = false;
     if (event.button !== 0) return;
     const el = getTarget(event);
     if (!el) return;
     const trigger = findAncestor(el, Prefix.TriggerMenu);
-    if (trigger) {
-      shouldSuppressClick[0] = true;
-      menuOpen(trigger, Focus.None);
-    } else if (findAncestor(el, Prefix.ContentMenu) && menuStack[0]) {
-      shouldSuppressClick[0] = true;
-    } else if (menuStack[0]) menuCloseAll();
+    if (trigger) menuOpen(trigger, Focus.None);
+    else if (menuStack[0] && !findAncestor(el, Prefix.ContentMenu)) menuCloseAll();
   });
 
   addEventListener("pointerup", (event: PointerEvent) => {
@@ -210,7 +204,6 @@ if (hasDocument) {
       if (isMenuItem(el) && !isTrigger(el, Prefix.TriggerMenu)) {
         if (el.tagName === "A") el.click();
         menuActivate(el);
-        if (!menuStack[0]) shouldSuppressClick[0] = false;
         return;
       }
       el = el.parentElement;
@@ -218,7 +211,6 @@ if (hasDocument) {
   });
 
   addEventListener("click", (event: MouseEvent) => {
-    if (shouldSuppressClick[0]) return;
     let el = getTarget(event);
     while (el && !el.id.startsWith(Prefix.TriggerMenu) && !el.id.startsWith(Prefix.ContentMenu)) {
       if (isMenuItem(el) && el.tagName === "A") {
@@ -311,7 +303,6 @@ if (hasDocument) {
   addEventListener("keydown", (event: KeyboardEvent) => {
     shouldMatchLetter = null;
     shouldPreventDefault = false;
-    shouldSuppressClick[0] = false;
     rovingBoundary = null;
     const key = spatialKey(event.key);
     let target = event.target;
@@ -388,10 +379,7 @@ if (hasDocument) {
             shouldPreventDefault = key === " " || target.tagName !== "A";
             if (target.ariaDisabled !== "true" && shouldPreventDefault) {
               menuActivate(target);
-              if (target.tagName !== "A") {
-                if (menuStack[0]) shouldSuppressClick[0] = true;
-                target.click();
-              }
+              if (target.tagName !== "A") target.click();
             }
           }
           break;
