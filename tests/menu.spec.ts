@@ -2174,8 +2174,11 @@ test.describe("Menubar dynamic", () => {
     page,
     renderer,
   }) => {
-    test.skip(renderer !== "react", "Exercises React render semantics");
-    await page.goto("/react/menu/menubar-dynamic");
+    test.skip(
+      renderer !== "react" && renderer !== "remix",
+      "Exercises React/Remix render semantics",
+    );
+    await page.goto(`/${renderer}/menu/menubar-dynamic`);
     await expect(page.getByTestId("trigger-1")).toHaveAttribute("tabindex", "0");
     await expect(page.getByTestId("trigger-2")).toHaveAttribute("tabindex", "-1");
     await page.evaluate(() => window.__bumpFirstMenu?.());
@@ -2185,8 +2188,8 @@ test.describe("Menubar dynamic", () => {
   });
 
   test("moves the tab stop on unmount and rejects late claimers", async ({ page, renderer }) => {
-    test.skip(renderer !== "vue", "Exercises Vue reactivity semantics");
-    await page.goto("/vue/menu/menubar-dynamic");
+    test.skip(renderer !== "vue" && renderer !== "remix", "Exercises Vue/Remix claim semantics");
+    await page.goto(`/${renderer}/menu/menubar-dynamic`);
     await expect(page.getByTestId("trigger-1")).toHaveAttribute("tabindex", "0");
     await page.getByTestId("add-extra").click();
     await expect(page.getByTestId("trigger-3")).toHaveAttribute("tabindex", "-1");

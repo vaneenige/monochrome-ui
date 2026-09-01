@@ -1,6 +1,7 @@
 # Monochrome
 
-Accessible UI component library. Best-in-class performance. HTML-first, React and Vue supported.
+Accessible UI component library. Best-in-class performance.
+HTML-first, React, Vue, and Remix supported.
 
 [![npm](https://img.shields.io/npm/v/monochrome.svg)](https://www.npmjs.com/package/monochrome)
 [![gzip](https://img.badgesize.io/https://unpkg.com/monochrome/dist/index.js?compression=gzip&label=gzip)](https://unpkg.com/monochrome/dist/index.js)
@@ -13,7 +14,8 @@ If you write accessible HTML, monochrome makes it interactive. The DOM is the st
 
 Accordion · Collapsible · Dialog · Menu · Menubar · Popover · Tabs · Tooltip.
 
-Plus an optional client-side router and thin React and Vue wrappers.
+Plus an optional client-side router and thin React, Vue, and Remix
+wrappers.
 
 ## Install
 
@@ -38,6 +40,10 @@ import { Accordion, Menu } from "monochrome/react"
 
 // Vue wrappers, same shape
 import { Accordion, Menu } from "monochrome/vue"
+
+// Remix wrappers, same shape. Handle factories, createElement,
+// `class` instead of `className`, `mix`/`on` for events
+import { Accordion, Menu } from "monochrome/remix"
 ```
 
 ## Example
@@ -53,7 +59,8 @@ import { Accordion, Menu } from "monochrome/vue"
 </div>
 ```
 
-The React and Vue wrappers generate the same HTML and ARIA; all interactivity comes from the core.
+The React, Vue, and Remix wrappers generate the same HTML and ARIA;
+all interactivity comes from the core.
 
 ## Browser support
 

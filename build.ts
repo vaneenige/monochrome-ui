@@ -55,6 +55,12 @@ const builds = [
     preserveRoot: "src/react",
   },
   {
+    input: "src/remix/index.ts",
+    dir: "dist/remix",
+    external: ["remix", "remix/ui", /^remix\//, /^\.\.\//],
+    preserveRoot: "src/remix",
+  },
+  {
     input: "src/vue/index.ts",
     dir: "dist/vue",
     external: ["vue", /^\.\.\//],
@@ -102,8 +108,8 @@ const fmt = (bytes: number) => `${(bytes / 1024).toFixed(1)}kB`;
 
 // One entry per export, each an object with a gzip number per
 // published flavour: the bytes that entry pulls in from its own
-// flavour. Core numbers include the shared `dom.js`; vue numbers
-// include the runtime `shared.js`; `menubar` pulls in `menu`.
+// flavour. Core numbers include the shared `dom.js`; remix and vue
+// numbers include the runtime `shared.js`; `menubar` pulls in `menu`.
 // Wrapper numbers exclude the core each wrapper auto-imports —
 // that lives under `core`. The wrapper `index` numbers are every
 // module of that framework gzipped together. `index.core` (and the
@@ -121,6 +127,11 @@ const coreGz = gzip("dist/index.js");
 const componentSizes = (name: (typeof wrappers)[number]) => ({
   core: gzipAll(["dist/dom.js", `dist/${name === "menubar" ? "menu" : name}.js`]),
   react: gzipAll([`dist/react/${name}.js`, ...(name === "menubar" ? ["dist/react/menu.js"] : [])]),
+  remix: gzipAll([
+    `dist/remix/${name}.js`,
+    "dist/remix/shared.js",
+    ...(name === "menubar" ? ["dist/remix/menu.js"] : []),
+  ]),
   vue: gzipAll([
     `dist/vue/${name}.js`,
     "dist/vue/shared.js",
@@ -130,7 +141,15 @@ const componentSizes = (name: (typeof wrappers)[number]) => ({
 const gzipSizes: Record<string, Record<string, number>> = Object.fromEntries(
   (
     [
-      ["index", { core: coreGz, react: gzipDir("dist/react"), vue: gzipDir("dist/vue") }],
+      [
+        "index",
+        {
+          core: coreGz,
+          react: gzipDir("dist/react"),
+          remix: gzipDir("dist/remix"),
+          vue: gzipDir("dist/vue"),
+        },
+      ],
       ["router", { core: gzip("dist/router.js") }],
       ...wrappers.map((name) => [name, componentSizes(name)] as const),
     ] as [string, Record<string, number>][]

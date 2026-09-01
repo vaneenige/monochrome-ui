@@ -20,6 +20,11 @@ const reactWrappers = readdirSync("src/react")
   .sort()
   .map((name) => [name, readFileSync(`src/react/${name}`, "utf8")] as const);
 
+const remixWrappers = readdirSync("src/remix")
+  .filter((name) => name.endsWith(".ts"))
+  .sort()
+  .map((name) => [name, readFileSync(`src/remix/${name}`, "utf8")] as const);
+
 const cores = [helper, combined, ...components.map(([, source]) => source)];
 const timers = ["setTimeout(", "setInterval(", "requestAnimationFrame(", "queueMicrotask("];
 
@@ -82,6 +87,16 @@ test.describe("Architecture invariants", () => {
     for (const [name, source] of reactWrappers) {
       expect(source, name).not.toContain(".Provider");
       expect(source, name).not.toContain("useContext");
+    }
+  });
+
+  test("Remix wrappers use Handle factories and `createElement`", () => {
+    for (const [name, source] of remixWrappers) {
+      expect(source, name).not.toContain("jsx");
+      if (name !== "index.ts" && name !== "shared.ts") {
+        expect(source, name).toContain("createElement");
+        expect(source, name).toContain("handle: Handle");
+      }
     }
   });
 

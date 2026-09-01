@@ -3,6 +3,8 @@ import { createServer, type ServerResponse } from "node:http";
 import { fileURLToPath } from "node:url";
 import { compileScript, parse } from "@vue/compiler-sfc";
 import { renderToString } from "react-dom/server";
+import { createElement } from "remix/ui";
+import { renderToString as remixRenderToString } from "remix/ui/server";
 import { rolldown, type Plugin } from "rolldown";
 import { createSSRApp } from "vue";
 import { renderToString as vueRenderToString } from "vue/server-renderer";
@@ -36,6 +38,7 @@ const vuePlugin: Plugin = {
 // freshly built `dist/`.
 const alias = {
   "monochrome/react": `${distDir}/react/index.js`,
+  "monochrome/remix": `${distDir}/remix/index.js`,
   "monochrome/vue": `${distDir}/vue/index.js`,
   monochrome: `${distDir}/index.js`,
 };
@@ -48,10 +51,15 @@ const ssrExternal = [
   "react-dom",
   "react-dom/server",
   "react/jsx-runtime",
+  "remix",
+  "remix/ui",
+  "remix/ui/server",
+  "remix/ui/jsx-runtime",
   "vue",
   "vue/server-renderer",
   "monochrome",
   "monochrome/react",
+  "monochrome/remix",
   "monochrome/vue",
 ];
 
@@ -60,10 +68,23 @@ const ssrExternal = [
 // `/{name}.js` URLs the page-level `/index.js` shim also imports,
 // so the browser loads one module instance per core file — exactly
 // like a bundler deduping the published package.
+const coreNames = new Set([
+  "accordion",
+  "collapsible",
+  "dialog",
+  "menu",
+  "popover",
+  "tabs",
+  "tooltip",
+]);
 const coreExternal: Plugin = {
   name: "core-external",
-  resolveId: (id) =>
-    /^\.\.\/[a-z]+\.js$/.test(id) ? { id: `/${id.slice(3)}`, external: "absolute" as const } : null,
+  resolveId: (id) => {
+    const name = id.match(/^\.\.\/([a-z]+)\.js$/)?.[1];
+    return name && coreNames.has(name)
+      ? { id: `/${name}.js`, external: "absolute" as const }
+      : null;
+  },
 };
 
 const clientCache = new Map<string, Promise<string>>();
@@ -126,7 +147,11 @@ const page = (title: string, body: string): string =>
 </html>`;
 
 const findFixture = (name: string): string | null => {
-  const exts = name.startsWith("vue/") ? [".vue", ".ts"] : [".tsx"];
+  const exts = name.startsWith("vue/")
+    ? [".vue", ".ts"]
+    : name.startsWith("remix/")
+      ? [".tsx", ".ts"]
+      : [".tsx"];
   for (const ext of exts) {
     const path = `${fixturesDir}/${name}${ext}`;
     if (existsSync(path)) return path;
@@ -137,6 +162,9 @@ const findFixture = (name: string): string | null => {
 const ssr = async (name: string, filePath: string): Promise<string> => {
   const mod = await import(await bundleForSSR(name, filePath));
   if (name.startsWith("vue/")) return vueRenderToString(createSSRApp(mod.default));
+  if (name.startsWith("remix/")) {
+    return remixRenderToString(createElement(mod.default, {}));
+  }
   return renderToString(mod.default({}));
 };
 

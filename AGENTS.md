@@ -4,8 +4,8 @@ Instructions for working on monochrome: an accessible, headless
 UI component library with no runtime dependencies. Eight
 components (Accordion, Collapsible, Dialog, Menu, Menubar,
 Popover, Tabs, Tooltip), plus an optional router and thin
-React and Vue wrappers. The core is framework-agnostic and
-works on plain HTML; import it once and every correctly-
+React, Vue, and Remix wrappers. The core is framework-agnostic
+and works on plain HTML; import it once and every correctly-
 structured component on the page becomes interactive.
 
 ## North stars (non-negotiables)
@@ -86,9 +86,9 @@ function signature it removes, and it makes the "where does this
 side effect come from?" question one grep away.
 
 **Wrappers use `createElement` / `h`, not JSX / SFC.** Eliminates
-`react/jsx-runtime` from the React bundle and halves the Vue bundle
-(no SFC patch-flag machinery). Source stays framework-agnostic in
-style.
+`react/jsx-runtime` from the React bundle, halves the Vue bundle
+(no SFC patch-flag machinery), and keeps Remix off
+`remix/ui/jsx-runtime`. Source stays framework-agnostic in style.
 
 ## Clever tricks
 
@@ -247,7 +247,8 @@ visually first item. React keys the claim by the claimer's
 id so a Menu that re-renders alone re-claims its slot, and
 StrictMode double-render agrees. Root resets the claim
 during render because a children change re-renders Root, and
-the next pass re-claims in document order. Vue holds the
+the next pass re-claims in document order. Remix follows that
+same render-time reset and claim-by-id. Vue holds the
 claimer id in a ref: claiming is idempotent per id,
 unmounting releases, and each Menu tracks the ref through a
 `watchEffect` so the earliest surviving Menu becomes the tab
@@ -345,8 +346,9 @@ Rules only. Rationale lives in "Why the core looks weird" and
 
 - Arrow functions in the core and router. React wrappers use
   `function` declarations for components (React convention, better
-  stack traces). Vue wrappers use `defineComponent` with
-  method-shorthand `setup`.
+  stack traces). Remix wrappers use Handle factories
+  (`function Root(handle: Handle<...>) { return () => ... }`).
+  Vue wrappers use `defineComponent` with method-shorthand `setup`.
 - Default parameter values with enum types instead of option
   objects when the set is small:
   `menu(trigger, mode = Focus.Trigger)`.
@@ -519,9 +521,9 @@ AGENTS.md, commit messages, PR descriptions.
   every declared symbol. Inline `//` for non-obvious decisions.
   File-top `@file` header explaining architecture, invariants,
   and file layout.
-- `src/react/*`, `src/vue/*`: **no comments** except
-  `// oxlint-disable-next-line` pragmas where required. Each file is
-  small and self-evident.
+- `src/react/*`, `src/vue/*`, `src/remix/*`: **no comments**
+  except `// oxlint-disable-next-line` pragmas where required.
+  Each file is small and self-evident.
 - Tests: no comments except when the _why_ of a setup step would
   surprise the next reader (race conditions, sentinel globals, etc.).
 
@@ -535,11 +537,12 @@ rolldown, emits `.d.ts` via `tsc`, and rewrites `package.json`'s
 `versionMeta` from the current source: `gzipSize` is the combined
 core (headline / badge), `gzipSizes` has one entry per export
 (each component plus `index` and `router`), each an object with
-a gzip number per published flavour (`core` / `react` / `vue`;
-`router` is core-only), and `tests` is Playwright counts. The
-numbers are generated, never hand-edited. Dist bytes match a Node
-build of the same tree; `gzipSync` numbers can differ by a few
-bytes from Node's zlib, so the gate always restamps from Bun.
+a gzip number per published flavour (`core` / `react` /
+`remix` / `vue`; `router` is core-only), and `tests` is
+Playwright counts. The numbers are generated, never
+hand-edited. Dist bytes match a Node build of the same tree;
+`gzipSync` numbers can differ by a few bytes from Node's zlib,
+so the gate always restamps from Bun.
 
 **Requires Bun >= 1.4.** `build.ts` and the SSR test server
 (`tests/server.ts`) are run directly as TypeScript. CI pins

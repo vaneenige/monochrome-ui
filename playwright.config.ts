@@ -1,6 +1,6 @@
 import { defineConfig } from "@playwright/test";
 
-type Options = { renderer: "html" | "react" | "vue" };
+type Options = { renderer: "html" | "react" | "vue" | "remix" };
 
 export default defineConfig<Options>({
 	fullyParallel: true,
@@ -14,6 +14,7 @@ export default defineConfig<Options>({
 		{ name: "html", use: { renderer: "html" } },
 		{ name: "react", use: { renderer: "react" } },
 		{ name: "vue", use: { renderer: "vue" } },
+		{ name: "remix", use: { renderer: "remix" } },
 	],
 	webServer: {
 		command: process.env.CI

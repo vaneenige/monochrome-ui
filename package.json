@@ -1,7 +1,7 @@
 {
   "name": "monochrome",
   "version": "0.12.0",
-  "description": "Accessible UI component library. Best-in-class performance. HTML-first, React and Vue supported.",
+  "description": "Accessible UI component library. Best-in-class performance. HTML-first, React, Vue, and Remix supported.",
   "author": "Colin van Eenige",
   "license": "MIT",
   "repository": {
@@ -26,6 +26,7 @@
     "keyboard-navigation",
     "html",
     "react",
+    "remix",
     "vue",
     "typescript",
     "accordion",
@@ -104,6 +105,10 @@
       "types": "./dist/react/index.d.ts",
       "default": "./dist/react/index.js"
     },
+    "./remix": {
+      "types": "./dist/remix/index.d.ts",
+      "default": "./dist/remix/index.js"
+    },
     "./vue": {
       "types": "./dist/vue/index.d.ts",
       "default": "./dist/vue/index.js"
@@ -125,6 +130,7 @@
   "peerDependencies": {
     "react": ">=19",
     "react-dom": ">=19",
+    "remix": ">=3.0.0-rc.1",
     "vue": ">=3.5"
   },
   "peerDependenciesMeta": {
@@ -132,6 +138,9 @@
       "optional": true
     },
     "react-dom": {
+      "optional": true
+    },
+    "remix": {
       "optional": true
     },
     "vue": {
@@ -149,6 +158,7 @@
     "oxlint": "1.73.0",
     "react": "19.2.7",
     "react-dom": "19.2.7",
+    "remix": "3.0.0-rc.1",
     "rolldown": "1.1.5",
     "typescript": "7.0.2",
     "vue": "3.5.39"
@@ -162,36 +172,43 @@
       "accordion": {
         "core": 977,
         "react": 506,
+        "remix": 562,
         "vue": 760
       },
       "collapsible": {
         "core": 713,
         "react": 428,
+        "remix": 484,
         "vue": 670
       },
       "dialog": {
         "core": 840,
         "react": 528,
+        "remix": 583,
         "vue": 788
       },
       "index": {
         "core": 3261,
         "react": 2019,
+        "remix": 2091,
         "vue": 2377
       },
       "menu": {
         "core": 2369,
         "react": 672,
+        "remix": 726,
         "vue": 923
       },
       "menubar": {
         "core": 2369,
         "react": 952,
+        "remix": 1001,
         "vue": 1254
       },
       "popover": {
         "core": 1011,
         "react": 514,
+        "remix": 573,
         "vue": 781
       },
       "router": {
@@ -200,19 +217,21 @@
       "tabs": {
         "core": 1039,
         "react": 556,
+        "remix": 621,
         "vue": 857
       },
       "tooltip": {
         "core": 1050,
         "react": 359,
+        "remix": 410,
         "vue": 573
       }
     },
     "tests": {
-      "total": 457,
+      "total": 458,
       "a11y": 11,
       "accordion": 34,
-      "architecture": 10,
+      "architecture": 11,
       "collapsible": 25,
       "dialog": 22,
       "menu": 221,
