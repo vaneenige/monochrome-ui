@@ -110,28 +110,27 @@ follow-up would split in two.
 
 **Walk-up then walk-down for click dispatch.** Single-prefix
 clicks (Collapsible, Accordion, Tabs, Tooltip suppress) use
-`findAncestor` from the event target. Dialog open/close and
-Popover toggle/outside use it too: the nearest matching
-prefix is the whole decision, and a content ancestor is the
-"inside, stop" / "not outside" check. Overlay components keep
+`findAncestor` from the event target. Dialog open/close uses
+it too: the nearest matching prefix is the whole decision.
+Popover click only toggles a trigger. Overlay components keep
 a hand-rolled walk where one pass mixes prefixes with roles
 (Menu `pointerup` activation, href `click`, `pointermove`
 hover path). Menu open/dismiss lives on `pointerdown` and
-item activation on `pointerup`. A menu pointer session
-arms a capture-phase `click` that marks the event
-(`suppressedClicks`); other components skip that
-gesture via `suppressedClicks.has`. The event is not stopped,
-so user listeners still fire. Popover dismisses on outside
-click when `findAncestor` finds neither trigger nor content,
-and on outside `pointerdown` so a Menu opening on
-pointerdown closes it without either file naming the other.
+item activation on `pointerup`. Other components miss the
+trailing `click` because they dispatch on their own ID
+prefixes. Popover dismisses on outside `pointerdown` so a
+Menu opening on pointerdown closes it without either file
+naming the other.
 
 **`findAncestor` over `closest()`.** `findAncestor(el, prefix)`
 walks `parentElement` up checking `id.startsWith(prefix)`.
 `closest(".foo")` would require classes or data attributes, which
 is the exact shadow registry the ID-prefix scheme exists to avoid.
 The manual walk is fewer bytes, inlines into a single loop, and
-doesn't pull in the CSS selector engine.
+doesn't pull in the CSS selector engine. Prefix families do
+not overlap (`mct:` vs `mcc:`), so a trigger is never a
+content hit: start at the element itself. Do not pass
+`parentElement` to skip it.
 
 **Array-as-nullable-stack.** `menuStack[0]` is "is any menu
 open?", `menuStack[1]` is "is a submenu open?",
@@ -167,19 +166,17 @@ radio sweep), selected by which module-scope flag is non-null.
 **Menu Enter/Space in `keydown`.** Accordion, Tabs, and the other
 triggers still rely on the browser's synthesized `click` for
 Enter/Space. Menu cannot: `pointerdown` already opened or
-dismissed the menu, and the following click is swallowed by the
-capture-phase suppressor. Keyboard activation therefore lives in
+dismissed the menu, so keyboard activation lives in
 `keydown` (`menuOpen` / `menu` / `menuActivate`) with
 `preventDefault` so Space does not scroll. After `menuActivate`
 on a non-href item, `keydown` dispatches `target.click()` so
 keyboard activation produces the same click a pointer session
 does: user `onclick` handlers fire, and a menuitem that is also
 another component's trigger (a `mct:dialog-open:` item) works
-without Menu naming that component. When the menu stays open
-(checkbox, radio), the one-shot suppressor is armed first, so
-that click is marked exactly like a pointer session's trailing
-click and other monochrome components skip it. Enter/Space on a
-submenu trigger call `menu` with `Focus.First`, so an
+without Menu naming that component. Checkbox and radio items
+leave the menu open; that click still does not match other
+prefixes. Enter/Space on a submenu trigger call `menu`
+with `Focus.First`, so an
 already-open submenu moves focus to the first item. Root menu
 buttons still `menuOpen` (toggle closed if already the stack
 root). Menubar items also call `menu` with `Focus.First`, so
@@ -195,23 +192,16 @@ pointer-opened standalone trigger (`role="button"`); they do not
 `preventDefault` so empty and all-disabled menus do not
 scroll.
 
-**Pointer session and capture-phase click suppress.** A menu
-gesture is a pointer session, not a click. `pointerdown` on a
-trigger opens or toggles; `pointerdown` outside dismisses;
-`pointerup` on a plain menuitem activates. Non-primary buttons
-(`button !== 0`) are ignored. After a menu `pointerdown`, a
-one-shot capture `click` listener marks the event
-(`suppressedClicks` in `src/dom.ts`). Other components skip
-that click via `suppressedClicks.has`. The event is not
-stopped, so user listeners still fire. Menu does not name
-Collapsible.
-The suppressor is removed at the start of `pointerdown` and
-`keydown`, so an abandoned press then Enter on a disclosure
-still works. It is also removed when a `pointerup` activation
-closes the menu: that trailing click is the activation itself,
-so it must reach every component (a `mct:dialog-open:` menuitem
-opens its dialog), not just user listeners. Playwright `.click()`
-still works: it fires `pointerdown`. `pointerup` on an href calls `el.click()` before
+**Pointer session.** A menu gesture is a pointer session, not a
+click. `pointerdown` on a trigger opens or toggles;
+`pointerdown` outside dismisses; `pointerup` on a plain
+menuitem activates. Non-primary buttons (`button !== 0`) are
+ignored. The trailing `click` is left alone: other components
+dispatch on their own ID prefixes, so a click that started on
+`mct:menu:` does not toggle a disclosure. A real press on a
+disclosure has its own `pointerdown`, which already closed the
+menu. Playwright `.click()` still works: it fires
+`pointerdown`. `pointerup` on an href calls `el.click()` before
 activate so sticky-drag navigates: the browser does not
 synthesize click across elements. Same-element press then
 fires a real click too (hash navigation is idempotent).
@@ -222,6 +212,12 @@ fires a real click too (hash navigation is idempotent).
 dismisses the tooltip; a Menu or Popover still open sees the
 second Escape. No import-order coordinator, and Tooltip does
 not name those components.
+
+**Dialog Escape is native.** `showModal()` already closes on
+Escape and restores focus to the trigger. The Close button is
+the only path that needs `dialogClose`. Native close (Escape,
+form `method="dialog"`) leaves the module refs stale;
+`dialogOpen` guards on `dialogContent.open`.
 
 **Sibling submenu replace.** Opening a menu closes every stack
 entry whose content does not contain the new trigger
@@ -416,14 +412,14 @@ PropType<...>` where Vue's prop typing requires it.)
 ### Events
 
 - `addEventListener` on `window` / `document` only.
+  Listeners are never removed.
 - Custom events (`mc:navigate`) for cross-boundary signals the
   wrappers need. No callback props or event-emitter exports from
   the core.
-- Menu open/dismiss/activate on `pointerdown` / `pointerup`; a
-  capture-phase one-shot `click` marks the event so other
-  components skip it (user listeners still fire). Enter/Space
-  for menu are handled in `keydown` with `preventDefault`.
-  Tooltip Escape is capture-phase.
+- Menu open/dismiss/activate on `pointerdown` / `pointerup`.
+  Enter/Space for menu are handled in `keydown` with
+  `preventDefault`. Tooltip Escape is capture-phase. Dialog
+  Escape is native.
 - `void` on fire-and-forget promise expressions.
 
 ### Naming
@@ -474,8 +470,9 @@ correct place. It applies to:
   clusters, and the functions within a cluster.
 - Dispatch chains (`else if` prefix ladders). One exception: a
   check that must short-circuit the ladder stays first. The menu
-  click walk breaks on `mct:menu:` before the href-item check so
-  a submenu trigger that is also a link never activates.
+  click and `pointerup` walks break on `mct:menu:` before item
+  activation so a submenu trigger that is also a link never
+  activates.
 
 Fixed, non-alphabetical orders that stay fixed:
 
@@ -490,9 +487,6 @@ Fixed, non-alphabetical orders that stay fixed:
   (`--width`, `--height`).
 - `Focus` enum: the default member first (`Trigger` is `0`),
   then semantic order.
-- `src/dom.ts` declares `suppressedClicks` before `hasDocument`.
-  Swapping the two costs ~39 B combined gzip at the same raw
-  size; leave that order.
 
 ## Prose style
 

@@ -1,4 +1,4 @@
-import { findAncestor, getLinked, getTarget, hasDocument, suppressedClicks } from "./dom.js";
+import { findAncestor, getLinked, getTarget, hasDocument } from "./dom.js";
 
 enum Prefix {
   TriggerDialogClose = "mct:dialog-close:",
@@ -29,16 +29,11 @@ if (hasDocument) {
   };
 
   addEventListener("click", (event: MouseEvent) => {
-    if (suppressedClicks.has(event)) return;
     const target = getTarget(event);
     if (findAncestor(target, Prefix.TriggerDialogClose)) dialogClose();
     else {
       const trigger = findAncestor(target, Prefix.TriggerDialogOpen);
       if (trigger && trigger.ariaDisabled !== "true") dialogOpen(trigger);
     }
-  });
-
-  addEventListener("keydown", (event: KeyboardEvent) => {
-    if (event.key === "Escape" && dialogContent) dialogClose();
   });
 }

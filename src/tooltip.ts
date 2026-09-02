@@ -1,12 +1,4 @@
-import {
-  findAncestor,
-  getLinked,
-  getTarget,
-  hasDocument,
-  isTrigger,
-  position,
-  suppressedClicks,
-} from "./dom.js";
+import { findAncestor, getLinked, getTarget, hasDocument, isTrigger, position } from "./dom.js";
 
 enum Prefix {
   ContentTooltip = "mcc:tooltip:",
@@ -63,7 +55,6 @@ if (hasDocument) {
   };
 
   addEventListener("click", (event: MouseEvent) => {
-    if (suppressedClicks.has(event)) return;
     if (findAncestor(getTarget(event), Prefix.TriggerTooltip)) tooltipSuppress();
   });
 

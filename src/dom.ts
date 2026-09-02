@@ -7,8 +7,6 @@ export type RovingFocusCallback = (
 
 export type Roving = (focus: RovingFocusCallback) => [RovingNavigator, RovingNavigator];
 
-export const suppressedClicks = new WeakSet<Event>();
-
 export const hasDocument = typeof document !== "undefined";
 
 export const isElement = (el: unknown): el is HTMLElement => el instanceof HTMLElement;
@@ -57,11 +55,13 @@ export const roving: Roving = (focus) => {
 };
 
 export const spatialKey = (key: string) =>
-  document.dir === "rtl" && key === "ArrowRight"
-    ? "ArrowLeft"
-    : document.dir === "rtl" && key === "ArrowLeft"
-      ? "ArrowRight"
-      : key;
+  document.dir === "rtl"
+    ? key === "ArrowRight"
+      ? "ArrowLeft"
+      : key === "ArrowLeft"
+        ? "ArrowRight"
+        : key
+    : key;
 
 export const toggleDisclosure = (trigger: HTMLElement) => {
   const content = getLinked(trigger, "aria-controls");
