@@ -622,6 +622,16 @@ test.describe("Menu", () => {
       await expect(page.getByTestId("root-trigger")).not.toHaveAttribute("data-highlighted");
     });
 
+    test("ArrowDown after a click on a label roves from the highlighted item", async ({ page }) => {
+      await openRoot(page);
+      await page.getByTestId("root-item-2").hover();
+      await page.getByTestId("root-label").click();
+      await expect(page.getByTestId("root-list")).toBeVisible();
+      await page.keyboard.press("ArrowDown");
+      await expect(page.getByTestId("root-list")).toBeVisible();
+      await expect(page.getByTestId("root-item-3")).toBeFocused();
+    });
+
     test("ArrowLeft from the submenu popover highlights the submenu trigger", async ({ page }) => {
       await openRoot(page);
       await openSubmenuViaHover(page);
@@ -1337,6 +1347,20 @@ test.describe("Menubar", () => {
       await expect(page.getByTestId("menubar-list-1")).not.toBeVisible();
       await expect(page.getByTestId("menubar-trigger-1")).toBeFocused();
       await expect(page.getByTestId("menubar-trigger-1")).toHaveAttribute("data-highlighted", "");
+    });
+
+    test("ArrowDown from the menu popover ignores a trigger painted by an earlier Escape", async ({
+      page,
+    }) => {
+      await page.getByTestId("menubar-trigger-1").click();
+      await page.keyboard.press("Escape");
+      await expect(page.getByTestId("menubar-trigger-1")).toHaveAttribute("data-highlighted", "");
+      await page.getByTestId("menubar-trigger-2").click();
+      await expect(page.getByTestId("menubar-trigger-1")).not.toHaveAttribute("data-highlighted");
+      await focusPopover(page, "menubar-list-2");
+      await page.keyboard.press("ArrowDown");
+      await expect(page.getByTestId("menubar-item-2-1")).toBeFocused();
+      await expect(page.getByTestId("menubar-list-1")).not.toBeVisible();
     });
 
     test("Tab still closes if click-open leaves focus on the menu popover", async ({ page }) => {

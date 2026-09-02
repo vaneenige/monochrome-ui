@@ -122,6 +122,7 @@ if (hasDocument) {
           }
         } else {
           menuTrim(trigger);
+          if (!menuStack[0] && menuHighlighted !== trigger) menuHighlight(null);
           if (trigger.ariaDisabled !== "true") {
             menuStack.push(trigger);
             content.showPopover();
@@ -134,7 +135,7 @@ if (hasDocument) {
             } else if (mode === Focus.Last) {
               menuRoving(content.lastElementChild, menuPrevious);
             } else {
-              menuHighlighted?.focus({ preventScroll: true });
+              trigger.focus({ preventScroll: true });
             }
           }
         }
@@ -197,8 +198,11 @@ if (hasDocument) {
     let el = getTarget(event);
     while (el && !el.id.startsWith(Prefix.ContentMenu)) {
       if (isMenuItem(el) && !el.id.startsWith(Prefix.TriggerMenu)) {
-        if (el.tagName === "A") el.click();
-        menuActivate(el);
+        if (el.tagName === "A") {
+          el.click();
+        } else {
+          menuActivate(el);
+        }
         return;
       }
       el = el.parentElement;
@@ -295,8 +299,12 @@ if (hasDocument) {
     const key = spatialKey(event.key);
     shouldMatchLetter = /^[a-z]$/i.test(key) ? key.toLowerCase() : null;
     let target = event.target;
-    if (menuStack[0] && isElement(target) && target.id.startsWith(Prefix.ContentMenu)) {
-      target = menuHighlighted || menuStack.at(-1) || target;
+    if (
+      menuStack[0] &&
+      isElement(target) &&
+      (target.id.startsWith(Prefix.ContentMenu) || target === document.body)
+    ) {
+      (target = menuHighlighted || menuStack.at(-1) || target).focus();
     }
     if (isTrigger(target, Prefix.TriggerMenu)) {
       const isRootTrigger = findAncestor(target, Prefix.ContentMenu) === null;

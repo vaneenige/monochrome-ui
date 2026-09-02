@@ -201,10 +201,12 @@ dispatch on their own ID prefixes, so a click that started on
 `mct:menu:` does not toggle a disclosure. A real press on a
 disclosure has its own `pointerdown`, which already closed the
 menu. Playwright `.click()` still works: it fires
-`pointerdown`. `pointerup` on an href calls `el.click()` before
-activate so sticky-drag navigates: the browser does not
-synthesize click across elements. Same-element press then
-fires a real click too (hash navigation is idempotent).
+`pointerdown`. `pointerup` on an href calls `el.click()` instead
+of activating, so sticky-drag navigates (the browser does not
+synthesize click across elements) and the click listener
+closes the menu once, the same path Enter on an href takes.
+Same-element press then fires a real click too (hash
+navigation is idempotent).
 
 **Tooltip Escape in capture.** When a tooltip is shown, its
 `keydown` listener runs in capture and
@@ -266,10 +268,16 @@ path, or arrived in the submenu where `t > 1`) clears the
 apex; hover the trigger again to re-arm. Pointermove focuses the
 enabled item under the pointer (React Aria / Base UI) so Arrow
 keys continue from there; `data-highlighted` follows that item.
-`showPopover` can leave focus on the content node, so
-`Focus.None` open restores `menuHighlighted` and `keydown`
-from a `mcc:menu:` surface retargets to that item or the
-stack top. Home, End, and typeahead on an already-open root
+`showPopover` can leave focus on the content node, and a
+click on a label or separator inside the menu blurs the item
+to `body`, so `Focus.None` open focuses the trigger and
+`keydown` from a `mcc:menu:` surface or from `body` retargets
+to the painted item or the stack top and focuses it, so the
+tail trim sees a live element. Opening a root menu clears a
+`data-highlighted` left on a menubar trigger by an earlier
+Escape or bar roving, unless it is the trigger being opened,
+so that retarget never picks an item from a closed session.
+Home, End, and typeahead on an already-open root
 trigger (click-open, or that retarget when nothing is
 painted) rove the open menu; they do not open a closed one,
 and they do not apply to menubar items (Home / End /
@@ -343,9 +351,8 @@ Rules only. Rationale lives in "Why the core looks weird" and
   `function` declarations for components (React convention, better
   stack traces). Vue wrappers use `defineComponent` with
   method-shorthand `setup`.
-- Default parameter values with enum types instead of option
-  objects when the set is small:
-  `menu(trigger, mode = Focus.Trigger)`.
+- Enum-typed mode parameters instead of option objects when
+  the set is small: `menu(trigger, mode: Focus)`.
 - No optional parameters that every caller supplies, and no
   return values that no caller reads. Signatures are the
   contract; unused generality is negative value here.
@@ -485,8 +492,7 @@ Fixed, non-alphabetical orders that stay fixed:
 - CSS custom properties: trigger rect in TRBL order (`--top`,
   `--right`, `--bottom`, `--left`), then content size
   (`--width`, `--height`).
-- `Focus` enum: the default member first (`Trigger` is `0`),
-  then semantic order.
+- `Focus` enum: `Trigger` first (`0`), then semantic order.
 
 ## Prose style
 
