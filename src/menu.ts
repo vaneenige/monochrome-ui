@@ -98,7 +98,7 @@ if (hasDocument) {
   };
   const [menuNext, menuPrevious] = roving(menuRoving);
 
-  const menu = (trigger: HTMLElement | undefined, mode = Focus.Trigger) => {
+  const menu = (trigger: HTMLElement | undefined, mode: Focus) => {
     if (trigger?.id.startsWith(Prefix.TriggerMenu)) {
       const content = getLinked(trigger, "aria-controls");
       if (content) {
@@ -120,22 +120,22 @@ if (hasDocument) {
             trigger.ariaExpanded = "false";
             content.ariaHidden = "true";
           }
-        } else if (trigger.ariaDisabled !== "true") {
+        } else {
           menuTrim(trigger);
-          menuStack.push(trigger);
-          content.showPopover();
-          trigger.ariaExpanded = "true";
-          content.ariaHidden = "false";
-          position(trigger, content);
-          safeX = null;
-          if (mode === Focus.Trigger) {
-            trigger.focus();
-          } else if (mode === Focus.First) {
-            menuRoving(content.firstElementChild, menuNext);
-          } else if (mode === Focus.Last) {
-            menuRoving(content.lastElementChild, menuPrevious);
-          } else {
-            menuHighlighted?.focus({ preventScroll: true });
+          if (trigger.ariaDisabled !== "true") {
+            menuStack.push(trigger);
+            content.showPopover();
+            trigger.ariaExpanded = "true";
+            content.ariaHidden = "false";
+            position(trigger, content);
+            safeX = null;
+            if (mode === Focus.First) {
+              menuRoving(content.firstElementChild, menuNext);
+            } else if (mode === Focus.Last) {
+              menuRoving(content.lastElementChild, menuPrevious);
+            } else {
+              menuHighlighted?.focus({ preventScroll: true });
+            }
           }
         }
       }
@@ -161,7 +161,7 @@ if (hasDocument) {
     if (trigger) {
       const wasOpen = menuStack[0];
       menuCloseAll();
-      if (wasOpen && isTrigger(trigger, Prefix.TriggerMenu)) menu(trigger, Focus.None);
+      if (wasOpen) menu(trigger, Focus.None);
     }
   };
 
@@ -170,14 +170,9 @@ if (hasDocument) {
   };
 
   const menuOpen = (trigger: HTMLElement, mode: Focus) => {
-    const inPopover = findAncestor(trigger, Prefix.ContentMenu);
-    if (inPopover) {
-      if (!menuStack.includes(trigger)) menu(trigger, mode);
-    } else if (menuStack[0]) {
-      const reopen = trigger !== menuStack[0];
+    if (trigger === menuStack[0]) {
       menuCloseAll();
-      if (reopen) menu(trigger, mode);
-    } else {
+    } else if (!menuStack.includes(trigger)) {
       menu(trigger, mode);
     }
   };
@@ -223,7 +218,6 @@ if (hasDocument) {
 
   addEventListener("pointermove", (event: PointerEvent) => {
     if (event.pointerType === "touch" || !menuStack[0]) return;
-    let safe = false;
     const subTrigger = menuStack[1] && menuStack.at(-1);
     if (subTrigger) {
       const rect = subTrigger.getBoundingClientRect();
@@ -245,66 +239,61 @@ if (hasDocument) {
                 ? safeRect.right
                 : safeX) - safeX;
           const t = dx && (event.clientX - safeX) / dx;
-          safe =
+          if (
             t > 0 &&
             t <= 1 &&
             (event.clientY - (safeY + t * (safeRect.top - safeY))) *
               (event.clientY - (safeY + t * (safeRect.bottom - safeY))) <=
               0 &&
-            (safeRect.left - rect.right) * event.movementX >= 0;
+            (safeRect.left - rect.right) * event.movementX >= 0
+          )
+            return;
         }
-        if (!safe) safeX = null;
+        safeX = null;
       }
     }
-    if (!safe) {
-      const triggerPath: HTMLElement[] = [];
-      let inContent = false;
-      let foundItem = false;
-      let el = getTarget(event);
-      while (el) {
-        if (
-          el.role?.startsWith("menuitem") ||
-          el.role === "separator" ||
-          el.role === "presentation"
-        ) {
-          if (!foundItem && isMenuItem(el)) menuHighlight(el);
-          foundItem = true;
-        }
-        if (!foundItem && el.id.startsWith(Prefix.Content)) {
-          inContent = true;
-          break;
-        }
-        if (el.id.startsWith(Prefix.TriggerMenu)) {
-          triggerPath.unshift(el);
-        } else if (el.id.startsWith(Prefix.ContentMenu)) {
-          const trigger = getLinked(el, "aria-labelledby");
-          if (isTrigger(trigger, Prefix.TriggerMenu)) {
-            triggerPath.unshift(trigger);
-          }
-        }
-        el = el.parentElement;
+    const triggerPath: HTMLElement[] = [];
+    let foundItem = false;
+    let el = getTarget(event);
+    while (el) {
+      if (
+        el.role?.startsWith("menuitem") ||
+        el.role === "separator" ||
+        el.role === "presentation"
+      ) {
+        if (!foundItem && isMenuItem(el)) menuHighlight(el);
+        foundItem = true;
       }
-      if (!inContent && triggerPath[0]) {
-        let i = 0;
-        while (menuStack[i] && menuStack[i] === triggerPath[i]) i++;
-        if (
-          i === 0 &&
-          (triggerPath[0].role !== "menuitem" ||
-            triggerPath[0].parentElement?.parentElement !==
-              menuStack[0].parentElement?.parentElement)
-        )
-          return;
-        menuCloseAll(i);
-        menu(triggerPath[i], Focus.None);
+      if (!foundItem && el.id.startsWith(Prefix.Content)) return;
+      if (el.id.startsWith(Prefix.TriggerMenu)) {
+        triggerPath.unshift(el);
+      } else if (el.id.startsWith(Prefix.ContentMenu)) {
+        const trigger = getLinked(el, "aria-labelledby");
+        if (isTrigger(trigger, Prefix.TriggerMenu)) {
+          triggerPath.unshift(trigger);
+        }
       }
+      el = el.parentElement;
+    }
+    if (triggerPath[0]) {
+      let i = 0;
+      while (menuStack[i] && menuStack[i] === triggerPath[i]) i++;
+      if (
+        i === 0 &&
+        (triggerPath[0].role !== "menuitem" ||
+          triggerPath[0].parentElement?.parentElement !== menuStack[0].parentElement?.parentElement)
+      )
+        return;
+      menuCloseAll(i);
+      menu(triggerPath[i], Focus.None);
     }
   });
 
   addEventListener("keydown", (event: KeyboardEvent) => {
-    shouldMatchLetter = null;
     shouldPreventDefault = false;
     rovingBoundary = null;
     const key = spatialKey(event.key);
+    shouldMatchLetter = /^[a-z]$/i.test(key) ? key.toLowerCase() : null;
     let target = event.target;
     if (menuStack[0] && isElement(target) && target.id.startsWith(Prefix.ContentMenu)) {
       target = menuHighlighted || menuStack.at(-1) || target;
@@ -351,10 +340,7 @@ if (hasDocument) {
           }
           break;
         default:
-          if (isOpenMenuButton && /^[a-z]$/i.test(key)) {
-            shouldMatchLetter = key.toLowerCase();
-            menu(target, Focus.First);
-          }
+          if (isOpenMenuButton && shouldMatchLetter) menu(target, Focus.First);
       }
     }
     if (
@@ -400,10 +386,7 @@ if (hasDocument) {
           menuRoving(parent.parentElement?.lastElementChild, menuPrevious);
           break;
         default:
-          if (/^[a-z]$/i.test(key)) {
-            shouldMatchLetter = key.toLowerCase();
-            menuNext(parent);
-          }
+          if (shouldMatchLetter) menuNext(parent);
           break;
       }
     }
