@@ -168,6 +168,40 @@ test.describe("Tooltip", () => {
       await page.keyboard.press("Escape");
       await expect(page.getByTestId("menu-list")).not.toBeVisible();
     });
+
+    test("Escape dismisses the tooltip first and the open popover second", async ({
+      page,
+      renderer,
+    }) => {
+      test.skip(renderer !== "html", "Cross-component fixture is plain HTML");
+      await page.goto("/html/tooltip/with-popover");
+      await page.getByTestId("popover-trigger").click();
+      await expect(page.getByTestId("popover-content")).toBeVisible();
+      await page.getByTestId("tooltip-trigger").hover();
+      await expect(page.getByTestId("tooltip-content")).toBeVisible();
+      await page.keyboard.press("Escape");
+      await expect(page.getByTestId("tooltip-content")).not.toBeVisible();
+      await expect(page.getByTestId("popover-content")).toBeVisible();
+      await page.keyboard.press("Escape");
+      await expect(page.getByTestId("popover-content")).not.toBeVisible();
+    });
+
+    test("Escape dismisses the tooltip first and the open dialog second", async ({
+      page,
+      renderer,
+    }) => {
+      test.skip(renderer !== "html", "Cross-component fixture is plain HTML");
+      await page.goto("/html/tooltip/with-dialog");
+      await page.getByTestId("dialog-trigger").click();
+      await expect(page.getByTestId("dialog-content")).toBeVisible();
+      await page.getByTestId("tooltip-trigger").hover();
+      await expect(page.getByTestId("tooltip-content")).toBeVisible();
+      await page.keyboard.press("Escape");
+      await expect(page.getByTestId("tooltip-content")).not.toBeVisible();
+      await expect(page.getByTestId("dialog-content")).toBeVisible();
+      await page.keyboard.press("Escape");
+      await expect(page.getByTestId("dialog-content")).not.toBeVisible();
+    });
   });
 
   test.describe("Disabled", () => {

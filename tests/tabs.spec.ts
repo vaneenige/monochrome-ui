@@ -270,7 +270,11 @@ test.describe("Tabs", () => {
     for (const [fixture, key, axis] of [
       ["tabs/horizontal", "Space", "y"],
       ["tabs/horizontal", "ArrowRight", "x"],
+      ["tabs/horizontal", "ArrowDown", "y"],
+      ["tabs/horizontal", "ArrowUp", "y"],
       ["tabs/vertical", "ArrowDown", "y"],
+      ["tabs/vertical", "ArrowLeft", "x"],
+      ["tabs/vertical", "ArrowRight", "x"],
     ] as const) {
       test(`${key} on a ${fixture.split("/")[1]} tab does not scroll`, async ({
         page,
@@ -280,12 +284,12 @@ test.describe("Tabs", () => {
         await page.evaluate((dim) => {
           document.body.style[dim === "y" ? "height" : "width"] = "3000px";
         }, axis);
+        await page.getByTestId(fixture.includes("vertical") ? "vtab-1" : "tab-1").focus();
         if (axis === "y") {
           await scrollAndSettle(page, 0, 500);
         } else {
           await scrollAndSettle(page, 500, 0);
         }
-        await page.getByTestId(fixture.includes("vertical") ? "vtab-1" : "tab-1").focus();
         const before = await page.evaluate(
           (d) => (d === "y" ? window.scrollY : window.scrollX),
           axis,
@@ -342,8 +346,8 @@ test.describe("Tabs", () => {
           if (el instanceof HTMLElement) el.ariaDisabled = "true";
         }
       });
-      await scrollAndSettle(page, 500, 0);
       await page.getByTestId("dtab-1").focus();
+      await scrollAndSettle(page, 500, 0);
       const before = await page.evaluate(() => window.scrollX);
       await page.keyboard.press("ArrowRight");
       expect(await page.evaluate(() => window.scrollX)).toBe(before);

@@ -15,17 +15,9 @@ function useAccordionContext() {
   return context;
 }
 
-function Root({
-  children,
-  type,
-  ...props
-}: BaseProps & { type?: "single" | "multiple" }): ReactElement {
+function Root({ children, ...props }: BaseProps): ReactElement {
   const id = useId();
-  return createElement(
-    "div",
-    { ...props, "data-mode": type ?? "single", id: `mcr:accordion:${id}` },
-    children,
-  );
+  return createElement("div", { ...props, id: `mcr:accordion:${id}` }, children);
 }
 
 function Item({
@@ -46,7 +38,7 @@ function Header({
   children,
   as,
   ...props
-}: BaseProps & { as?: "h1" | "h2" | "h3" | "h4" | "h5" | "h6" }): ReactElement {
+}: BaseProps & { as?: "div" | "h1" | "h2" | "h3" | "h4" | "h5" | "h6" }): ReactElement {
   return createElement(as ?? "h3", props, children);
 }
 
@@ -77,7 +69,6 @@ function Panel({ children, ...props }: BaseProps): ReactElement {
     {
       ...props,
       id: `mcc:accordion:${fullId}`,
-      role: "region",
       "aria-labelledby": `mct:accordion:${fullId}`,
       "aria-hidden": !isOpen,
       hidden: isOpen ? undefined : true,

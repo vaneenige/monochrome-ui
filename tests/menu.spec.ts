@@ -921,7 +921,6 @@ test.describe("Menu", () => {
       await page.evaluate(() => {
         document.body.style.height = "3000px";
       });
-      await scrollAndSettle(page, 0, 500);
     });
 
     for (const [key, prep] of [
@@ -935,6 +934,7 @@ test.describe("Menu", () => {
           await openRootViaKeyboard(page);
         } else {
           await page.getByTestId("root-trigger").focus();
+          await scrollAndSettle(page, 0, 500);
         }
         const before = await page.evaluate(() => window.scrollY);
         await page.keyboard.press(key);

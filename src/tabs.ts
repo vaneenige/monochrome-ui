@@ -27,7 +27,7 @@ if (hasDocument) {
       if (!rovingBoundary) rovingBoundary = node;
       if (isTrigger(node, Prefix.TriggerTabs) && node.ariaDisabled !== "true") {
         shouldPreventDefault = true;
-        node.focus();
+        node.focus({ preventScroll: true });
         return node;
       }
     }
@@ -65,6 +65,7 @@ if (hasDocument) {
     rovingBoundary = null;
     const target = event.target;
     if (isTrigger(target, Prefix.TriggerTabs)) {
+      if (event.key.startsWith("Arrow")) shouldPreventDefault = true;
       const vertical = target.parentElement?.ariaOrientation === "vertical";
       switch (spatialKey(event.key)) {
         case "ArrowDown":

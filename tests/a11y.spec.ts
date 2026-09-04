@@ -97,4 +97,36 @@ test.describe("Accessibility (axe)", () => {
     const results = await scan(page);
     expect(results.violations).toEqual([]);
   });
+
+  test("open accordion has no WCAG A/AA violations", async ({ page }) => {
+    await page.goto("/html/accordion/single");
+    await page.getByTestId("single-trigger-1").click();
+    await expect(page.getByTestId("single-content-1")).toBeVisible();
+    expect((await scan(page)).violations).toEqual([]);
+  });
+
+  test("selected tab has no WCAG A/AA violations", async ({ page }) => {
+    await page.goto("/html/tabs/horizontal");
+    await page.getByTestId("tab-2").click();
+    await expect(page.getByTestId("panel-2")).toBeVisible();
+    expect((await scan(page)).violations).toEqual([]);
+  });
+
+  test("open popover has no WCAG A/AA violations", async ({ page }) => {
+    await page.goto("/html/popover/basic");
+    await page.getByTestId("click-trigger").click();
+    await expect(page.getByTestId("click-content")).toBeVisible();
+    expect((await scan(page)).violations).toEqual([]);
+    await page.keyboard.press("Escape");
+    await page.getByTestId("dialog-popover-trigger").click();
+    await expect(page.getByTestId("dialog-popover-content")).toBeVisible();
+    expect((await scan(page)).violations).toEqual([]);
+  });
+
+  test("shown tooltip has no WCAG A/AA violations", async ({ page }) => {
+    await page.goto("/html/tooltip/basic");
+    await page.getByTestId("tooltip-trigger").focus();
+    await expect(page.getByTestId("tooltip-content")).toBeVisible();
+    expect((await scan(page)).violations).toEqual([]);
+  });
 });

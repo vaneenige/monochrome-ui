@@ -2,14 +2,14 @@ import { Accordion } from "monochrome/react";
 
 export default () => (
   <>
-    <Accordion.Root type="single">
+    <Accordion.Root>
       <Accordion.Item>
         <Accordion.Header>
           <Accordion.Trigger data-testid="outer-trigger-1">Outer Section 1</Accordion.Trigger>
         </Accordion.Header>
         <Accordion.Panel data-testid="outer-content-1">
           <p>Outer content with nested accordion:</p>
-          <Accordion.Root type="single">
+          <Accordion.Root>
             <Accordion.Item>
               <Accordion.Header>
                 <Accordion.Trigger data-testid="nested-trigger-1">

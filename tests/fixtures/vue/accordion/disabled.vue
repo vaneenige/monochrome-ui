@@ -10,10 +10,7 @@ import { Accordion } from "monochrome/vue"
     >
       Focus before
     </button>
-    <Accordion.Root
-      type="single"
-     
-    >
+    <Accordion.Root>
       <Accordion.Item>
         <Accordion.Header>
           <Accordion.Trigger data-testid="disabled-trigger-1">

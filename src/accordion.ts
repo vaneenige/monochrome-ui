@@ -18,6 +18,21 @@ if (hasDocument) {
   let shouldPreventDefault = false;
   let rovingBoundary: Element | null = null;
 
+  const accordionTrigger = (item: Element | null | undefined) => {
+    let el = item?.firstElementChild;
+    while (el && !isTrigger(el, Prefix.TriggerAccordion)) {
+      el = el.firstElementChild;
+    }
+    return isTrigger(el, Prefix.TriggerAccordion) ? el : null;
+  };
+
+  const accordionItem = (el: HTMLElement | null | undefined) => {
+    const root = el && findAncestor(el, Prefix.RootAccordion);
+    if (!root) return null;
+    while (el && el.parentElement !== root) el = el.parentElement;
+    return el;
+  };
+
   const accordionRoving: RovingFocusCallback = (node, fallback) => {
     if (isElement(node)) {
       if (rovingBoundary === node) {
@@ -25,10 +40,10 @@ if (hasDocument) {
         return null;
       }
       if (!rovingBoundary) rovingBoundary = node;
-      const trigger = node.firstElementChild?.firstElementChild;
-      if (isTrigger(trigger, Prefix.TriggerAccordion) && trigger.ariaDisabled !== "true") {
+      const trigger = accordionTrigger(node);
+      if (trigger && trigger.ariaDisabled !== "true") {
         shouldPreventDefault = true;
-        trigger.focus();
+        trigger.focus({ preventScroll: true });
         return trigger;
       }
     }
@@ -40,11 +55,11 @@ if (hasDocument) {
     if (trigger.ariaDisabled !== "true") {
       if (trigger.ariaExpanded !== "true") {
         const root = findAncestor(trigger, Prefix.RootAccordion);
-        if (root?.getAttribute("data-mode") === "single") {
+        if (root) {
           let item = root.firstElementChild;
           while (item) {
-            const itemTrigger = item.firstElementChild?.firstElementChild;
-            if (isElement(itemTrigger) && itemTrigger.ariaExpanded === "true") {
+            const itemTrigger = accordionTrigger(item);
+            if (itemTrigger && itemTrigger.ariaExpanded === "true") {
               toggleDisclosure(itemTrigger);
             }
             item = item.nextElementSibling;
@@ -65,7 +80,8 @@ if (hasDocument) {
     rovingBoundary = null;
     const target = event.target;
     if (isTrigger(target, Prefix.TriggerAccordion)) {
-      const item = target.parentElement?.parentElement;
+      if (event.key.startsWith("Arrow")) shouldPreventDefault = true;
+      const item = accordionItem(target);
       if (item) {
         switch (event.key) {
           case "ArrowDown":
