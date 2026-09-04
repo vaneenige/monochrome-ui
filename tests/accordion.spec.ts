@@ -351,18 +351,24 @@ test.describe("Accordion", () => {
   });
 
   test.describe("Structure independence", () => {
-    test("toggles without a heading and stays exclusive", async ({ page, renderer }) => {
+    test("toggles when Header sits in an extra wrapper and stays exclusive", async ({
+      page,
+      renderer,
+    }) => {
       await page.goto(`/${renderer}/accordion/structure-independence`);
-      await page.getByTestId("bare-trigger").click();
-      await expect(page.getByTestId("bare-content")).toBeVisible();
+      await page.getByTestId("h3-trigger").click();
+      await expect(page.getByTestId("h3-content")).toBeVisible();
       await page.getByTestId("h4-trigger").click();
       await expect(page.getByTestId("h4-content")).toBeVisible();
-      await expect(page.getByTestId("bare-content")).not.toBeVisible();
+      await expect(page.getByTestId("h3-content")).not.toBeVisible();
     });
 
-    test("ArrowDown moves from a bare trigger to an `h4` Header", async ({ page, renderer }) => {
+    test("ArrowDown moves from an `h3` Header to a nested `h4` Header", async ({
+      page,
+      renderer,
+    }) => {
       await page.goto(`/${renderer}/accordion/structure-independence`);
-      await page.getByTestId("bare-trigger").focus();
+      await page.getByTestId("h3-trigger").focus();
       await page.keyboard.press("ArrowDown");
       await expect(page.getByTestId("h4-trigger")).toBeFocused();
     });

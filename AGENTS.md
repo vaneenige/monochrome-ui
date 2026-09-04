@@ -101,13 +101,14 @@ DOM walk in the core is a hand-rolled loop: `let item =
 root.firstElementChild; while (item) { ...; item =
 item.nextElementSibling }`. `querySelectorAll` would allocate a
 NodeList and run a selector parser for structure we already know
-(Accordion items are direct children of the root; the trigger is
-the first `mct:accordion:` on that item's first-child chain, so
-Header is optional; Tab buttons are direct children of the List).
-A sibling-pointer walk costs nothing, makes iteration order
-explicit (Accordion closes others before toggling the trigger,
-Tabs toggles off-and-on in one pass), and lets a single traversal
-do work that a list plus follow-up would split in two.
+(Accordion items are direct children of the root; each trigger
+sits inside an h2-h6 Header, so the walk follows that item's
+first-child chain to `mct:accordion:`; Tab buttons are direct
+children of the List). A sibling-pointer walk costs nothing,
+makes iteration order explicit (Accordion closes others before
+toggling the trigger, Tabs toggles off-and-on in one pass), and
+lets a single traversal do work that a list plus follow-up would
+split in two.
 
 **Walk-up then walk-down for click dispatch.** Single-prefix
 clicks (Collapsible, Accordion, Tabs, Tooltip suppress) use

@@ -5,19 +5,23 @@ import { Accordion } from "monochrome/vue"
 <template>
   <Accordion.Root>
     <Accordion.Item>
-      <Accordion.Trigger data-testid="bare-trigger">
-        Bare
-      </Accordion.Trigger>
-      <Accordion.Panel data-testid="bare-content">
-        <p>Bare panel</p>
+      <Accordion.Header>
+        <Accordion.Trigger data-testid="h3-trigger">
+          H3 header
+        </Accordion.Trigger>
+      </Accordion.Header>
+      <Accordion.Panel data-testid="h3-content">
+        <p>H3 panel</p>
       </Accordion.Panel>
     </Accordion.Item>
     <Accordion.Item>
-      <Accordion.Header as="h4">
-        <Accordion.Trigger data-testid="h4-trigger">
-          H4 header
-        </Accordion.Trigger>
-      </Accordion.Header>
+      <div>
+        <Accordion.Header as="h4">
+          <Accordion.Trigger data-testid="h4-trigger">
+            H4 header
+          </Accordion.Trigger>
+        </Accordion.Header>
+      </div>
       <Accordion.Panel data-testid="h4-content">
         <p>H4 panel</p>
       </Accordion.Panel>
