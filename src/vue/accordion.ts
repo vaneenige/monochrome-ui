@@ -30,7 +30,10 @@ const Item = defineComponent({
 
 const Header = defineComponent({
   props: {
-    as: { type: String, default: "h3" },
+    as: {
+      type: String as () => "h2" | "h3" | "h4" | "h5" | "h6",
+      default: "h3",
+    },
   },
   setup(props, { slots }) {
     return () => h(props.as, null, slots.default?.());

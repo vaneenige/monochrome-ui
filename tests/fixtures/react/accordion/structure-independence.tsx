@@ -9,11 +9,11 @@ export default () => (
       </Accordion.Panel>
     </Accordion.Item>
     <Accordion.Item>
-      <Accordion.Header as="div">
-        <Accordion.Trigger data-testid="div-trigger">Div header</Accordion.Trigger>
+      <Accordion.Header as="h4">
+        <Accordion.Trigger data-testid="h4-trigger">H4 header</Accordion.Trigger>
       </Accordion.Header>
-      <Accordion.Panel data-testid="div-content">
-        <p>Div panel</p>
+      <Accordion.Panel data-testid="h4-content">
+        <p>H4 panel</p>
       </Accordion.Panel>
     </Accordion.Item>
   </Accordion.Root>

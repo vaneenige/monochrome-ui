@@ -355,16 +355,16 @@ test.describe("Accordion", () => {
       await page.goto(`/${renderer}/accordion/structure-independence`);
       await page.getByTestId("bare-trigger").click();
       await expect(page.getByTestId("bare-content")).toBeVisible();
-      await page.getByTestId("div-trigger").click();
-      await expect(page.getByTestId("div-content")).toBeVisible();
+      await page.getByTestId("h4-trigger").click();
+      await expect(page.getByTestId("h4-content")).toBeVisible();
       await expect(page.getByTestId("bare-content")).not.toBeVisible();
     });
 
-    test("ArrowDown moves from a bare trigger to a div Header", async ({ page, renderer }) => {
+    test("ArrowDown moves from a bare trigger to an `h4` Header", async ({ page, renderer }) => {
       await page.goto(`/${renderer}/accordion/structure-independence`);
       await page.getByTestId("bare-trigger").focus();
       await page.keyboard.press("ArrowDown");
-      await expect(page.getByTestId("div-trigger")).toBeFocused();
+      await expect(page.getByTestId("h4-trigger")).toBeFocused();
     });
   });
 });
