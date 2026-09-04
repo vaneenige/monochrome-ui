@@ -33,13 +33,62 @@ test.describe("Accessibility (axe)", () => {
     });
   }
 
-  test("open menu has no WCAG A/AA violations", async ({ page }) => {
-    await page.goto("/html/menu/basic");
-    await page.getByTestId("root-trigger").click();
-    await expect(page.getByTestId("root-list")).toBeVisible();
-    const results = await scan(page);
-    expect(results.violations).toEqual([]);
-  });
+  const openMenus = [
+    {
+      name: "menu/basic",
+      trigger: "root-trigger",
+      list: "root-list",
+      subTrigger: "root-submenu-trigger",
+      subList: "root-submenu-list",
+    },
+    {
+      name: "menu/menubar",
+      trigger: "menubar-trigger-1",
+      list: "menubar-list-1",
+      subTrigger: "menubar-submenu-trigger-1",
+      subList: "menubar-submenu-list-1",
+    },
+    {
+      name: "menu/checkbox-radio",
+      trigger: "trigger",
+      list: "list",
+    },
+    {
+      name: "menu/siblings",
+      trigger: "trigger",
+      list: "list",
+      subTrigger: "share-trigger",
+      subList: "share-list",
+    },
+    {
+      name: "menu/nested-content",
+      trigger: "nested-menu-trigger",
+      list: "nested-menu-list",
+    },
+    {
+      name: "menu/structure-independence",
+      trigger: "c-trigger",
+      list: "c-list",
+      subTrigger: "c-submenu-trigger",
+      subList: "c-submenu-list",
+    },
+  ] as const;
+
+  for (const fixture of openMenus) {
+    test(`open ${fixture.name} has no WCAG A/AA violations`, async ({ page }) => {
+      await page.goto(`/html/${fixture.name}`);
+      await page.getByTestId(fixture.trigger).click();
+      await expect(page.getByTestId(fixture.list)).toBeVisible();
+      const opened = await scan(page);
+      expect(opened.violations).toEqual([]);
+      if ("subTrigger" in fixture) {
+        await page.getByTestId(fixture.subTrigger).hover();
+        await expect(page.getByTestId(fixture.subList)).toBeVisible();
+        const nested = await scan(page);
+        expect(nested.violations).toEqual([]);
+      }
+    });
+  }
 
   test("open dialog has no WCAG A/AA violations", async ({ page }) => {
     await page.goto("/html/dialog/basic");
