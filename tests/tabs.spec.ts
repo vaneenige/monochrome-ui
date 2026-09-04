@@ -222,7 +222,11 @@ test.describe("Tabs", () => {
       await page.goto(`/${renderer}/tabs/horizontal`);
     });
 
-    test("walks Focus before → selected tab → its panel → Focus after", async ({ page }) => {
+    test("walks Focus before → selected tab → its panel → Focus after", async ({
+      page,
+      browserName,
+    }) => {
+      test.skip(browserName === "webkit", "WebKit Tab order");
       await page.getByTestId("focus-before").focus();
       await page.keyboard.press("Tab");
       await expect(page.getByTestId("tab-1")).toBeFocused();
@@ -239,7 +243,11 @@ test.describe("Tabs", () => {
       await expect(page.getByTestId("tab-2")).toBeFocused();
     });
 
-    test("Shift+Tab from the tablist moves to the previous focusable", async ({ page }) => {
+    test("Shift+Tab from the tablist moves to the previous focusable", async ({
+      page,
+      browserName,
+    }) => {
+      test.skip(browserName === "webkit", "WebKit Tab order");
       await page.getByTestId("tab-1").focus();
       await page.keyboard.press("Shift+Tab");
       await expect(page.getByTestId("focus-before")).toBeFocused();
@@ -379,7 +387,11 @@ test.describe("Tabs", () => {
       await expect(page.getByTestId("nf-panel-1")).not.toHaveAttribute("tabindex");
     });
 
-    test("Tab from the tab lands directly inside focusable panel content", async ({ page }) => {
+    test("Tab from the tab lands directly inside focusable panel content", async ({
+      page,
+      browserName,
+    }) => {
+      test.skip(browserName === "webkit", "WebKit Tab order");
       await page.getByTestId("nf-tab-1").focus();
       await page.keyboard.press("Tab");
       await expect(page.getByTestId("nf-button-1")).toBeFocused();

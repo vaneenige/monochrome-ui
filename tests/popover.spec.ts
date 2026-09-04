@@ -125,7 +125,9 @@ test.describe("Popover", () => {
   test.describe("Focus management", () => {
     test("opening with the mouse moves focus into content; trigger Tab walks into focusable children", async ({
       page,
+      browserName,
     }) => {
+      test.skip(browserName === "webkit", "WebKit click/Tab focus inside a popover");
       await page.getByTestId("click-trigger").click();
       await expect(page.getByTestId("click-content")).toBeFocused();
       await page.keyboard.press("Tab");
@@ -153,7 +155,8 @@ test.describe("Popover", () => {
       await expect(page.getByTestId("click-content")).not.toBeVisible();
     });
 
-    test("Shift+Tab off the trigger closes the popover", async ({ page }) => {
+    test("Shift+Tab off the trigger closes the popover", async ({ page, browserName }) => {
+      test.skip(browserName === "webkit", "WebKit Tab order after popover");
       await page.getByTestId("click-trigger").click();
       await page.getByTestId("click-trigger").focus();
       await page.keyboard.press("Shift+Tab");
@@ -194,7 +197,9 @@ test.describe("Popover", () => {
     test("opens, focuses content, and dismisses on outside click when trigger and content live in different containers", async ({
       page,
       renderer,
+      browserName,
     }) => {
+      test.skip(browserName === "webkit", "WebKit click/Tab focus inside a popover");
       await page.goto(`/${renderer}/popover/structure-independence`);
       await page.getByTestId("trigger").click();
       await expect(page.getByTestId("content")).toBeVisible();

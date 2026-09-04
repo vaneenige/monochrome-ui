@@ -81,7 +81,8 @@ test.describe("Tooltip", () => {
       await expect(page.getByTestId("focus-before")).toBeFocused();
     });
 
-    test("shows when Tab moves focus onto the trigger", async ({ page }) => {
+    test("shows when Tab moves focus onto the trigger", async ({ page, browserName }) => {
+      test.skip(browserName === "webkit", "WebKit Tab order");
       await page.getByTestId("focus-before").focus();
       await page.keyboard.press("Tab");
       await expect(page.getByTestId("tooltip-trigger")).toBeFocused();

@@ -163,7 +163,8 @@ test.describe("Dialog", () => {
       await expect(page.getByTestId("focus-after")).not.toBeFocused();
     });
 
-    test("returns focus to the trigger on close", async ({ page }) => {
+    test("returns focus to the trigger on close", async ({ page, browserName }) => {
+      test.skip(browserName === "webkit", "WebKit does not focus the trigger on click");
       await page.getByTestId("primary-trigger").click();
       await page.keyboard.press("Escape");
       await expect(page.getByTestId("primary-trigger")).toBeFocused();
@@ -173,7 +174,9 @@ test.describe("Dialog", () => {
   test.describe("Tabs inside dialog", () => {
     test("initial tab order reflects the selected tab and excludes inactive panel content", async ({
       page,
+      browserName,
     }) => {
+      test.skip(browserName === "webkit", "WebKit Tab order inside a dialog");
       await page.getByTestId("tabs-dialog-trigger").click();
       await expect(page.getByTestId("tabs-dialog-close")).toBeFocused();
       await page.keyboard.press("Tab");
@@ -195,7 +198,9 @@ test.describe("Dialog", () => {
     test("opens, focuses inside, and closes when trigger and content live in different containers", async ({
       page,
       renderer,
+      browserName,
     }) => {
+      test.skip(browserName === "webkit", "WebKit does not focus the trigger on click");
       await page.goto(`/${renderer}/dialog/structure-independence`);
       await page.getByTestId("trigger").click();
       await expect(page.getByTestId("content")).toBeVisible();

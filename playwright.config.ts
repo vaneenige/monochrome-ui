@@ -14,6 +14,8 @@ export default defineConfig<Options>({
 		{ name: "html", use: { renderer: "html" } },
 		{ name: "react", use: { renderer: "react" } },
 		{ name: "vue", use: { renderer: "vue" } },
+		{ name: "html-webkit", use: { renderer: "html", browserName: "webkit" } },
+		{ name: "html-firefox", use: { renderer: "html", browserName: "firefox" } },
 	],
 	webServer: {
 		command: process.env.CI

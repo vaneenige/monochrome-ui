@@ -87,15 +87,18 @@ test.describe("Accordion", () => {
       });
     }
 
-    test("toggles via mouse click and keeps focus on the trigger", async ({ page }) => {
+    test("toggles via mouse click and keeps focus on the trigger", async ({
+      page,
+      browserName,
+    }) => {
       const trigger = page.getByTestId("single-trigger-1");
       const content = page.getByTestId("single-content-1");
       await trigger.click();
       await expect(content).toBeVisible();
-      await expect(trigger).toBeFocused();
+      if (browserName !== "webkit") await expect(trigger).toBeFocused();
       await trigger.click();
       await expect(content).not.toBeVisible();
-      await expect(trigger).toBeFocused();
+      if (browserName !== "webkit") await expect(trigger).toBeFocused();
     });
 
     test("activates via a click on a nested SVG inside the trigger", async ({ page }) => {
@@ -158,7 +161,9 @@ test.describe("Accordion", () => {
     test("Tab walks every trigger and continues into focusable panel content", async ({
       page,
       renderer,
+      browserName,
     }) => {
+      test.skip(browserName === "webkit", "WebKit Tab order after disclosure");
       await page.getByTestId("focus-before").focus();
       await page.keyboard.press("Tab");
       await expect(page.getByTestId("single-trigger-1")).toBeFocused();

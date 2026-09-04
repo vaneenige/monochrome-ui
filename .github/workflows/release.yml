@@ -38,7 +38,7 @@ jobs:
 
       - run: bun run typecheck
 
-      - run: bunx playwright install chromium
+      - run: bunx playwright install chromium webkit firefox
 
       - run: bun run test
 
