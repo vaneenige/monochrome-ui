@@ -112,7 +112,7 @@ if (hasDocument) {
               menuHighlight(trigger);
             } else {
               if (mode !== Focus.None || content.contains(document.activeElement)) {
-                trigger.focus();
+                trigger.focus({ preventScroll: mode === Focus.None });
               }
               if (content.contains(menuHighlighted)) menuHighlight(null);
             }
@@ -156,6 +156,11 @@ if (hasDocument) {
     } else {
       menuCloseAll();
     }
+  };
+
+  const menubarItem = (el: HTMLElement | null | undefined) => {
+    while (el && el.parentElement?.role !== "menubar") el = el.parentElement;
+    return el;
   };
 
   const menubarStep = (trigger: HTMLElement | null) => {
@@ -280,12 +285,14 @@ if (hasDocument) {
       el = el.parentElement;
     }
     if (triggerPath[0]) {
+      const menubar = menubarItem(triggerPath[0])?.parentElement;
       let i = 0;
       while (menuStack[i] && menuStack[i] === triggerPath[i]) i++;
       if (
         i === 0 &&
         (triggerPath[0].role !== "menuitem" ||
-          triggerPath[0].parentElement?.parentElement !== menuStack[0].parentElement?.parentElement)
+          !menubar ||
+          menubar !== menubarItem(menuStack[0])?.parentElement)
       )
         return;
       menuCloseAll(i);
@@ -297,7 +304,6 @@ if (hasDocument) {
     shouldPreventDefault = false;
     rovingBoundary = null;
     const key = spatialKey(event.key);
-    shouldMatchLetter = /^[a-z]$/i.test(key) ? key.toLowerCase() : null;
     let target = event.target;
     if (
       menuStack[0] &&
@@ -306,111 +312,90 @@ if (hasDocument) {
     ) {
       (target = menuHighlighted || menuStack.at(-1) || target).focus();
     }
-    if (isTrigger(target, Prefix.TriggerMenu)) {
-      const isRootTrigger = findAncestor(target, Prefix.ContentMenu) === null;
-      const isOpenMenuButton =
-        isRootTrigger && target.ariaExpanded === "true" && target.role === "button";
-      switch (key) {
-        case "Enter":
-        case " ":
-          if (isRootTrigger && target.role === "button") {
-            menuOpen(target, Focus.First);
+    const el = isElement(target) ? target : null;
+    const trigger = isTrigger(el, Prefix.TriggerMenu) ? el : null;
+    const parent = el?.parentElement;
+    const isItem = el && parent && el.role?.startsWith("menuitem");
+    const inPopover = (trigger || isItem) && el && findAncestor(el, Prefix.ContentMenu);
+    const isRootTrigger = trigger && !inPopover;
+    const isOpenMenuButton =
+      isRootTrigger && trigger.ariaExpanded === "true" && trigger.role === "button";
+    const menubarRoot = isItem && menubarItem(menuStack[0] || el);
+    shouldMatchLetter = key.length === 1 && key !== " " ? key.toLowerCase() : null;
+    switch (key) {
+      case "Enter":
+      case " ":
+        if (trigger) {
+          if (isRootTrigger && trigger.role === "button") {
+            menuOpen(trigger, Focus.First);
           } else {
-            menu(target, Focus.First);
+            menu(trigger, Focus.First);
           }
           shouldPreventDefault = true;
-          break;
-        case "ArrowDown":
-          if (isRootTrigger) {
-            menu(target, Focus.First);
-            shouldPreventDefault = true;
+        } else if (isItem) {
+          shouldPreventDefault = key === " " || el.tagName !== "A" || el.ariaDisabled === "true";
+          if (el.ariaDisabled !== "true" && shouldPreventDefault) {
+            menuActivate(el);
+            if (el.tagName !== "A") el.click();
           }
-          break;
-        case "ArrowUp":
-          if (isRootTrigger) {
-            menu(target, Focus.Last);
-            shouldPreventDefault = true;
-          }
-          break;
-        case "ArrowRight":
-          if (!isRootTrigger) menu(target, Focus.First);
-          break;
-        case "Home":
-          if (isOpenMenuButton) {
-            menu(target, Focus.First);
-            shouldPreventDefault = true;
-          }
-          break;
-        case "End":
-          if (isOpenMenuButton) {
-            menu(target, Focus.Last);
-            shouldPreventDefault = true;
-          }
-          break;
-        default:
-          if (isOpenMenuButton && shouldMatchLetter) menu(target, Focus.First);
-      }
-    }
-    if (
-      !shouldPreventDefault &&
-      isElement(target) &&
-      target.role?.startsWith("menuitem") &&
-      target.parentElement
-    ) {
-      const parent = target.parentElement;
-      const menubarRoot = menuStack[0]?.parentElement || parent;
-      const inPopover = findAncestor(target, Prefix.ContentMenu);
-      switch (key) {
-        case "Enter":
-        case " ":
-          if (!isTrigger(target, Prefix.TriggerMenu)) {
-            shouldPreventDefault = key === " " || target.tagName !== "A";
-            if (target.ariaDisabled !== "true" && shouldPreventDefault) {
-              menuActivate(target);
-              if (target.tagName !== "A") target.click();
-            }
-          }
-          break;
-        case "ArrowDown":
-          if (inPopover) menuNext(parent);
-          break;
-        case "ArrowUp":
-          if (inPopover) menuPrevious(parent);
-          break;
-        case "ArrowRight":
-          menubarStep(menuNext(menubarRoot));
-          break;
-        case "ArrowLeft":
+        }
+        break;
+      case "Tab":
+        if (menuStack[0]) {
+          menuStack[0].focus();
+          menuCloseAll();
+        }
+        break;
+      case "Escape":
+        if (menuStack[0]) {
+          menu(menuStack.pop(), Focus.Trigger);
+          shouldPreventDefault = true;
+        }
+        break;
+      case "ArrowDown":
+        if (isRootTrigger) {
+          menu(trigger, Focus.First);
+          shouldPreventDefault = true;
+        } else if (inPopover) menuNext(parent);
+        break;
+      case "ArrowUp":
+        if (isRootTrigger) {
+          menu(trigger, Focus.Last);
+          shouldPreventDefault = true;
+        } else if (inPopover) menuPrevious(parent);
+        break;
+      case "ArrowRight":
+        if (trigger && inPopover) menu(trigger, Focus.First);
+        else if (isItem && menubarRoot) menubarStep(menuNext(menubarRoot));
+        break;
+      case "ArrowLeft":
+        if (isItem) {
           if (menuStack[1]) {
             menu(menuStack.pop(), Focus.Trigger);
-          } else {
-            menubarStep(menuPrevious(menubarRoot));
-          }
-          break;
-        case "Home":
-          menuRoving(parent.parentElement?.firstElementChild, menuNext);
-          break;
-        case "End":
-          menuRoving(parent.parentElement?.lastElementChild, menuPrevious);
-          break;
-        default:
-          if (shouldMatchLetter) menuNext(parent);
-          break;
-      }
+          } else if (menubarRoot) menubarStep(menuPrevious(menubarRoot));
+        }
+        break;
+      case "Home":
+        if (isOpenMenuButton) {
+          menu(trigger, Focus.First);
+          shouldPreventDefault = true;
+        } else if (isItem) menuRoving(parent.parentElement?.firstElementChild, menuNext);
+        break;
+      case "End":
+        if (isOpenMenuButton) {
+          menu(trigger, Focus.Last);
+          shouldPreventDefault = true;
+        } else if (isItem) menuRoving(parent.parentElement?.lastElementChild, menuPrevious);
+        break;
+      default:
+        if (shouldMatchLetter) {
+          if (isOpenMenuButton) menu(trigger, Focus.First);
+          else if (isItem) menuNext(parent);
+        }
     }
     const active = document.activeElement;
     if (isElement(active) && active !== menuStack.at(-1)) menuTrim(active);
-    if (key === "Tab" && menuStack[0]) {
-      menuStack[0].focus();
-      menuCloseAll();
-    }
-    if (key === "Escape") {
-      if (menuStack[0]) {
-        menu(menuStack.pop(), Focus.Trigger);
-        shouldPreventDefault = true;
-      }
-    }
-    if (shouldPreventDefault) event.preventDefault();
+    if (shouldPreventDefault || (isItem && key.startsWith("Arrow"))) event.preventDefault();
   });
 
   addEventListener(

@@ -24,6 +24,10 @@ export default () => (
         <Menubar.Item data-testid="menubar-item-2-1">MenuItem 2.1</Menubar.Item>
         <Menubar.Item>MenuItem 2.2</Menubar.Item>
         <Menubar.Item>MenuItem 2.3</Menubar.Item>
+        <Menubar.Group>
+          <Menubar.Trigger data-testid="menubar-empty-trigger">Empty</Menubar.Trigger>
+          <Menubar.Popover data-testid="menubar-empty-list">{null}</Menubar.Popover>
+        </Menubar.Group>
       </Menubar.Popover>
     </Menubar.Menu>
     <Menubar.Menu>

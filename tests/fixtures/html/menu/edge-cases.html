@@ -31,3 +31,9 @@
 <button data-testid="no-items-trigger" type="button" id="mct:menu:3" aria-controls="mcc:menu:3" aria-expanded="false" aria-haspopup="menu" tabindex="0" role="button">MenuTrigger</button>
 <ul role="menu" id="mcc:menu:3" aria-labelledby="mct:menu:3" aria-hidden="true" popover="manual">
 </ul>
+<button data-testid="disabled-link-trigger" type="button" id="mct:menu:4" aria-controls="mcc:menu:4" aria-expanded="false" aria-haspopup="menu" tabindex="0" role="button">MenuTrigger</button>
+<ul data-testid="disabled-link-list" role="menu" id="mcc:menu:4" aria-labelledby="mct:menu:4" aria-hidden="true" popover="manual">
+  <li role="none">
+    <a data-testid="disabled-link" href="#nope" role="menuitem" aria-disabled="true" tabindex="-1">Nope</a>
+  </li>
+</ul>

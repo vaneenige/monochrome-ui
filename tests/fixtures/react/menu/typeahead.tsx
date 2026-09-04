@@ -9,6 +9,7 @@ export default () => (
       <Menu.Item data-testid="typeahead-item-3">Avocado</Menu.Item>
       <Menu.Item disabled>Apricot</Menu.Item>
       <Menu.Item data-testid="typeahead-item-5">Artichoke</Menu.Item>
+      <Menu.Item data-testid="typeahead-item-6">Éclair</Menu.Item>
     </Menu.Popover>
   </Menu.Root>
 );

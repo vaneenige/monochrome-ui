@@ -50,6 +50,12 @@ import { Menubar } from "monochrome/vue"
         <Menubar.Item>
           MenuItem 2.3
         </Menubar.Item>
+        <Menubar.Group>
+          <Menubar.Trigger data-testid="menubar-empty-trigger">
+            Empty
+          </Menubar.Trigger>
+          <Menubar.Popover data-testid="menubar-empty-list" />
+        </Menubar.Group>
       </Menubar.Popover>
     </Menubar.Menu>
     <Menubar.Menu>

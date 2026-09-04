@@ -14,6 +14,7 @@ import { Menu } from "monochrome/vue"
         :disabled="true"
       >Apricot</Menu.Item>
       <Menu.Item data-testid="typeahead-item-5">Artichoke</Menu.Item>
+      <Menu.Item data-testid="typeahead-item-6">Éclair</Menu.Item>
     </Menu.Popover>
   </Menu.Root>
 </template>

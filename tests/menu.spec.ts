@@ -871,8 +871,11 @@ test.describe("Menu", () => {
         document.body.style.height = "3000px";
       });
       await openRoot(page);
-      await page.evaluate(() => window.scrollBy(0, 100));
+      await page.getByTestId("root-item-1").focus();
+      await scrollAndSettle(page, 0, 100);
       await expect(page.getByTestId("root-list")).not.toBeVisible();
+      expect(await page.evaluate(() => window.scrollY)).toBe(100);
+      await expect(page.getByTestId("root-trigger")).toBeFocused();
     });
 
     test("keyboard navigation between items does not dismiss the menu", async ({ page }) => {
@@ -916,6 +919,20 @@ test.describe("Menu", () => {
         expect(after).toBe(before);
       });
     }
+
+    test("ArrowRight / ArrowLeft on an item do not scroll the page sideways", async ({ page }) => {
+      await page.evaluate(() => {
+        document.body.style.width = "3000px";
+      });
+      await scrollAndSettle(page, 0, 0);
+      await openRootViaKeyboard(page);
+      const before = await page.evaluate(() => window.scrollX);
+      await page.keyboard.press("ArrowRight");
+      expect(await page.evaluate(() => window.scrollX)).toBe(before);
+      await page.keyboard.press("ArrowLeft");
+      expect(await page.evaluate(() => window.scrollX)).toBe(before);
+      await expect(page.getByTestId("root-list")).toBeVisible();
+    });
   });
 });
 
@@ -937,6 +954,13 @@ test.describe("Typeahead", () => {
     await expect(page.getByTestId("typeahead-item-5")).toBeFocused();
     await page.keyboard.press("a");
     await expect(page.getByTestId("typeahead-item-1")).toBeFocused();
+  });
+
+  test("two letters in quick succession are two single-letter jumps", async ({ page }) => {
+    await page.keyboard.press("a");
+    await expect(page.getByTestId("typeahead-item-3")).toBeFocused();
+    await page.keyboard.press("b");
+    await expect(page.getByTestId("typeahead-item-2")).toBeFocused();
   });
 
   test("skips disabled items", async ({ page }) => {
@@ -962,6 +986,14 @@ test.describe("Typeahead", () => {
     await expect(page.getByTestId("typeahead-trigger")).toBeFocused();
     await page.keyboard.press("b");
     await expect(page.getByTestId("typeahead-item-2")).toBeFocused();
+  });
+
+  test("a letter outside a-z matches", async ({ page }) => {
+    // Playwright's keyboard has no key named "é" and `type` goes
+    // through insertText without a keydown, so dispatch the event a
+    // real keyboard would produce.
+    await page.getByTestId("typeahead-item-1").dispatchEvent("keydown", { key: "é" });
+    await expect(page.getByTestId("typeahead-item-6")).toBeFocused();
   });
 
   test("no-op when no items match", async ({ page }) => {
@@ -1046,6 +1078,18 @@ test.describe("Edge cases", () => {
     await expect(page.getByTestId("no-items-trigger")).toHaveAttribute("aria-expanded", "true");
     await page.keyboard.press("Escape");
     await expect(page.getByTestId("no-items-trigger")).toHaveAttribute("aria-expanded", "false");
+  });
+
+  test("Enter on a disabled href menuitem does not navigate and keeps the menu open", async ({
+    page,
+    renderer,
+  }) => {
+    test.skip(renderer !== "html", "Disabled href markup is html-only");
+    await page.getByTestId("disabled-link-trigger").click();
+    await page.getByTestId("disabled-link").focus();
+    await page.keyboard.press("Enter");
+    await expect(page).not.toHaveURL(/#nope/);
+    await expect(page.getByTestId("disabled-link-list")).toBeVisible();
   });
 });
 
@@ -1255,6 +1299,37 @@ test.describe("Menubar", () => {
       await page.getByTestId("menubar-item-1").press("ArrowRight");
       await expect(page.getByTestId("menubar-trigger-2")).toBeFocused();
       await expect(page.getByTestId("menubar-list-2")).not.toBeVisible();
+    });
+
+    test("ArrowRight on an empty submenu trigger opens it and does not step the menubar", async ({
+      page,
+    }) => {
+      await page.getByTestId("menubar-trigger-2").press("Enter");
+      await page.getByTestId("menubar-empty-trigger").focus();
+      await page.getByTestId("menubar-empty-trigger").press("ArrowRight");
+      await expect(page.getByTestId("menubar-empty-trigger")).toHaveAttribute(
+        "aria-expanded",
+        "true",
+      );
+      await expect(page.getByTestId("menubar-empty-list")).toHaveAttribute("aria-hidden", "false");
+      await expect(page.getByTestId("menubar-list-2")).toBeVisible();
+      await expect(page.getByTestId("menubar-trigger-3")).not.toBeFocused();
+      await expect(page.getByTestId("menubar-empty-trigger")).toBeFocused();
+    });
+
+    test("ArrowRight from a menu whose popover lives outside the menubar steps the bar", async ({
+      page,
+      renderer,
+    }) => {
+      test.skip(renderer !== "html", "Remote popover markup is html-only");
+      await page.goto("/html/menu/menubar-remote");
+      await page.getByTestId("remote-trigger-1").focus();
+      await page.keyboard.press("Enter");
+      await expect(page.getByTestId("remote-item-1-1")).toBeFocused();
+      await page.keyboard.press("ArrowRight");
+      await expect(page.getByTestId("remote-trigger-2")).toBeFocused();
+      await expect(page.getByTestId("remote-list-2")).toBeVisible();
+      await expect(page.getByTestId("remote-list-1")).not.toBeVisible();
     });
 
     test("Escape closes the menu and returns focus to the trigger", async ({ page }) => {

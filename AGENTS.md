@@ -168,29 +168,38 @@ triggers still rely on the browser's synthesized `click` for
 Enter/Space. Menu cannot: `pointerdown` already opened or
 dismissed the menu, so keyboard activation lives in
 `keydown` (`menuOpen` / `menu` / `menuActivate`) with
-`preventDefault` so Space does not scroll. After `menuActivate`
-on a non-href item, `keydown` dispatches `target.click()` so
-keyboard activation produces the same click a pointer session
-does: user `onclick` handlers fire, and a menuitem that is also
-another component's trigger (a `mct:dialog-open:` item) works
-without Menu naming that component. Checkbox and radio items
-leave the menu open; that click still does not match other
-prefixes. Enter/Space on a submenu trigger call `menu`
-with `Focus.First`, so an
-already-open submenu moves focus to the first item. Root menu
-buttons still `menuOpen` (toggle closed if already the stack
-root). Menubar items also call `menu` with `Focus.First`, so
-Enter on an open trigger moves into the menu instead of
-closing it. `menu` treats `Focus.First` / `Focus.Last` on an
-already-open menu as rove-in, not close. Enter on an href
-menuitem is the exception: no `preventDefault`, so the
-synthesized `click` navigates and the click listener closes
-the menu. Tab / Shift+Tab
-close every open menu whenever `menuStack[0]`, including from a
-pointer-opened standalone trigger (`role="button"`); they do not
-`preventDefault`. Root ArrowDown / ArrowUp always
-`preventDefault` so empty and all-disabled menus do not
-scroll.
+`preventDefault` so Space does not scroll. Trigger and item
+keys share one `switch (key)`. Each case branches on whether
+the target is a trigger, a root trigger, or in a popover.
+ArrowRight on a submenu trigger opens or roves in and does
+not fall through to a menubar step, so an empty submenu
+cannot move the bar. After `menuActivate` on a non-href
+item, `keydown` dispatches `target.click()` so keyboard
+activation produces the same click a pointer session does:
+user `onclick` handlers fire, and a menuitem that is also
+another component's trigger (a `mct:dialog-open:` item)
+works without Menu naming that component. Checkbox and radio
+items leave the menu open; that click still does not match
+other prefixes. Enter/Space on a submenu trigger call `menu`
+with `Focus.First`, so an already-open submenu moves focus
+to the first item. Root menu buttons still `menuOpen`
+(toggle closed if already the stack root). Menubar items
+also call `menu` with `Focus.First`, so Enter on an open
+trigger moves into the menu instead of closing it. `menu`
+treats `Focus.First` / `Focus.Last` on an already-open menu
+as rove-in, not close. Enter on an href menuitem is the
+exception: no `preventDefault`, so the synthesized `click`
+navigates and the click listener closes the menu. Enter on
+an `aria-disabled` href does `preventDefault`, so the
+browser does not navigate. Pointer clicks on a disabled
+`<a>` still navigate natively; that is the consumer's `href`
+to remove. Tab / Shift+Tab close every open menu whenever
+`menuStack[0]`, including from a pointer-opened standalone
+trigger (`role="button"`); they do not `preventDefault`.
+Root ArrowDown / ArrowUp, and every arrow key on a menuitem,
+`preventDefault`, so empty and all-disabled menus do not
+scroll and horizontal arrows on a standalone item do not
+scroll the page sideways.
 
 **Pointer session.** A menu gesture is a pointer session, not a
 click. `pointerdown` on a trigger opens or toggles;
@@ -292,10 +301,43 @@ highlight: focus stays on the submenu trigger so items under
 the path cannot steal it. No overlay, no CSS vars, no timers.
 Hover can leave focus inside the popover. A `Focus.None` close
 focuses the trigger first when the active element is inside
-the content, so `hidePopover` never drops a focused node that
-lives in the menu. Enter on an href does not activate in
-`keydown`; the synthesized `click` both navigates and closes.
-Sticky-drag onto an href uses the `pointerup` `click()` above.
+the content, with `preventScroll` so a document scroll that
+dismissed the menu is not undone, and `hidePopover` never
+drops a focused node that lives in the menu. Enter on an href
+does not activate in `keydown`; the synthesized `click` both
+navigates and closes. Sticky-drag onto an href uses the
+`pointerup` `click()` above.
+
+**Menubar by role.** `menubarItem` walks up to the element
+whose parent is `role="menubar"`: the bar-level wrapper that
+ArrowRight / ArrowLeft rove. Hover-switch compares the
+menubars of the two wrappers instead of assuming trigger,
+wrapper, menubar depth. In `keydown` the walk starts from the
+open root trigger when a menu is open, so a menubar popover
+rendered outside the bar still steps; it falls back to the
+focused item. A standalone menu has no menubar ancestor, so
+ArrowRight / ArrowLeft on its items are inert without walking
+unrelated siblings. `keydown` computes the popover and menubar
+walks only for a menu trigger or menuitem target; any other
+keystroke on the page costs two checks and a switch.
+
+**Single-letter typeahead, on purpose.** A printable key
+(any single character except Space, in any script) moves
+focus to the next enabled item whose text starts with that
+character; pressing it again cycles. There is no prefix
+buffer. Multi-character typeahead needs a window ("keys
+within 500 ms belong together"), and inside that window the
+same two keystrokes mean different things depending on how
+fast they were typed. Even without a `setTimeout` (Blink and
+WebKit implement `<select>` typeahead by comparing event
+timestamps) the behaviour is hidden state driven by wall-clock
+pace, and this core has none of that: every outcome is a
+function of the DOM and the event. APG asks for exactly the
+single-character behaviour for menus and marks even that
+optional; the multi-character form belongs to the listbox
+pattern. Menus are short, and repeat-to-cycle covers shared
+first letters. `shouldMatchLetter` carries the letter into the
+roving walk for that keydown only.
 
 **Signed movement for triangle direction.** "Is the cursor
 moving toward the submenu?" is
