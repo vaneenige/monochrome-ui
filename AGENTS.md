@@ -537,7 +537,7 @@ bytes from Node's zlib, so the gate always restamps from Bun.
 
 **Requires Bun >= 1.4.** `build.ts` and the SSR test server
 (`tests/server.ts`) are run directly as TypeScript. CI pins
-`1.4.0` via `.bun-version`; the published package itself has no
+`1.4.1` via `.bun-version`; the published package itself has no
 runtime Bun or Node requirement (it ships browser ESM), which
 is why there is no `engines` field constraining consumers.
 Install with `bun install` (`bun.lock`); do not add a

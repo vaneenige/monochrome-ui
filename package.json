@@ -37,7 +37,7 @@
     "tabs",
     "tooltip"
   ],
-  "packageManager": "bun@1.4.0",
+  "packageManager": "bun@1.4.1",
   "type": "module",
   "sideEffects": [
     "./src/index.ts",
@@ -139,66 +139,66 @@
     }
   },
   "devDependencies": {
-    "@axe-core/playwright": "4.12.1",
-    "@playwright/test": "1.61.1",
-    "@types/node": "26.1.1",
-    "@types/react": "19.2.17",
-    "@types/react-dom": "19.2.3",
-    "@vue/compiler-sfc": "3.5.39",
-    "oxfmt": "0.58.0",
-    "oxlint": "1.73.0",
-    "react": "19.2.7",
-    "react-dom": "19.2.7",
-    "rolldown": "1.1.5",
+    "@axe-core/playwright": "4.13.0",
+    "@playwright/test": "1.62.1",
+    "@types/node": "26.4.1",
+    "@types/react": "19.2.18",
+    "@types/react-dom": "19.2.7",
+    "@vue/compiler-sfc": "3.5.42",
+    "oxfmt": "0.66.0",
+    "oxlint": "1.81.0",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "rolldown": "1.2.7",
     "typescript": "7.0.2",
-    "vue": "3.5.39"
+    "vue": "3.5.42"
   },
   "overrides": {
-    "playwright-core": "1.61.1"
+    "playwright-core": "1.62.1"
   },
   "versionMeta": {
-    "gzipSize": 3181,
+    "gzipSize": 3179,
     "gzipSizes": {
       "accordion": {
-        "core": 936,
+        "core": 935,
         "react": 506,
-        "vue": 760
+        "vue": 759
       },
       "collapsible": {
         "core": 669,
         "react": 428,
-        "vue": 670
+        "vue": 669
       },
       "dialog": {
         "core": 775,
         "react": 528,
-        "vue": 788
+        "vue": 787
       },
       "index": {
-        "core": 3181,
-        "react": 2019,
-        "vue": 2377
+        "core": 3179,
+        "react": 2020,
+        "vue": 2385
       },
       "menu": {
-        "core": 2265,
-        "react": 672,
-        "vue": 923
+        "core": 2264,
+        "react": 674,
+        "vue": 939
       },
       "menubar": {
-        "core": 2265,
-        "react": 952,
-        "vue": 1254
+        "core": 2264,
+        "react": 956,
+        "vue": 1266
       },
       "popover": {
         "core": 956,
         "react": 514,
-        "vue": 781
+        "vue": 779
       },
       "router": {
-        "core": 1223
+        "core": 1231
       },
       "tabs": {
-        "core": 1001,
+        "core": 1000,
         "react": 556,
         "vue": 857
       },
