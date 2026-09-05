@@ -585,14 +585,14 @@ bytes from Node's zlib, so the gate always restamps from Bun.
 
 **Requires Bun >= 1.4.** `build.ts` and the SSR test server
 (`tests/server.ts`) are run directly as TypeScript. CI pins
-`1.4.0` via `.bun-version`; the published package itself has no
+`1.4.2` via `.bun-version`; the published package itself has no
 runtime Bun or Node requirement (it ships browser ESM), which
 is why there is no `engines` field constraining consumers.
 Install with `bun install` (`bun.lock`); do not add a
-`package-lock.json`. A parent npm workspace (this tree nested
-as a docs-site submodule) will capture `bun install`; generate
-and verify the lockfile from a standalone clone, which is what
-CI does.
+`package-lock.json`. This tree is self-contained: when nested as
+a docs-site submodule, the parent links it via `file:` rather
+than as a workspace member, so `bun install` here owns its own
+`node_modules` and lockfile.
 
 **Every commit runs the full gate.** The pre-commit hook runs
 lint, typecheck, build, and the complete test suite, then stages
