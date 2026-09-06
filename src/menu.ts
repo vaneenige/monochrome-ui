@@ -48,7 +48,7 @@ if (hasDocument) {
       menuHighlighted = item;
       item?.setAttribute("data-highlighted", "");
     }
-    item?.focus({ preventScroll: true });
+    item?.focus();
   };
 
   const menuRoving: RovingFocusCallback = (node, fallback) => {
@@ -135,7 +135,7 @@ if (hasDocument) {
             } else if (mode === Focus.Last) {
               menuRoving(content.lastElementChild, menuPrevious);
             } else {
-              trigger.focus({ preventScroll: true });
+              trigger.focus();
             }
           }
         }
