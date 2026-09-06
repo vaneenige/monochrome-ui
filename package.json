@@ -209,8 +209,8 @@
       }
     },
     "tests": {
-      "total": 469,
-      "a11y": 16,
+      "total": 475,
+      "a11y": 20,
       "accordion": 34,
       "architecture": 10,
       "collapsible": 25,
@@ -220,7 +220,7 @@
       "router": 34,
       "ssr": 9,
       "tabs": 41,
-      "tooltip": 21
+      "tooltip": 23
     }
   }
 }
