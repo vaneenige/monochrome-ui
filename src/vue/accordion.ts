@@ -3,13 +3,9 @@ import { defineComponent, h, provide, reactive, toRef, useId } from "vue";
 import { AccordionKey, requireInject } from "./shared.js";
 
 const Root = defineComponent({
-  props: {
-    type: { type: String, default: "single" },
-  },
-  setup(props, { slots }) {
+  setup(_, { slots }) {
     const id = useId();
-    return () =>
-      h("div", { "data-mode": props.type, id: `mcr:accordion:${id}` }, slots.default?.());
+    return () => h("div", { id: `mcr:accordion:${id}` }, slots.default?.());
   },
 });
 
@@ -34,7 +30,10 @@ const Item = defineComponent({
 
 const Header = defineComponent({
   props: {
-    as: { type: String, default: "h3" },
+    as: {
+      type: String as () => "h2" | "h3" | "h4" | "h5" | "h6",
+      default: "h3",
+    },
   },
   setup(props, { slots }) {
     return () => h(props.as, null, slots.default?.());
@@ -67,7 +66,6 @@ const Panel = defineComponent({
         "div",
         {
           id: `mcc:accordion:${ctx.baseId}`,
-          role: "region",
           "aria-labelledby": `mct:accordion:${ctx.baseId}`,
           "aria-hidden": !ctx.open,
           hidden: ctx.open ? undefined : true,

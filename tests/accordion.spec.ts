@@ -16,7 +16,7 @@ test.describe("Accordion", () => {
       await expect(trigger).toHaveAttribute("aria-controls", contentId as string);
       await expect(content).toHaveAttribute("aria-labelledby", triggerId as string);
       await expect(trigger).toHaveAttribute("type", "button");
-      await expect(content).toHaveAttribute("role", "region");
+      await expect(content).not.toHaveAttribute("role");
     });
 
     test("toggles `aria-expanded` / `aria-hidden` across the open and close cycle", async ({
@@ -47,14 +47,6 @@ test.describe("Accordion", () => {
       const customHeading = page.getByTestId("single-trigger-3").locator("..");
       await expect(defaultHeading).toHaveJSProperty("tagName", "H3");
       await expect(customHeading).toHaveJSProperty("tagName", "H2");
-    });
-
-    test("publishes the active mode via `data-mode` on the root", async ({ page, renderer }) => {
-      const root = page.getByTestId("single-trigger-1").locator("../../..");
-      await expect(root).toHaveAttribute("data-mode", "single");
-      await page.goto(`/${renderer}/accordion/multiple`);
-      const multiRoot = page.getByTestId("multi-trigger-1").locator("../../..");
-      await expect(multiRoot).toHaveAttribute("data-mode", "multiple");
     });
   });
 
@@ -118,6 +110,34 @@ test.describe("Accordion", () => {
       await page.getByTestId("rich-trigger-1").click();
       await page.getByTestId("rich-button").click();
       await expect(page.getByTestId("rich-content-1")).toBeVisible();
+    });
+
+    test("opening a new item closes the previously open one", async ({ page }) => {
+      await page.getByTestId("single-trigger-1").click();
+      await expect(page.getByTestId("single-content-1")).toBeVisible();
+      await page.getByTestId("single-trigger-2").click();
+      await expect(page.getByTestId("single-content-1")).not.toBeVisible();
+      await expect(page.getByTestId("single-content-2")).toBeVisible();
+    });
+
+    test("keyboard activation also closes the previously open item", async ({ page }) => {
+      await page.getByTestId("single-trigger-1").focus();
+      await page.keyboard.press("Enter");
+      await expect(page.getByTestId("single-content-1")).toBeVisible();
+      await page.keyboard.press("ArrowDown");
+      await expect(page.getByTestId("single-trigger-2")).toBeFocused();
+      await page.keyboard.press("Enter");
+      await expect(page.getByTestId("single-content-2")).toBeVisible();
+      await expect(page.getByTestId("single-content-1")).not.toBeVisible();
+    });
+
+    test("supports closing all items", async ({ page }) => {
+      const trigger = page.getByTestId("single-trigger-1");
+      await trigger.click();
+      await trigger.click();
+      for (const id of ["single-content-1", "single-content-2", "single-content-3"]) {
+        await expect(page.getByTestId(id)).not.toBeVisible();
+      }
     });
   });
 
@@ -191,68 +211,6 @@ test.describe("Accordion", () => {
     });
   });
 
-  test.describe("Single mode", () => {
-    test.beforeEach(async ({ page, renderer }) => {
-      await page.goto(`/${renderer}/accordion/single`);
-    });
-
-    test("opening a new item closes the previously open one", async ({ page }) => {
-      await page.getByTestId("single-trigger-1").click();
-      await expect(page.getByTestId("single-content-1")).toBeVisible();
-      await page.getByTestId("single-trigger-2").click();
-      await expect(page.getByTestId("single-content-1")).not.toBeVisible();
-      await expect(page.getByTestId("single-content-2")).toBeVisible();
-    });
-
-    test("keyboard activation also closes the previously open item", async ({ page }) => {
-      await page.getByTestId("single-trigger-1").focus();
-      await page.keyboard.press("Enter");
-      await expect(page.getByTestId("single-content-1")).toBeVisible();
-      await page.keyboard.press("ArrowDown");
-      await expect(page.getByTestId("single-trigger-2")).toBeFocused();
-      await page.keyboard.press("Enter");
-      await expect(page.getByTestId("single-content-2")).toBeVisible();
-      await expect(page.getByTestId("single-content-1")).not.toBeVisible();
-    });
-
-    test("supports closing all items", async ({ page }) => {
-      const trigger = page.getByTestId("single-trigger-1");
-      await trigger.click();
-      await trigger.click();
-      for (const id of ["single-content-1", "single-content-2", "single-content-3"]) {
-        await expect(page.getByTestId(id)).not.toBeVisible();
-      }
-    });
-  });
-
-  test.describe("Multiple mode", () => {
-    test.beforeEach(async ({ page, renderer }) => {
-      await page.goto(`/${renderer}/accordion/multiple`);
-    });
-
-    test("keeps every open item open and lets them close independently", async ({ page }) => {
-      await page.getByTestId("multi-trigger-1").click();
-      await page.getByTestId("multi-trigger-2").click();
-      await page.getByTestId("multi-trigger-3").click();
-      await expect(page.getByTestId("multi-content-1")).toBeVisible();
-      await expect(page.getByTestId("multi-content-2")).toBeVisible();
-      await expect(page.getByTestId("multi-content-3")).toBeVisible();
-
-      await page.getByTestId("multi-trigger-2").click();
-      await expect(page.getByTestId("multi-content-2")).not.toBeVisible();
-      await expect(page.getByTestId("multi-content-1")).toBeVisible();
-      await expect(page.getByTestId("multi-content-3")).toBeVisible();
-    });
-
-    test("ArrowDown navigates across triggers in multiple mode", async ({ page }) => {
-      await page.getByTestId("multi-trigger-1").focus();
-      await page.keyboard.press("ArrowDown");
-      await expect(page.getByTestId("multi-trigger-2")).toBeFocused();
-      await page.keyboard.press("ArrowDown");
-      await expect(page.getByTestId("multi-trigger-3")).toBeFocused();
-    });
-  });
-
   test.describe("Nested", () => {
     test.beforeEach(async ({ page, renderer }) => {
       await page.goto(`/${renderer}/accordion/nested`);
@@ -315,6 +273,21 @@ test.describe("Accordion", () => {
         expect(after).toBe(before);
       });
     }
+
+    test("ArrowLeft / ArrowRight on a trigger do not scroll the page sideways", async ({
+      page,
+    }) => {
+      await page.evaluate(() => {
+        document.body.style.width = "3000px";
+      });
+      await scrollAndSettle(page, 500, 0);
+      await page.getByTestId("single-trigger-1").focus();
+      const before = await page.evaluate(() => window.scrollX);
+      await page.keyboard.press("ArrowRight");
+      await page.keyboard.press("ArrowLeft");
+      expect(await page.evaluate(() => window.scrollX)).toBe(before);
+      await expect(page.getByTestId("single-trigger-1")).toBeFocused();
+    });
   });
 
   test.describe("Disabled", () => {
@@ -352,7 +325,7 @@ test.describe("Accordion", () => {
       await expect(page.getByTestId("disabled-trigger-1")).toBeFocused();
     });
 
-    test("lets enabled items still toggle in single mode", async ({ page }) => {
+    test("lets enabled items still toggle", async ({ page }) => {
       await page.getByTestId("disabled-trigger-1").click();
       await expect(page.getByTestId("disabled-content-1")).toBeVisible();
       await page.getByTestId("disabled-trigger-3").click();
@@ -374,6 +347,30 @@ test.describe("Accordion", () => {
       await page.keyboard.press("ArrowDown");
       expect(await page.evaluate(() => window.scrollY)).toBe(before);
       await expect(page.getByTestId("disabled-trigger-1")).toBeFocused();
+    });
+  });
+
+  test.describe("Structure independence", () => {
+    test("toggles when Header sits in an extra wrapper and stays exclusive", async ({
+      page,
+      renderer,
+    }) => {
+      await page.goto(`/${renderer}/accordion/structure-independence`);
+      await page.getByTestId("h3-trigger").click();
+      await expect(page.getByTestId("h3-content")).toBeVisible();
+      await page.getByTestId("h4-trigger").click();
+      await expect(page.getByTestId("h4-content")).toBeVisible();
+      await expect(page.getByTestId("h3-content")).not.toBeVisible();
+    });
+
+    test("ArrowDown moves from an `h3` Header to a nested `h4` Header", async ({
+      page,
+      renderer,
+    }) => {
+      await page.goto(`/${renderer}/accordion/structure-independence`);
+      await page.getByTestId("h3-trigger").focus();
+      await page.keyboard.press("ArrowDown");
+      await expect(page.getByTestId("h4-trigger")).toBeFocused();
     });
   });
 });
@@ -398,7 +395,7 @@ test.describe("Click handler", () => {
 });
 
 test.describe("Dynamic", () => {
-  test("handles dynamic items, disabled, mode toggle, multi-instance, and props passthrough", async ({
+  test("handles dynamic items, disabled, multi-instance, and props passthrough", async ({
     page,
     renderer,
   }) => {
@@ -432,13 +429,8 @@ test.describe("Dynamic", () => {
     await expect(page.getByTestId("content-2")).not.toBeVisible();
 
     await page.getByTestId("toggle-disabled").click();
-    await page.getByTestId("toggle-mode").click();
     await page.getByTestId("trigger-1").click();
     await page.getByTestId("trigger-2").click();
-    await expect(page.getByTestId("content-1")).toBeVisible();
-    await expect(page.getByTestId("content-2")).toBeVisible();
-
-    await page.getByTestId("trigger-1").click();
     await expect(page.getByTestId("content-1")).not.toBeVisible();
     await expect(page.getByTestId("content-2")).toBeVisible();
 

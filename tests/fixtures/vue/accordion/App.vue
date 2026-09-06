@@ -9,7 +9,6 @@ const items = ref([
 ])
 const disabledIndex = ref<number | null>(null)
 const output = ref("")
-const mode = ref<"single" | "multiple">("single")
 
 function addItem() {
   items.value = [...items.value, {
@@ -24,10 +23,6 @@ function removeItem() {
 
 function toggleDisabled() {
   disabledIndex.value = disabledIndex.value === 1 ? null : 1
-}
-
-function toggleMode() {
-  mode.value = mode.value === "single" ? "multiple" : "single"
 }
 </script>
 
@@ -61,16 +56,8 @@ function toggleMode() {
       >
         Toggle Disabled Item 2
       </button>
-      <button
-        type="button"
-        data-testid="toggle-mode"
-        @click="toggleMode"
-      >
-        Toggle Mode
-      </button>
     </div>
     <Accordion.Root
-      :type="mode"
       class="accordion-root"
       data-testid="accordion-root"
     >
@@ -93,10 +80,7 @@ function toggleMode() {
         </Accordion.Panel>
       </Accordion.Item>
     </Accordion.Root>
-    <Accordion.Root
-      type="single"
-     
-    >
+    <Accordion.Root>
       <Accordion.Item>
         <Accordion.Header>
           <Accordion.Trigger data-testid="accordion2-trigger-1">

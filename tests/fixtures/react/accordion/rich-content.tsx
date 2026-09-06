@@ -2,7 +2,7 @@ import { Accordion } from "monochrome/react";
 
 export default () => (
   <>
-    <Accordion.Root type="multiple">
+    <Accordion.Root>
       <Accordion.Item>
         <Accordion.Header>
           <Accordion.Trigger data-testid="rich-trigger-1">Section with Form</Accordion.Trigger>

@@ -6,7 +6,7 @@ export default () => (
     <button type="button" data-testid="focus-before">
       Focus before
     </button>
-    <Accordion.Root type="single">
+    <Accordion.Root>
       <Accordion.Item>
         <Accordion.Header>
           <Accordion.Trigger data-testid="single-trigger-1" data-action="trigger-clicked">

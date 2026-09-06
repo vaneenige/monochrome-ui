@@ -4,10 +4,7 @@ import { Accordion } from "monochrome/vue"
 
 <template>
   <div>
-    <Accordion.Root
-      type="multiple"
-     
-    >
+    <Accordion.Root>
       <Accordion.Item>
         <Accordion.Header>
           <Accordion.Trigger data-testid="rich-trigger-1">

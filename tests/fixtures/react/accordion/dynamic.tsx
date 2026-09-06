@@ -10,7 +10,6 @@ function App() {
   ]);
   const [disabledIndex, setDisabledIndex] = useState<number | null>(null);
   const [output, setOutput] = useState("");
-  const [mode, setMode] = useState<"single" | "multiple">("single");
 
   return (
     <>
@@ -47,15 +46,8 @@ function App() {
         >
           Toggle Disabled Item 2
         </button>
-        <button
-          type="button"
-          data-testid="toggle-mode"
-          onClick={() => setMode((prev) => (prev === "single" ? "multiple" : "single"))}
-        >
-          Toggle Mode
-        </button>
       </div>
-      <Accordion.Root type={mode} className="accordion-root" data-testid="accordion-root">
+      <Accordion.Root className="accordion-root" data-testid="accordion-root">
         {items.map((item, i) => (
           <Accordion.Item
             key={item.label}
@@ -77,7 +69,7 @@ function App() {
         ))}
       </Accordion.Root>
 
-      <Accordion.Root type="single">
+      <Accordion.Root>
         <Accordion.Item>
           <Accordion.Header>
             <Accordion.Trigger data-testid="accordion2-trigger-1">A2 Section 1</Accordion.Trigger>

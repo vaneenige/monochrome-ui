@@ -101,12 +101,14 @@ DOM walk in the core is a hand-rolled loop: `let item =
 root.firstElementChild; while (item) { ...; item =
 item.nextElementSibling }`. `querySelectorAll` would allocate a
 NodeList and run a selector parser for structure we already know
-(Accordion items are direct children of the root; Tab buttons are
-direct children of the List). A sibling-pointer walk costs
-nothing, makes iteration order explicit (single-mode Accordion
-closes others before toggling the trigger, Tabs toggles off-and-on
-in one pass), and lets a single traversal do work that a list plus
-follow-up would split in two.
+(Accordion items are direct children of the root; each trigger
+sits inside an h2-h6 Header, so the walk follows that item's
+first-child chain to `mct:accordion:`; Tab buttons are direct
+children of the List). A sibling-pointer walk costs nothing,
+makes iteration order explicit (Accordion closes others before
+toggling the trigger, Tabs toggles off-and-on in one pass), and
+lets a single traversal do work that a list plus follow-up would
+split in two.
 
 **Walk-up then walk-down for click dispatch.** Single-prefix
 clicks (Collapsible, Accordion, Tabs, Tooltip suppress) use
@@ -619,7 +621,7 @@ menu`).
   `correctly`, `properly`, `as expected`. If the assertion exists,
   the behaviour IS the expected one.
 - **Backticks for kebab-case attributes and ambiguous tokens.**
-  `aria-expanded`, `data-mode`, `role="menu"`, `Tab` (the
+  `aria-expanded`, `role="menu"`, `Tab` (the
   key, to disambiguate from the noun) always quoted with backticks.
   PascalCase key names (`Enter`, `ArrowDown`, `Home`, `End`) are
   visually distinct enough that backticks are optional, but be

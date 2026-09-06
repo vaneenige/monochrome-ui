@@ -4,10 +4,7 @@ import { Accordion } from "monochrome/vue"
 
 <template>
   <div>
-    <Accordion.Root
-      type="single"
-     
-    >
+    <Accordion.Root>
       <Accordion.Item>
         <Accordion.Header>
           <Accordion.Trigger data-testid="outer-trigger-1">
@@ -16,10 +13,7 @@ import { Accordion } from "monochrome/vue"
         </Accordion.Header>
         <Accordion.Panel data-testid="outer-content-1">
           <p>Outer content with nested accordion:</p>
-          <Accordion.Root
-            type="single"
-           
-          >
+          <Accordion.Root>
             <Accordion.Item>
               <Accordion.Header>
                 <Accordion.Trigger data-testid="nested-trigger-1">
