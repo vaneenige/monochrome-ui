@@ -147,7 +147,9 @@ forever. `rovingBoundary` remembers the first candidate the walker
 rejected; if we ever see it again we give up. One pointer, zero
 counters, zero extra passes. Accordion and Tabs also
 `preventDefault` when the walker gives up, so an all-disabled
-list does not scroll. Menu uses the same give-up
+list does not scroll. Both bail out of `keydown` on an Alt /
+Ctrl / Meta modifier so browser shortcuts such as back and
+forward pass through untouched. Menu uses the same give-up
 `preventDefault` so Home / End / typeahead on an empty or
 all-disabled menu do not scroll either. Cleared at the top
 of every `keydown`, `click`, and `pointerup` (all three

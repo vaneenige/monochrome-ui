@@ -157,10 +157,10 @@
     "playwright-core": "1.63.0"
   },
   "versionMeta": {
-    "gzipSize": 3249,
+    "gzipSize": 3269,
     "gzipSizes": {
       "accordion": {
-        "core": 984,
+        "core": 1006,
         "react": 470,
         "vue": 728
       },
@@ -175,7 +175,7 @@
         "vue": 787
       },
       "index": {
-        "core": 3249,
+        "core": 3269,
         "react": 1984,
         "vue": 2354
       },
@@ -198,7 +198,7 @@
         "core": 1231
       },
       "tabs": {
-        "core": 1000,
+        "core": 1021,
         "react": 556,
         "vue": 857
       },

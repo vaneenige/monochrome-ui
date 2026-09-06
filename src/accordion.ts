@@ -78,6 +78,7 @@ if (hasDocument) {
   addEventListener("keydown", (event: KeyboardEvent) => {
     shouldPreventDefault = false;
     rovingBoundary = null;
+    if (event.altKey || event.ctrlKey || event.metaKey) return;
     const target = event.target;
     if (isTrigger(target, Prefix.TriggerAccordion)) {
       if (event.key.startsWith("Arrow")) shouldPreventDefault = true;
