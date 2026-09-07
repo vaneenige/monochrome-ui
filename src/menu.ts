@@ -118,7 +118,6 @@ if (hasDocument) {
             }
             content.hidePopover();
             trigger.ariaExpanded = "false";
-            content.ariaHidden = "true";
           }
         } else {
           menuTrim(trigger);
@@ -127,7 +126,6 @@ if (hasDocument) {
             menuStack.push(trigger);
             content.showPopover();
             trigger.ariaExpanded = "true";
-            content.ariaHidden = "false";
             position(trigger, content);
             safeX = null;
             if (mode === Focus.First) {

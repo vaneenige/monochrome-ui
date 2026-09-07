@@ -8,11 +8,11 @@
 <div id="mcr:accordion:d2">
   <div>
     <h3><button data-testid="accordion2-trigger-1" type="button" id="mct:accordion:d2-1" aria-expanded="false" aria-controls="mcc:accordion:d2-1">A2 Section 1</button></h3>
-    <div data-testid="accordion2-content-1" id="mcc:accordion:d2-1" aria-labelledby="mct:accordion:d2-1" aria-hidden="true" hidden><p>A2 Content 1</p></div>
+    <div data-testid="accordion2-content-1" id="mcc:accordion:d2-1" aria-labelledby="mct:accordion:d2-1" hidden><p>A2 Content 1</p></div>
   </div>
   <div>
     <h3><button data-testid="accordion2-trigger-2" type="button" id="mct:accordion:d2-2" aria-expanded="false" aria-controls="mcc:accordion:d2-2">A2 Section 2</button></h3>
-    <div data-testid="accordion2-content-2" id="mcc:accordion:d2-2" aria-labelledby="mct:accordion:d2-2" aria-hidden="true" hidden><p>A2 Content 2</p></div>
+    <div data-testid="accordion2-content-2" id="mcc:accordion:d2-2" aria-labelledby="mct:accordion:d2-2" hidden><p>A2 Content 2</p></div>
   </div>
 </div>
 <script>
@@ -40,7 +40,6 @@
     panel.setAttribute('data-testid', 'content-' + n);
     panel.id = 'mcc:accordion:d1-' + n;
     panel.setAttribute('aria-labelledby', 'mct:accordion:d1-' + n);
-    panel.setAttribute('aria-hidden', 'true');
     panel.setAttribute("hidden", "");
     panel.innerHTML = '<p>Content ' + n + '</p>';
 

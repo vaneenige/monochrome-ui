@@ -45,7 +45,6 @@ if (hasDocument) {
             const willSelect = tab === trigger;
             tab.ariaSelected = `${willSelect}`;
             tab.tabIndex = willSelect ? 0 : -1;
-            content.ariaHidden = `${!willSelect}`;
             if (content.hasAttribute("tabindex")) content.tabIndex = willSelect ? 0 : -1;
             content.hidden = !willSelect;
           }

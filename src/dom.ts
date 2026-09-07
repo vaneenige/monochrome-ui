@@ -68,7 +68,6 @@ export const toggleDisclosure = (trigger: HTMLElement) => {
   if (content) {
     const willOpen = trigger.ariaExpanded !== "true";
     trigger.ariaExpanded = `${willOpen}`;
-    content.ariaHidden = `${!willOpen}`;
     content.hidden = !willOpen;
   }
 };

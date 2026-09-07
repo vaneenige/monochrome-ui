@@ -14,7 +14,7 @@ These aren't preferences. Break any of them and it isn't monochrome
 any more:
 
 1. **DOM is the source of truth.** Every decision reads
-   `aria-expanded`, `aria-selected`, `aria-checked`, `aria-hidden`,
+   `aria-expanded`, `aria-selected`, `aria-checked`,
    `aria-disabled`. There is no internal state object mirroring the
    DOM anywhere in the library.
 2. **Event delegation only.** Listeners go on `window`. Zero
@@ -282,7 +282,11 @@ the next pass re-claims in document order. Vue holds the
 claimer id in a ref: claiming is idempotent per id,
 unmounting releases, and each Menu tracks the ref through a
 `watchEffect` so the earliest surviving Menu becomes the tab
-stop.
+stop. `Menubar.Menu` provides the Menu context itself (`tabStop`
+from the claim, `item` true), so `Menubar.Trigger`,
+`Menubar.Popover`, and `Menubar.Group` are `Menu.Trigger`,
+`Menu.Popover`, and `Menu.Group`. There is no menubar-specific
+slot context.
 
 **Popover API with CSS-variable positioning.** The core publishes
 the trigger rect (`--top`, `--right`, `--bottom`, `--left`, in
@@ -424,7 +428,10 @@ Rules only. Rationale lives in "Why the core looks weird" and
 - Arrow functions in the core and router. React wrappers use
   `function` declarations for components (React convention, better
   stack traces). Vue wrappers use `defineComponent` with
-  method-shorthand `setup`.
+  method-shorthand `setup`. Menu's Item, CheckboxItem, and
+  RadioItem come from one `menuItem(role, checkable)` factory in
+  both wrappers; its React product is a named function expression,
+  so all three trace as `MenuItem`.
 - Enum-typed mode parameters instead of option objects when
   the set is small: `menu(trigger, mode: Focus)`.
 - No optional parameters that every caller supplies, and no
@@ -460,10 +467,14 @@ Rules only. Rationale lives in "Why the core looks weird" and
   hand. (The router uses `querySelectorAll` once, for a named-region
   lookup where no sibling relationship exists.)
 - No `closest()`. Use `findAncestor(el, prefix)`.
-- ARIA IDL accessors (`ariaExpanded`, `ariaChecked`, `ariaHidden`,
+- ARIA IDL accessors (`ariaExpanded`, `ariaChecked`,
   `ariaDisabled`, `ariaSelected`, `role`, `hidden`) over
   `getAttribute`/`setAttribute`. String API only where there's no
   IDL counterpart (`data-*`, `aria-labelledby`, `aria-controls`).
+- Hidden content carries `hidden`, or is a closed popover or
+  `<dialog>`. Never write `aria-hidden`: each already drops the
+  subtree from the accessibility tree, so the attribute would be a
+  second copy of the same state.
 - Compare ARIA strings with `!== "true"` when the "not truthy"
   case is the one you care about.
 

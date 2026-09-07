@@ -8,7 +8,7 @@
   <button type="button" data-testid="toggle-disabled">Toggle Disabled</button>
 </div>
 <button data-testid="trigger" data-action="trigger-clicked" type="button" id="mct:menu:d1" aria-controls="mcc:menu:d1" aria-expanded="false" aria-haspopup="menu" tabindex="0" role="button">Open Menu</button>
-<ul data-testid="list" role="menu" id="mcc:menu:d1" aria-labelledby="mct:menu:d1" aria-hidden="true" popover="manual">
+<ul data-testid="list" role="menu" id="mcc:menu:d1" aria-labelledby="mct:menu:d1" popover="manual">
   <li role="none"><button data-testid="item-1" type="button" role="menuitem" tabindex="-1">Item 1</button></li>
   <li role="none"><button data-testid="item-2" type="button" role="menuitem" tabindex="-1">Item 2</button></li>
   <li role="none"><button type="button" role="menuitem" tabindex="-1">Item 3</button></li>
@@ -20,7 +20,7 @@
   <li role="none"><button data-testid="radio-b" type="button" role="menuitemradio" aria-checked="false" tabindex="-1">Radio B</button></li>
 </ul>
 <button data-testid="menu2-trigger" type="button" id="mct:menu:d2" aria-controls="mcc:menu:d2" aria-expanded="false" aria-haspopup="menu" tabindex="0" role="button">Open Menu 2</button>
-<ul data-testid="menu2-list" role="menu" id="mcc:menu:d2" aria-labelledby="mct:menu:d2" aria-hidden="true" popover="manual">
+<ul data-testid="menu2-list" role="menu" id="mcc:menu:d2" aria-labelledby="mct:menu:d2" popover="manual">
   <li role="none"><button type="button" role="menuitem" tabindex="-1">Menu2 Item 1</button></li>
 </ul>
 <script>
@@ -81,7 +81,6 @@
     ul.setAttribute('role', 'menu');
     ul.id = 'mcc:menu:d1sub';
     ul.setAttribute('aria-labelledby', 'mct:menu:d1sub');
-    ul.setAttribute('aria-hidden', 'true');
     ul.setAttribute('popover', 'manual');
     ul.innerHTML = '<li role="none"><button data-testid="submenu-item-1" type="button" role="menuitem" tabindex="-1">Sub Item 1</button></li><li role="none"><button type="button" role="menuitem" tabindex="-1">Sub Item 2</button></li>';
 

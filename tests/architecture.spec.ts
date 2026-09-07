@@ -20,7 +20,13 @@ const reactWrappers = readdirSync("src/react")
   .sort()
   .map((name) => [name, readFileSync(`src/react/${name}`, "utf8")] as const);
 
+const vueWrappers = readdirSync("src/vue")
+  .filter((name) => name.endsWith(".ts"))
+  .sort()
+  .map((name) => [name, readFileSync(`src/vue/${name}`, "utf8")] as const);
+
 const cores = [helper, combined, ...components.map(([, source]) => source)];
+const wrappers = [...reactWrappers, ...vueWrappers].map(([, source]) => source);
 const timers = ["setTimeout(", "setInterval(", "requestAnimationFrame(", "queueMicrotask("];
 
 const importsFrom = (source: string) =>
@@ -41,6 +47,13 @@ test.describe("Architecture invariants", () => {
     for (const source of cores) {
       expect(source).not.toContain("querySelector");
       expect(source).not.toContain(".closest(");
+    }
+  });
+
+  test("core and wrappers never write `aria-hidden`", () => {
+    for (const source of [...cores, ...wrappers]) {
+      expect(source).not.toContain("aria-hidden");
+      expect(source).not.toContain("ariaHidden");
     }
   });
 

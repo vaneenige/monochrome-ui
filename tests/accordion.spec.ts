@@ -19,24 +19,24 @@ test.describe("Accordion", () => {
       await expect(content).not.toHaveAttribute("role");
     });
 
-    test("toggles `aria-expanded` / `aria-hidden` across the open and close cycle", async ({
+    test("toggles `aria-expanded` and `hidden` across the open and close cycle", async ({
       page,
     }) => {
       const trigger = page.getByTestId("single-trigger-1");
       const content = page.getByTestId("single-content-1");
 
       await expect(trigger).toHaveAttribute("aria-expanded", "false");
-      await expect(content).toHaveAttribute("aria-hidden", "true");
+      await expect(content).toHaveAttribute("hidden", "");
       await expect(content).not.toBeVisible();
 
       await trigger.click();
       await expect(trigger).toHaveAttribute("aria-expanded", "true");
-      await expect(content).toHaveAttribute("aria-hidden", "false");
+      await expect(content).not.toHaveAttribute("hidden");
       await expect(content).toBeVisible();
 
       await trigger.click();
       await expect(trigger).toHaveAttribute("aria-expanded", "false");
-      await expect(content).toHaveAttribute("aria-hidden", "true");
+      await expect(content).toHaveAttribute("hidden", "");
       await expect(content).not.toBeVisible();
     });
 

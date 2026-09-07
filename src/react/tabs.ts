@@ -93,7 +93,6 @@ function Panel({
       role: "tabpanel",
       id: `mcc:tabs:${fullId}`,
       "aria-labelledby": `mct:tabs:${fullId}`,
-      "aria-hidden": !isSelected,
       hidden: isSelected ? undefined : true,
       tabIndex: focusable ? (isSelected ? 0 : -1) : undefined,
     },

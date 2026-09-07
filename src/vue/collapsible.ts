@@ -48,7 +48,6 @@ const Panel = defineComponent({
         {
           id: `mcc:collapsible:${ctx.baseId}`,
           "aria-labelledby": `mct:collapsible:${ctx.baseId}`,
-          "aria-hidden": !ctx.open,
           hidden: ctx.open ? undefined : true,
         },
         slots.default?.(),

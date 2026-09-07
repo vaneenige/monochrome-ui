@@ -30,11 +30,11 @@ test.describe("Tabs", () => {
       await expect(page.getByTestId("tab-2")).toHaveAttribute("aria-selected", "false");
       await expect(page.getByTestId("tab-2")).toHaveAttribute("tabindex", "-1");
       await expect(page.getByTestId("tab-3")).toHaveAttribute("tabindex", "-1");
-      await expect(page.getByTestId("panel-1")).toHaveAttribute("aria-hidden", "false");
+      await expect(page.getByTestId("panel-1")).not.toHaveAttribute("hidden");
       await expect(page.getByTestId("panel-1")).toHaveAttribute("tabindex", "0");
-      await expect(page.getByTestId("panel-2")).toHaveAttribute("aria-hidden", "true");
+      await expect(page.getByTestId("panel-2")).toHaveAttribute("hidden", "");
       await expect(page.getByTestId("panel-2")).toHaveAttribute("tabindex", "-1");
-      await expect(page.getByTestId("panel-3")).toHaveAttribute("aria-hidden", "true");
+      await expect(page.getByTestId("panel-3")).toHaveAttribute("hidden", "");
       await expect(page.getByTestId("panel-3")).toHaveAttribute("tabindex", "-1");
 
       await page.getByTestId("tab-2").click();

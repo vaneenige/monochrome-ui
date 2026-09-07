@@ -157,62 +157,62 @@
     "playwright-core": "1.63.0"
   },
   "versionMeta": {
-    "gzipSize": 3319,
+    "gzipSize": 3293,
     "gzipSizes": {
       "accordion": {
-        "core": 1006,
-        "react": 470,
-        "vue": 728
+        "core": 998,
+        "react": 466,
+        "vue": 674
       },
       "collapsible": {
-        "core": 669,
-        "react": 428,
-        "vue": 669
+        "core": 662,
+        "react": 424,
+        "vue": 615
       },
       "dialog": {
-        "core": 775,
+        "core": 769,
         "react": 528,
-        "vue": 787
+        "vue": 738
       },
       "index": {
-        "core": 3319,
-        "react": 1984,
-        "vue": 2354
+        "core": 3293,
+        "react": 1987,
+        "vue": 2224
       },
       "menu": {
-        "core": 2295,
-        "react": 674,
-        "vue": 939
+        "core": 2277,
+        "react": 683,
+        "vue": 883
       },
       "menubar": {
-        "core": 2295,
-        "react": 956,
-        "vue": 1266
+        "core": 2277,
+        "react": 912,
+        "vue": 1149
       },
       "popover": {
-        "core": 1016,
-        "react": 514,
-        "vue": 779
+        "core": 1007,
+        "react": 506,
+        "vue": 722
       },
       "router": {
         "core": 1281
       },
       "tabs": {
-        "core": 1021,
-        "react": 556,
-        "vue": 857
+        "core": 1009,
+        "react": 550,
+        "vue": 802
       },
       "tooltip": {
-        "core": 1014,
+        "core": 1007,
         "react": 359,
-        "vue": 573
+        "vue": 523
       }
     },
     "tests": {
-      "total": 480,
+      "total": 481,
       "a11y": 20,
       "accordion": 34,
-      "architecture": 10,
+      "architecture": 11,
       "collapsible": 25,
       "dialog": 22,
       "menu": 228,

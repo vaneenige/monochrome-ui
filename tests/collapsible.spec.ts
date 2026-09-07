@@ -19,24 +19,24 @@ test.describe("Collapsible", () => {
       await expect(content).not.toHaveAttribute("role");
     });
 
-    test("toggles `aria-expanded` / `aria-hidden` across the open and close cycle", async ({
+    test("toggles `aria-expanded` and `hidden` across the open and close cycle", async ({
       page,
     }) => {
       const trigger = page.getByTestId("collapsible-trigger");
       const content = page.getByTestId("collapsible-content");
 
       await expect(trigger).toHaveAttribute("aria-expanded", "false");
-      await expect(content).toHaveAttribute("aria-hidden", "true");
+      await expect(content).toHaveAttribute("hidden", "");
       await expect(content).not.toBeVisible();
 
       await trigger.click();
       await expect(trigger).toHaveAttribute("aria-expanded", "true");
-      await expect(content).toHaveAttribute("aria-hidden", "false");
+      await expect(content).not.toHaveAttribute("hidden");
       await expect(content).toBeVisible();
 
       await trigger.click();
       await expect(trigger).toHaveAttribute("aria-expanded", "false");
-      await expect(content).toHaveAttribute("aria-hidden", "true");
+      await expect(content).toHaveAttribute("hidden", "");
       await expect(content).not.toBeVisible();
     });
   });
@@ -234,7 +234,7 @@ test.describe("Collapsible", () => {
       const content = page.getByTestId("separated-content");
       await trigger.click();
       await expect(content).toBeVisible();
-      await expect(content).toHaveAttribute("aria-hidden", "false");
+      await expect(content).not.toHaveAttribute("hidden");
       await trigger.press("Enter");
       await expect(content).not.toBeVisible();
       await expect(trigger).toHaveAttribute("aria-expanded", "false");

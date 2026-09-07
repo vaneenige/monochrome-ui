@@ -53,7 +53,6 @@ function Panel({ children, ...props }: BaseProps): ReactElement {
       ...props,
       id: `mcc:collapsible:${fullId}`,
       "aria-labelledby": `mct:collapsible:${fullId}`,
-      "aria-hidden": !isOpen,
       hidden: isOpen ? undefined : true,
     },
     children,

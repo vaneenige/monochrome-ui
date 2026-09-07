@@ -48,7 +48,7 @@ import { Accordion, Menu } from "monochrome/vue"
 <button id="mct:collapsible:1" aria-expanded="false" aria-controls="mcc:collapsible:1">
   Show details
 </button>
-<div id="mcc:collapsible:1" aria-labelledby="mct:collapsible:1" aria-hidden="true" hidden>
+<div id="mcc:collapsible:1" aria-labelledby="mct:collapsible:1" hidden>
   Hidden by default, revealed on click.
 </div>
 ```

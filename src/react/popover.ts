@@ -47,7 +47,6 @@ function Content({ children, ...props }: BaseProps): ReactElement {
       ...(hasDescription ? {} : { "aria-describedby": `mcc:popover-description:${context.id}` }),
       ...props,
       id: `mcc:popover:${context.id}`,
-      "aria-hidden": "true",
       popover: "manual",
       tabIndex: -1,
     },

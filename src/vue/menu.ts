@@ -5,7 +5,7 @@ import { MenuKey, requireInject } from "./shared.js";
 const Root = defineComponent({
   setup(_, { slots }) {
     const id = useId();
-    provide(MenuKey, { id, root: true });
+    provide(MenuKey, { id, tabStop: true, item: false });
     return () => slots.default?.();
   },
 });
@@ -25,8 +25,8 @@ const Trigger = defineComponent({
           "aria-controls": `mcc:menu:${ctx.id}`,
           "aria-expanded": "false",
           "aria-haspopup": "menu",
-          tabindex: ctx.root ? 0 : -1,
-          role: ctx.submenu ? "menuitem" : "button",
+          tabindex: ctx.tabStop ? 0 : -1,
+          role: ctx.item ? "menuitem" : "button",
           "aria-disabled": props.disabled || undefined,
         },
         slots.default?.(),
@@ -44,7 +44,6 @@ const Popover = defineComponent({
           role: "menu",
           id: `mcc:menu:${ctx.id}`,
           "aria-labelledby": `mct:menu:${ctx.id}`,
-          "aria-hidden": "true",
           popover: "manual",
         },
         slots.default?.(),
@@ -52,112 +51,35 @@ const Popover = defineComponent({
   },
 });
 
-const Item = defineComponent({
-  inheritAttrs: false,
-  props: {
-    disabled: Boolean,
-    href: String,
-  },
-  setup(props, { slots, attrs }) {
-    return () => {
-      const inner = props.disabled
-        ? h(
-            "span",
-            {
-              ...attrs,
-              role: "menuitem",
-              "aria-disabled": "true",
-              tabindex: -1,
-            },
-            slots.default?.(),
-          )
-        : props.href
-          ? h(
-              "a",
-              { ...attrs, role: "menuitem", href: props.href, tabindex: -1 },
-              slots.default?.(),
-            )
-          : h(
-              "button",
-              { ...attrs, type: "button", role: "menuitem", tabindex: -1 },
-              slots.default?.(),
-            );
-      return h("li", { role: "none" }, [inner]);
-    };
-  },
-});
+const menuItem = (role: string, checkable: boolean) =>
+  defineComponent({
+    inheritAttrs: false,
+    props: {
+      checked: { type: Boolean, default: false },
+      disabled: Boolean,
+      href: String,
+    },
+    setup(props, { slots, attrs }) {
+      return () => {
+        const shared = {
+          ...attrs,
+          role,
+          tabindex: -1,
+          "aria-checked": checkable ? props.checked : undefined,
+        };
+        const inner = props.disabled
+          ? h("span", { ...shared, "aria-disabled": "true" }, slots.default?.())
+          : props.href
+            ? h("a", { ...shared, href: props.href }, slots.default?.())
+            : h("button", { ...shared, type: "button" }, slots.default?.());
+        return h("li", { role: "none" }, [inner]);
+      };
+    },
+  });
 
-const CheckboxItem = defineComponent({
-  inheritAttrs: false,
-  props: {
-    checked: { type: Boolean, default: false },
-    disabled: Boolean,
-  },
-  setup(props, { slots, attrs }) {
-    return () => {
-      const inner = props.disabled
-        ? h(
-            "span",
-            {
-              ...attrs,
-              role: "menuitemcheckbox",
-              "aria-checked": props.checked,
-              "aria-disabled": "true",
-              tabindex: -1,
-            },
-            slots.default?.(),
-          )
-        : h(
-            "button",
-            {
-              ...attrs,
-              type: "button",
-              role: "menuitemcheckbox",
-              "aria-checked": props.checked,
-              tabindex: -1,
-            },
-            slots.default?.(),
-          );
-      return h("li", { role: "none" }, [inner]);
-    };
-  },
-});
-
-const RadioItem = defineComponent({
-  inheritAttrs: false,
-  props: {
-    checked: { type: Boolean, default: false },
-    disabled: Boolean,
-  },
-  setup(props, { slots, attrs }) {
-    return () => {
-      const inner = props.disabled
-        ? h(
-            "span",
-            {
-              ...attrs,
-              role: "menuitemradio",
-              "aria-checked": props.checked,
-              "aria-disabled": "true",
-              tabindex: -1,
-            },
-            slots.default?.(),
-          )
-        : h(
-            "button",
-            {
-              ...attrs,
-              type: "button",
-              role: "menuitemradio",
-              "aria-checked": props.checked,
-              tabindex: -1,
-            },
-            slots.default?.(),
-          );
-      return h("li", { role: "none" }, [inner]);
-    };
-  },
-});
+const Item = menuItem("menuitem", false);
+const CheckboxItem = menuItem("menuitemcheckbox", true);
+const RadioItem = menuItem("menuitemradio", true);
 
 const Label = defineComponent({
   setup(_, { slots }) {
@@ -174,7 +96,7 @@ const Separator = defineComponent({
 const Group = defineComponent({
   setup(_, { slots }) {
     const id = useId();
-    provide(MenuKey, { id, submenu: true });
+    provide(MenuKey, { id, tabStop: false, item: true });
     return () => h("li", { role: "none" }, slots.default?.());
   },
 });

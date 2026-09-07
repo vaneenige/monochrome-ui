@@ -67,7 +67,6 @@ const Panel = defineComponent({
         {
           id: `mcc:accordion:${ctx.baseId}`,
           "aria-labelledby": `mct:accordion:${ctx.baseId}`,
-          "aria-hidden": !ctx.open,
           hidden: ctx.open ? undefined : true,
         },
         slots.default?.(),

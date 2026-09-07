@@ -88,10 +88,10 @@
         <button data-testid="t1-trigger" type="button" role="tab" id="mct:tabs:100:t1" aria-selected="true" aria-controls="mcc:tabs:100:t1" tabindex="0">T1</button>
         <button data-testid="t2-trigger" type="button" role="tab" id="mct:tabs:100:t2" aria-selected="false" aria-controls="mcc:tabs:100:t2" tabindex="-1">T2</button>
       </div>
-      <div role="tabpanel" id="mcc:tabs:100:t1" aria-labelledby="mct:tabs:100:t1" aria-hidden="false">
+      <div role="tabpanel" id="mcc:tabs:100:t1" aria-labelledby="mct:tabs:100:t1">
         <input data-testid="t1-input" />
       </div>
-      <div role="tabpanel" id="mcc:tabs:100:t2" aria-labelledby="mct:tabs:100:t2" aria-hidden="true" hidden>
+      <div role="tabpanel" id="mcc:tabs:100:t2" aria-labelledby="mct:tabs:100:t2" hidden>
         <a data-testid="t2-link" href="/link">Link</a>
       </div>
     </div>
@@ -102,7 +102,7 @@
   <button data-testid="popover-trigger" type="button"
     id="mct:popover:1" aria-controls="mcc:popover:1" aria-expanded="false">Popover</button>
   <div data-testid="popover-content" id="mcc:popover:1"
-    aria-labelledby="mct:popover:1" aria-hidden="true" popover="manual" tabindex="-1">
+    aria-labelledby="mct:popover:1" popover="manual" tabindex="-1">
     <p>Popover content</p>
   </div>
 </div>
@@ -110,7 +110,7 @@
 <button data-testid="menu-trigger" type="button" id="mct:menu:1"
   aria-controls="mcc:menu:1" aria-expanded="false" aria-haspopup="menu" tabindex="0" role="button">Menu</button>
 <ul data-testid="menu-list" role="menu" id="mcc:menu:1"
-  aria-labelledby="mct:menu:1" aria-hidden="true" popover="manual">
+  aria-labelledby="mct:menu:1" popover="manual">
   <li role="none"><button type="button" role="menuitem" tabindex="-1">Item</button></li>
 </ul>
 

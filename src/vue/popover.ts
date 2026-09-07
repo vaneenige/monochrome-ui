@@ -45,7 +45,6 @@ const Content = defineComponent({
           ...(hasDescription ? {} : { "aria-describedby": `mcc:popover-description:${ctx.id}` }),
           ...attrs,
           id: `mcc:popover:${ctx.id}`,
-          "aria-hidden": "true",
           popover: "manual",
           tabindex: -1,
         },

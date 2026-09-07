@@ -70,7 +70,6 @@ function Panel({ children, ...props }: BaseProps): ReactElement {
       ...props,
       id: `mcc:accordion:${fullId}`,
       "aria-labelledby": `mct:accordion:${fullId}`,
-      "aria-hidden": !isOpen,
       hidden: isOpen ? undefined : true,
     },
     children,

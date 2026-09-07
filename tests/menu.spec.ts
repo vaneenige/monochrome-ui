@@ -56,22 +56,20 @@ test.describe("Menu", () => {
       await expect(list).toHaveAttribute("aria-labelledby", triggerId as string);
     });
 
-    test("toggles `aria-expanded` / `aria-hidden` across the open and close cycle", async ({
-      page,
-    }) => {
+    test("toggles `aria-expanded` across the open and close cycle", async ({ page }) => {
       const trigger = page.getByTestId("root-trigger");
       const list = page.getByTestId("root-list");
 
       await expect(trigger).toHaveAttribute("aria-expanded", "false");
-      await expect(list).toHaveAttribute("aria-hidden", "true");
+      await expect(list).not.toBeVisible();
 
       await trigger.click();
       await expect(trigger).toHaveAttribute("aria-expanded", "true");
-      await expect(list).toHaveAttribute("aria-hidden", "false");
+      await expect(list).toBeVisible();
 
       await trigger.click();
       await expect(trigger).toHaveAttribute("aria-expanded", "false");
-      await expect(list).toHaveAttribute("aria-hidden", "true");
+      await expect(list).not.toBeVisible();
     });
 
     test("declares menuitem role and roving tabindex on every item", async ({ page }) => {
@@ -95,13 +93,13 @@ test.describe("Menu", () => {
       await expect(subTrigger).toHaveAttribute("aria-haspopup", "menu");
       await expect(subTrigger).toHaveAttribute("tabindex", "-1");
       await expect(subTrigger).toHaveAttribute("aria-expanded", "false");
-      await expect(subList).toHaveAttribute("aria-hidden", "true");
+      await expect(subList).not.toBeVisible();
       await expect(subList).toHaveAttribute("role", "menu");
       await expect(subList).toHaveAttribute("aria-labelledby", subTriggerId as string);
 
       await openSubmenuViaHover(page);
       await expect(subTrigger).toHaveAttribute("aria-expanded", "true");
-      await expect(subList).toHaveAttribute("aria-hidden", "false");
+      await expect(subList).toBeVisible();
     });
 
     test("declares `aria-disabled` and skips disabled items in focus", async ({
@@ -1328,7 +1326,12 @@ test.describe("Menubar", () => {
         "aria-expanded",
         "true",
       );
-      await expect(page.getByTestId("menubar-empty-list")).toHaveAttribute("aria-hidden", "false");
+      // Empty list has no box, so toBeVisible cannot see it open.
+      await expect
+        .poll(() =>
+          page.getByTestId("menubar-empty-list").evaluate((el) => el.matches(":popover-open")),
+        )
+        .toBe(true);
       await expect(page.getByTestId("menubar-list-2")).toBeVisible();
       await expect(page.getByTestId("menubar-trigger-3")).not.toBeFocused();
       await expect(page.getByTestId("menubar-empty-trigger")).toBeFocused();
@@ -2065,11 +2068,11 @@ test.describe("Link items", () => {
     await expect(page.getByTestId("list")).not.toBeVisible();
   });
 
-  test("activating an href menuitem moves focus off the link before aria-hidden", async ({
+  test("activating an href menuitem moves focus off the link before the menu hides", async ({
     page,
   }) => {
     await page.getByTestId("item-link").click();
-    await expect(page.getByTestId("list")).toHaveAttribute("aria-hidden", "true");
+    await expect(page.getByTestId("list")).not.toBeVisible();
     await expect(page.getByTestId("item-link")).not.toBeFocused();
     await expect(page.getByTestId("trigger")).toBeFocused();
   });

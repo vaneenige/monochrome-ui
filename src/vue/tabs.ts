@@ -87,7 +87,6 @@ const Panel = defineComponent({
           role: "tabpanel",
           id: `mcc:tabs:${fullId.value}`,
           "aria-labelledby": `mct:tabs:${fullId.value}`,
-          "aria-hidden": !isSelected.value,
           hidden: isSelected.value ? undefined : true,
           tabindex: props.focusable ? (isSelected.value ? 0 : -1) : undefined,
         },

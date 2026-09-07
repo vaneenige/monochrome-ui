@@ -1,14 +1,6 @@
 import "../menu.js";
-import { createContext, createElement, type ReactElement, type ReactNode, use, useId } from "react";
-import type { BaseProps } from "./shared.js";
-
-type MenuContextValue = {
-  id: string;
-  root?: boolean;
-  submenu?: boolean;
-};
-
-const MenuContext = createContext<MenuContextValue | null>(null);
+import { createElement, type ReactElement, type ReactNode, use, useId } from "react";
+import { type BaseProps, MenuContext } from "./shared.js";
 
 function useMenuContext() {
   const context = use(MenuContext);
@@ -18,7 +10,7 @@ function useMenuContext() {
 
 function Root({ children }: { children: ReactNode }): ReactElement {
   const id = useId();
-  return createElement(MenuContext, { value: { id, root: true } }, children);
+  return createElement(MenuContext, { value: { id, tabStop: true, item: false } }, children);
 }
 
 function Trigger({
@@ -36,8 +28,8 @@ function Trigger({
       "aria-controls": `mcc:menu:${context.id}`,
       "aria-expanded": "false",
       "aria-haspopup": "menu",
-      tabIndex: context.root ? 0 : -1,
-      role: context.submenu ? "menuitem" : "button",
+      tabIndex: context.tabStop ? 0 : -1,
+      role: context.item ? "menuitem" : "button",
       ...(disabled ? { "aria-disabled": "true" } : {}),
     },
     children,
@@ -53,98 +45,40 @@ function Popover({ children, ...props }: BaseProps): ReactElement {
       role: "menu",
       id: `mcc:menu:${context.id}`,
       "aria-labelledby": `mct:menu:${context.id}`,
-      "aria-hidden": "true",
       popover: "manual",
     },
     children,
   );
 }
 
-function Item({
-  children,
-  disabled,
-  href,
-  ...props
-}: BaseProps & { disabled?: boolean; href?: string }): ReactElement {
-  const inner = disabled
-    ? createElement(
-        "span",
-        { ...props, role: "menuitem", "aria-disabled": "true", tabIndex: -1 },
-        children,
-      )
-    : href
-      ? createElement("a", { ...props, role: "menuitem", href, tabIndex: -1 }, children)
-      : createElement(
-          "button",
-          { ...props, type: "button", role: "menuitem", tabIndex: -1 },
-          children,
-        );
-  return createElement("li", { role: "none" }, inner);
-}
+type ItemProps = BaseProps & { disabled?: boolean; href?: string };
+type CheckedItemProps = BaseProps & { disabled?: boolean; checked?: boolean | undefined };
 
-function CheckboxItem({
-  children,
-  checked,
-  disabled,
-  ...props
-}: BaseProps & { checked?: boolean; disabled?: boolean }): ReactElement {
-  const inner = disabled
-    ? createElement(
-        "span",
-        {
-          ...props,
-          role: "menuitemcheckbox",
-          "aria-checked": checked ?? false,
-          "aria-disabled": "true",
-          tabIndex: -1,
-        },
-        children,
-      )
-    : createElement(
-        "button",
-        {
-          ...props,
-          type: "button",
-          role: "menuitemcheckbox",
-          "aria-checked": checked ?? false,
-          tabIndex: -1,
-        },
-        children,
-      );
-  return createElement("li", { role: "none" }, inner);
-}
+const menuItem = (role: string, checkable: boolean) =>
+  function MenuItem({
+    children,
+    checked,
+    disabled,
+    href,
+    ...props
+  }: ItemProps & CheckedItemProps): ReactElement {
+    const shared = {
+      ...props,
+      role,
+      tabIndex: -1,
+      ...(checkable ? { "aria-checked": checked ?? false } : {}),
+    };
+    const inner = disabled
+      ? createElement("span", { ...shared, "aria-disabled": "true" }, children)
+      : href
+        ? createElement("a", { ...shared, href }, children)
+        : createElement("button", { ...shared, type: "button" }, children);
+    return createElement("li", { role: "none" }, inner);
+  };
 
-function RadioItem({
-  children,
-  checked,
-  disabled,
-  ...props
-}: BaseProps & { checked?: boolean; disabled?: boolean }): ReactElement {
-  const inner = disabled
-    ? createElement(
-        "span",
-        {
-          ...props,
-          role: "menuitemradio",
-          "aria-checked": checked ?? false,
-          "aria-disabled": "true",
-          tabIndex: -1,
-        },
-        children,
-      )
-    : createElement(
-        "button",
-        {
-          ...props,
-          type: "button",
-          role: "menuitemradio",
-          "aria-checked": checked ?? false,
-          tabIndex: -1,
-        },
-        children,
-      );
-  return createElement("li", { role: "none" }, inner);
-}
+const Item: (props: ItemProps) => ReactElement = menuItem("menuitem", false);
+const CheckboxItem: (props: CheckedItemProps) => ReactElement = menuItem("menuitemcheckbox", true);
+const RadioItem: (props: CheckedItemProps) => ReactElement = menuItem("menuitemradio", true);
 
 function Label({ children, ...props }: BaseProps): ReactElement {
   return createElement("li", { ...props, role: "presentation" }, children);
@@ -158,7 +92,7 @@ function Group({ children, ...props }: BaseProps): ReactElement {
   const id = useId();
   return createElement(
     MenuContext,
-    { value: { id, submenu: true } },
+    { value: { id, tabStop: false, item: true } },
     createElement("li", { ...props, role: "none" }, children),
   );
 }

@@ -5,7 +5,7 @@
 <div>
   <button type="button" data-testid="focus-before">Focus before</button>
   <button data-testid="root-trigger" type="button" id="mct:menu:1" aria-controls="mcc:menu:1" aria-expanded="false" aria-haspopup="menu" tabindex="0" role="button">MenuTrigger</button>
-  <ul data-testid="root-list" role="menu" id="mcc:menu:1" aria-labelledby="mct:menu:1" aria-hidden="true" popover="manual">
+  <ul data-testid="root-list" role="menu" id="mcc:menu:1" aria-labelledby="mct:menu:1" popover="manual">
     <li role="none">
       <button data-testid="root-item-1" type="button" role="menuitem" tabindex="-1">MenuItem 1</button>
     </li>
@@ -22,7 +22,7 @@
     <li data-testid="root-label" role="presentation">Section</li>
     <li role="none">
       <button data-testid="root-submenu-trigger" type="button" id="mct:menu:2" aria-controls="mcc:menu:2" aria-expanded="false" aria-haspopup="menu" tabindex="-1" role="menuitem">Submenu Trigger</button>
-      <ul data-testid="root-submenu-list" role="menu" id="mcc:menu:2" aria-labelledby="mct:menu:2" aria-hidden="true" popover="manual">
+      <ul data-testid="root-submenu-list" role="menu" id="mcc:menu:2" aria-labelledby="mct:menu:2" popover="manual">
         <li role="none">
           <button data-testid="root-submenu-item-1" type="button" role="menuitem" tabindex="-1">Submenu Item 1</button>
         </li>
@@ -37,7 +37,7 @@
   </ul>
   <button type="button" data-testid="focus-after">Focus after</button>
   <button data-testid="second-trigger" type="button" id="mct:menu:3" aria-controls="mcc:menu:3" aria-expanded="false" aria-haspopup="menu" tabindex="0" role="button">Second Menu</button>
-  <ul data-testid="second-list" role="menu" id="mcc:menu:3" aria-labelledby="mct:menu:3" aria-hidden="true" popover="manual">
+  <ul data-testid="second-list" role="menu" id="mcc:menu:3" aria-labelledby="mct:menu:3" popover="manual">
     <li role="none">
       <button type="button" role="menuitem" tabindex="-1">Second Item 1</button>
     </li>
@@ -53,7 +53,7 @@
   </svg>
   Menu with SVG
 </button>
-<ul data-testid="svg-list" role="menu" id="mcc:menu:4" aria-labelledby="mct:menu:4" aria-hidden="true" popover="manual">
+<ul data-testid="svg-list" role="menu" id="mcc:menu:4" aria-labelledby="mct:menu:4" popover="manual">
   <li role="none">
     <button type="button" role="menuitem" tabindex="-1">SVG Menu Item 1</button>
   </li>
@@ -62,7 +62,7 @@
   </li>
 </ul>
 <button data-testid="trigger" data-action="trigger-clicked" type="button" id="mct:menu:5" aria-controls="mcc:menu:5" aria-expanded="false" aria-haspopup="menu" tabindex="0" role="button">Open Menu</button>
-<ul data-testid="list" role="menu" id="mcc:menu:5" aria-labelledby="mct:menu:5" aria-hidden="true" popover="manual">
+<ul data-testid="list" role="menu" id="mcc:menu:5" aria-labelledby="mct:menu:5" popover="manual">
   <li role="none">
     <button data-testid="item" data-action="item-clicked" type="button" role="menuitem" tabindex="-1">Action</button>
   </li>

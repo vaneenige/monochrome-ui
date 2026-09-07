@@ -22,7 +22,6 @@ if (hasDocument) {
         if (popoverShown === trigger) popoverShown = null;
       }
       trigger.ariaExpanded = `${show}`;
-      content.ariaHidden = `${!show}`;
     }
   };
 

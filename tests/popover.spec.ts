@@ -20,18 +20,16 @@ test.describe("Popover", () => {
       await expect(content).toHaveAttribute("popover", "manual");
     });
 
-    test("toggles `aria-expanded` / `aria-hidden` across the open and close cycle", async ({
-      page,
-    }) => {
+    test("toggles `aria-expanded` across the open and close cycle", async ({ page }) => {
       const trigger = page.getByTestId("click-trigger");
       const content = page.getByTestId("click-content");
 
       await expect(trigger).toHaveAttribute("aria-expanded", "false");
-      await expect(content).toHaveAttribute("aria-hidden", "true");
+      await expect(content).not.toBeVisible();
 
       await trigger.click();
       await expect(trigger).toHaveAttribute("aria-expanded", "true");
-      await expect(content).toHaveAttribute("aria-hidden", "false");
+      await expect(content).toBeVisible();
     });
 
     test("auto-wires `aria-describedby` from Popover.Description while keeping the trigger as the label", async ({
