@@ -2,11 +2,18 @@ import AxeBuilder from "@axe-core/playwright";
 import type { Page } from "@playwright/test";
 import { expect, test } from "./fixtures";
 
-// Axe WCAG 2.x A/AA pass over one representative fixture per
-// component, closed and (where one interaction suffices) open.
-// Scoped to the WCAG tags: the fixtures are bare test scaffolding,
-// so best-practice rules about landmarks and headings do not apply.
-const scan = (page: Page) => new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa"]).analyze();
+// Axe WCAG 2.0, 2.1 and 2.2 A/AA pass over one representative
+// fixture per component, closed and (where one interaction
+// suffices) open. Scoped to the WCAG tags: the fixtures are bare
+// test scaffolding, so best-practice rules about landmarks and
+// headings do not apply. `target-size` (2.5.8) is disabled for the
+// same reason: it measures the consumer's styling, and unstyled
+// buttons are 22px tall.
+const scan = (page: Page) =>
+  new AxeBuilder({ page })
+    .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"])
+    .disableRules(["target-size"])
+    .analyze();
 
 test.describe("Accessibility (axe)", () => {
   test.beforeEach(({ renderer }) => {
