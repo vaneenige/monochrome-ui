@@ -1,4 +1,4 @@
-import { findAncestor, getLinked, getTarget, hasDocument, isTrigger, position } from "./dom.js";
+import { findAncestor, getLinked, getTarget, hasDocument, position } from "./dom.js";
 
 enum Prefix {
   ContentTooltip = "mcc:tooltip:",
@@ -93,25 +93,23 @@ if (hasDocument) {
   );
 
   addEventListener("resize", () => {
-    if (tooltipShown) tooltipReset();
+    if (tooltipShown) {
+      const content = getLinked(tooltipShown, "aria-describedby");
+      if (content) position(tooltipShown, content);
+    }
     pointerTarget = null;
   });
 
   addEventListener("focusin", (event: FocusEvent) => {
-    const target = event.target;
-    if (isTrigger(target, Prefix.TriggerTooltip)) {
-      if (tooltipFocused !== target) {
-        tooltipFocused = target;
-        tooltipSync();
-      }
-    } else if (tooltipFocused) {
-      tooltipFocused = null;
+    const trigger = findAncestor(getTarget(event), Prefix.TriggerTooltip);
+    if (trigger !== tooltipFocused) {
+      tooltipFocused = trigger;
       tooltipSync();
     }
   });
 
   addEventListener("focusout", (event: FocusEvent) => {
-    if (tooltipFocused && event.target === tooltipFocused && !event.relatedTarget) {
+    if (tooltipFocused && !event.relatedTarget) {
       tooltipFocused = null;
       tooltipSync();
     }

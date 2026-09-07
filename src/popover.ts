@@ -48,11 +48,16 @@ if (hasDocument) {
   });
 
   addEventListener("keydown", (event: KeyboardEvent) => {
-    if (event.key === "Escape" && popoverShown) {
+    if (event.key === "Escape" && popoverShown && !event.defaultPrevented) {
       const trigger = popoverShown;
-      popover(trigger, false);
-      trigger.focus();
-      event.preventDefault();
+      const content = getLinked(trigger, "aria-controls");
+      let el = getTarget(event);
+      while (el && el !== content && !el.popover) el = el.parentElement;
+      if (el === content || !el) {
+        popover(trigger, false);
+        trigger.focus();
+        event.preventDefault();
+      }
     }
   });
 
@@ -70,7 +75,10 @@ if (hasDocument) {
   );
 
   addEventListener("resize", () => {
-    if (popoverShown) popover(popoverShown, false);
+    if (popoverShown) {
+      const content = getLinked(popoverShown, "aria-controls");
+      if (content) position(popoverShown, content);
+    }
   });
 
   addEventListener("focusout", (event: FocusEvent) => {

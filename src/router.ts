@@ -7,6 +7,10 @@
  *   regions (`data-area="..."`) without a full reload.
  * - Prefetches any link that gets a pointer or focus hint.
  * - Preserves scroll position across back/forward navigation.
+ * - Moves focus to the swapped area after a swap (the root, or the
+ *   first replaced region when the root is kept), so assistive
+ *   tech announces the new page and Tab starts from the new
+ *   content.
  * - Falls back to a hard navigation whenever the assumptions break
  *   (cross-origin, network error, missing root area, etc.).
  *
@@ -29,8 +33,9 @@
  *
  * ## Comment convention
  *
- * Same standard as `src/index.ts`: TSDoc for declarations, `//` for
- * inline notes. Comments are stripped by `build.ts` before bundling.
+ * TSDoc for every declared symbol, `//` for inline notes (AGENTS.md,
+ * Comment policy). Comments are stripped by `build.ts` before
+ * bundling.
  */
 
 /** A successful fetch: the page HTML and the resolved URL. */
@@ -71,6 +76,9 @@ if (typeof document !== "undefined") {
   /** Strip the `#fragment` from a URL for cache and comparison keys. */
   const stripHash = (url: string) => url.split("#")[0] ?? "";
 
+  /** Snapshot the current scroll position onto the current history entry. */
+  const stampScroll = () => history.replaceState({ ...history.state, scrollY: scrollY }, "");
+
   /**
    * Commit a successful navigation: update scroll + history + fire
    * `mc:navigate` for any downstream listeners.
@@ -81,8 +89,6 @@ if (typeof document !== "undefined") {
    * scroll to top. For pop navigations we just restore whatever
    * scroll was saved on the entry we're returning to.
    */
-  const stampScroll = () => history.replaceState({ ...history.state, scrollY: scrollY }, "");
-
   const commit = (url: string, pop: boolean) => {
     if (pop) {
       const y = history.state?.scrollY;
@@ -217,6 +223,15 @@ if (typeof document !== "undefined") {
    *
    * This "keyed swap" lets pages keep sidebars, shells, or layouts
    * across navigations while still diffing content regions.
+   *
+   * Finally the swapped area takes focus: the new root, or the first
+   * replaced region when the root is kept (falling back to the kept
+   * root when every key matched). A native navigation resets focus
+   * to the document, but after a swap it would stay on the clicked
+   * anchor (or fall to `body` if that anchor was replaced) and a
+   * screen reader would hear nothing. The area gets `tabindex="-1"`
+   * so a plain container is focusable, and `preventScroll` keeps
+   * `commit` in charge of scrolling.
    */
   const swap = (newDoc: Document): boolean => {
     const incoming = collectAreas(newDoc);
@@ -240,15 +255,20 @@ if (typeof document !== "undefined") {
     const keepRoot =
       sameShape && curRoot.dataset.key !== undefined && curRoot.dataset.key === newRoot.dataset.key;
 
+    let area: HTMLElement | null = keepRoot ? null : newRoot;
     if (!keepRoot) curRoot.replaceWith(newRoot);
     for (const [name, el] of current) {
       if (name !== "root" && el.isConnected) {
         const next = incoming.get(name);
         if (next && (el.dataset.key === undefined || el.dataset.key !== next.dataset.key)) {
           el.replaceWith(next);
+          area ||= next;
         }
       }
     }
+    area ||= curRoot;
+    area.tabIndex = -1;
+    area.focus({ preventScroll: true });
     return true;
   };
 

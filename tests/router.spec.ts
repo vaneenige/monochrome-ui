@@ -25,6 +25,20 @@ test.describe("Router", () => {
       await expect(page).toHaveTitle("About");
     });
 
+    test("moves focus to the root area", async ({ page }) => {
+      await page.goto("/html/router/index");
+      await page.getByTestId("nav-about").click();
+      await expect(page.getByTestId("page-title")).toHaveText("About");
+      await expect(page.locator("[data-area='root']")).toBeFocused();
+    });
+
+    test("moves focus to the replaced region when the root is kept", async ({ page }) => {
+      await page.goto("/html/router/docs");
+      await page.getByTestId("nav-docs-guide").click();
+      await expect(page.getByTestId("page-title")).toHaveText("Docs Guide");
+      await expect(page.locator("[data-area='content']")).toBeFocused();
+    });
+
     test("preserves the JS context across navigation", async ({ page }) => {
       await page.goto("/html/router/index");
       await page.evaluate(() => {

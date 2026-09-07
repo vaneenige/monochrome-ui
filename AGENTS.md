@@ -228,6 +228,26 @@ dismisses the tooltip; a Menu or Popover still open sees the
 second Escape. No import-order coordinator, and Tooltip does
 not name those components.
 
+**Popover Escape yields to nested surfaces.** Popover skips an
+Escape that is already `defaultPrevented` (a Menu inside the
+popover consumed it first) and one whose target sits in a nested
+surface: the walk from the event target up to the popover content
+stops at any element whose `popover` IDL property is set. The
+second check reads the DOM, so a keyboard session inside a nested
+menu is safe in any registration order. A pointer-opened menu
+leaves focus on its trigger, outside the nested surface, so that
+case rests on the first check and on Menu's `keydown` running
+before Popover's: `src/index.ts` and the wrapper indexes import
+`menu` before `popover`, and per-component imports must keep that
+order. Otherwise Escape closes the popover and focuses its trigger.
+
+**Tooltip triggers are any element.** Both the hover and the
+focus path resolve the trigger with `findAncestor`, so a link or
+an input carrying the `mct:tooltip:` id shows its tooltip on focus
+as well as on hover. `focusout` only checks `relatedTarget`: while
+`tooltipFocused` is set, focus is on or inside that trigger, so a
+blur to nowhere always means leaving it.
+
 **Dialog Escape is native.** `showModal()` already closes on
 Escape and restores focus to the trigger. The Close button is
 the only path that needs `dialogClose`. Native close (Escape,
@@ -270,6 +290,14 @@ TRBL order) and the content's own size (`--width`, `--height`)
 as CSS custom properties on the content element. All positioning
 happens in CSS. No JS layout math, no `z-index` management (top
 layer handles that).
+
+**Resize repositions, scroll dismisses.** `resize` re-runs
+`position` for every open surface (the whole `menuStack`,
+`popoverShown`, `tooltipShown`) instead of closing it. On Android
+the soft keyboard fires a window `resize`, so a popover holding an
+input would otherwise close the moment its field gained focus.
+Scroll still dismisses: a surface that follows a moving trigger is
+a different design.
 
 **Safety triangle in JS.** When a submenu is open, pointermove
 records the last cursor point inside the topmost open submenu
@@ -471,8 +499,10 @@ PropType<...>` where Vue's prop typing requires it.)
   the core.
 - Menu open/dismiss/activate on `pointerdown` / `pointerup`.
   Enter/Space for menu are handled in `keydown` with
-  `preventDefault`. Tooltip Escape is capture-phase. Dialog
-  Escape is native.
+  `preventDefault`. Tooltip Escape is capture-phase. Popover
+  Escape yields when already default-prevented or when the
+  target sits in a nested popover. Dialog Escape is native.
+- `resize` repositions open surfaces; `scroll` dismisses them.
 - `void` on fire-and-forget promise expressions.
 
 ### Naming

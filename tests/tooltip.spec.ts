@@ -81,6 +81,14 @@ test.describe("Tooltip", () => {
       await expect(page.getByTestId("focus-before")).toBeFocused();
     });
 
+    test("shows on focus for a non-button trigger", async ({ page, renderer }) => {
+      test.skip(renderer !== "html", "Wrappers always render a button trigger");
+      await page.getByTestId("link-trigger").focus();
+      await expect(page.getByTestId("link-content")).toBeVisible();
+      await page.getByTestId("focus-before").focus();
+      await expect(page.getByTestId("link-content")).not.toBeVisible();
+    });
+
     test("shows when Tab moves focus onto the trigger", async ({ page, browserName }) => {
       test.skip(browserName === "webkit", "WebKit Tab order");
       await page.getByTestId("focus-before").focus();
@@ -130,13 +138,6 @@ test.describe("Tooltip", () => {
       await page.getByTestId("focus-before").focus();
       await page.getByTestId("tooltip-trigger").focus();
       await expect(page.getByTestId("tooltip-content")).toBeVisible();
-    });
-
-    test("viewport resize hides the tooltip", async ({ page }) => {
-      await page.getByTestId("tooltip-trigger").hover();
-      await expect(page.getByTestId("tooltip-content")).toBeVisible();
-      await page.setViewportSize({ width: 800, height: 400 });
-      await expect(page.getByTestId("tooltip-content")).not.toBeVisible();
     });
 
     test("scroll hides the tooltip", async ({ page }) => {
@@ -272,5 +273,23 @@ test.describe("Positioning", () => {
         el.style.getPropertyValue("--height"),
       ]);
     for (const value of vars) expect(value).toMatch(/^-?\d+(\.\d+)?px$/);
+  });
+
+  test("viewport resize keeps the tooltip shown and republishes the trigger rect", async ({
+    page,
+    renderer,
+  }) => {
+    await page.goto(`/${renderer}/tooltip/basic`);
+    await page.getByTestId("tooltip-trigger").evaluate((el) => {
+      el.style.marginLeft = "50vw";
+    });
+    await page.getByTestId("tooltip-trigger").hover();
+    await expect(page.getByTestId("tooltip-content")).toBeVisible();
+    const left = () =>
+      page.getByTestId("tooltip-content").evaluate((el) => el.style.getPropertyValue("--left"));
+    const before = await left();
+    await page.setViewportSize({ width: 800, height: 400 });
+    await expect(page.getByTestId("tooltip-content")).toBeVisible();
+    await expect.poll(left).not.toBe(before);
   });
 });

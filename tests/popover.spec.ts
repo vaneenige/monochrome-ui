@@ -184,13 +184,6 @@ test.describe("Popover", () => {
       });
       await expect(page.getByTestId("scroll-content")).toBeVisible();
     });
-
-    test("viewport resize closes the popover", async ({ page }) => {
-      await page.getByTestId("click-trigger").click();
-      await expect(page.getByTestId("click-content")).toBeVisible();
-      await page.setViewportSize({ width: 800, height: 400 });
-      await expect(page.getByTestId("click-content")).not.toBeVisible();
-    });
   });
 
   test.describe("Structure independence", () => {
@@ -230,6 +223,40 @@ test.describe("Popover", () => {
       await page.getByTestId("click-trigger").click();
       await expect(page.getByTestId("menu-list")).not.toBeVisible();
       await expect(page.getByTestId("click-content")).toBeVisible();
+    });
+  });
+
+  test.describe("Nested surfaces", () => {
+    test.beforeEach(async ({ page, renderer }) => {
+      test.skip(renderer !== "html", "Cross-component fixture is plain HTML");
+      await page.goto("/html/popover/with-menu");
+      await page.getByTestId("popover-trigger").click();
+      await expect(page.getByTestId("popover-content")).toBeVisible();
+    });
+
+    test("Escape closes a keyboard-opened menu inside the popover first", async ({ page }) => {
+      await page.getByTestId("menu-trigger").focus();
+      await page.keyboard.press("Enter");
+      await expect(page.getByTestId("menu-list")).toBeVisible();
+      await expect(page.getByTestId("menu-item-1")).toBeFocused();
+      await page.keyboard.press("Escape");
+      await expect(page.getByTestId("menu-list")).not.toBeVisible();
+      await expect(page.getByTestId("popover-content")).toBeVisible();
+      await expect(page.getByTestId("menu-trigger")).toBeFocused();
+      await page.keyboard.press("Escape");
+      await expect(page.getByTestId("popover-content")).not.toBeVisible();
+      await expect(page.getByTestId("popover-trigger")).toBeFocused();
+    });
+
+    test("Escape closes a pointer-opened menu inside the popover first", async ({ page }) => {
+      await page.getByTestId("menu-trigger").click();
+      await expect(page.getByTestId("menu-list")).toBeVisible();
+      await expect(page.getByTestId("popover-content")).toBeVisible();
+      await page.keyboard.press("Escape");
+      await expect(page.getByTestId("menu-list")).not.toBeVisible();
+      await expect(page.getByTestId("popover-content")).toBeVisible();
+      await page.keyboard.press("Escape");
+      await expect(page.getByTestId("popover-content")).not.toBeVisible();
     });
   });
 });
@@ -272,5 +299,23 @@ test.describe("Positioning", () => {
         el.style.getPropertyValue("--height"),
       ]);
     for (const value of vars) expect(value).toMatch(/^-?\d+(\.\d+)?px$/);
+  });
+
+  test("viewport resize keeps the popover open and republishes the trigger rect", async ({
+    page,
+    renderer,
+  }) => {
+    await page.goto(`/${renderer}/popover/basic`);
+    await page.getByTestId("click-trigger").evaluate((el) => {
+      el.style.marginLeft = "50vw";
+    });
+    await page.getByTestId("click-trigger").click();
+    await expect(page.getByTestId("click-content")).toBeVisible();
+    const left = () =>
+      page.getByTestId("click-content").evaluate((el) => el.style.getPropertyValue("--left"));
+    const before = await left();
+    await page.setViewportSize({ width: 800, height: 400 });
+    await expect(page.getByTestId("click-content")).toBeVisible();
+    await expect.poll(left).not.toBe(before);
   });
 });

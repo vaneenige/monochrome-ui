@@ -412,6 +412,9 @@ if (hasDocument) {
   );
 
   addEventListener("resize", () => {
-    if (menuStack[0]) menuCloseAll();
+    for (const trigger of menuStack) {
+      const content = getLinked(trigger, "aria-controls");
+      if (content) position(trigger, content);
+    }
   });
 }

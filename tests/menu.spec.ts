@@ -908,12 +908,6 @@ test.describe("Menu", () => {
       await page.keyboard.press("ArrowUp");
       await expect(page.getByTestId("root-list")).toBeVisible();
     });
-
-    test("viewport resize closes the menu", async ({ page }) => {
-      await openRoot(page);
-      await page.setViewportSize({ width: 800, height: 400 });
-      await expect(page.getByTestId("root-list")).not.toBeVisible();
-    });
   });
 
   test.describe("Scroll prevention", () => {
@@ -2322,5 +2316,22 @@ test.describe("Positioning", () => {
         el.style.getPropertyValue("--height"),
       ]);
     for (const value of vars) expect(value).toMatch(/^-?\d+(\.\d+)?px$/);
+  });
+
+  test("viewport resize keeps the menu open and republishes the trigger rect", async ({
+    page,
+    renderer,
+  }) => {
+    await page.goto(`/${renderer}/menu/basic`);
+    await page.getByTestId("root-trigger").evaluate((el) => {
+      el.style.marginLeft = "50vw";
+    });
+    await openRoot(page);
+    const left = () =>
+      page.getByTestId("root-list").evaluate((el) => el.style.getPropertyValue("--left"));
+    const before = await left();
+    await page.setViewportSize({ width: 800, height: 400 });
+    await expect(page.getByTestId("root-list")).toBeVisible();
+    await expect.poll(left).not.toBe(before);
   });
 });
