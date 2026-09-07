@@ -2,7 +2,7 @@ import { Collapsible } from "monochrome/react";
 
 export default () => (
   <>
-    <Collapsible.Root open>
+    <Collapsible.Root defaultOpen>
       <Collapsible.Trigger data-testid="open-collapsible-trigger">
         Hide information
       </Collapsible.Trigger>

@@ -42,7 +42,7 @@ test.describe("Collapsible", () => {
   });
 
   test.describe("Initial state", () => {
-    test("respects the `open` prop on initial render", async ({ page, renderer }) => {
+    test("respects the `defaultOpen` prop on initial render", async ({ page, renderer }) => {
       await page.goto(`/${renderer}/collapsible/open`);
       await expect(page.getByTestId("open-collapsible-content")).toBeVisible();
       await expect(page.getByTestId("open-collapsible-trigger")).toHaveAttribute(
@@ -288,7 +288,7 @@ test.describe("Click handler", () => {
 });
 
 test.describe("Dynamic", () => {
-  test("handles conditional render, open prop, remount, multi-instance, and props passthrough", async ({
+  test("handles conditional render, `defaultOpen`, remount, multi-instance, and props passthrough", async ({
     page,
     renderer,
   }) => {

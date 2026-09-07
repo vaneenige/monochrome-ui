@@ -34,7 +34,7 @@ function App() {
       </div>
       {mounted && (
         <Collapsible.Root
-          open={startOpen}
+          defaultOpen={startOpen}
           className="collapsible-root"
           data-testid="collapsible-root"
         >

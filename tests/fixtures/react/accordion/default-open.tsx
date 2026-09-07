@@ -11,7 +11,7 @@ export default () => (
           <p>This section is closed by default.</p>
         </Accordion.Panel>
       </Accordion.Item>
-      <Accordion.Item open>
+      <Accordion.Item defaultOpen>
         <Accordion.Header>
           <Accordion.Trigger data-testid="default-trigger-2">
             Open Section (default)

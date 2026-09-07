@@ -45,7 +45,7 @@ function toggleOpen() {
     </div>
     <Collapsible.Root
       v-if="mounted"
-      :open="startOpen"
+      :default-open="startOpen"
       class="collapsible-root"
       data-testid="collapsible-root"
     >

@@ -4,7 +4,7 @@ import { CollapsibleKey, requireInject } from "./shared.js";
 
 const Root = defineComponent({
   props: {
-    open: { type: Boolean, default: false },
+    defaultOpen: { type: Boolean, default: false },
     disabled: { type: Boolean, default: false },
   },
   setup(props, { slots }) {
@@ -13,7 +13,7 @@ const Root = defineComponent({
       CollapsibleKey,
       reactive({
         baseId,
-        open: toRef(props, "open"),
+        open: toRef(props, "defaultOpen"),
         disabled: toRef(props, "disabled"),
       }),
     );

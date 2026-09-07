@@ -52,12 +52,12 @@ function Popover({ children, ...props }: BaseProps): ReactElement {
 }
 
 type ItemProps = BaseProps & { disabled?: boolean; href?: string };
-type CheckedItemProps = BaseProps & { disabled?: boolean; checked?: boolean | undefined };
+type CheckedItemProps = BaseProps & { disabled?: boolean; defaultChecked?: boolean | undefined };
 
 const menuItem = (role: string, checkable: boolean) =>
   function MenuItem({
     children,
-    checked,
+    defaultChecked,
     disabled,
     href,
     ...props
@@ -66,7 +66,7 @@ const menuItem = (role: string, checkable: boolean) =>
       ...props,
       role,
       tabIndex: -1,
-      ...(checkable ? { "aria-checked": checked ?? false } : {}),
+      ...(checkable ? { "aria-checked": defaultChecked ?? false } : {}),
     };
     const inner = disabled
       ? createElement("span", { ...shared, "aria-disabled": "true" }, children)

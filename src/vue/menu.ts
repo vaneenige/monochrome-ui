@@ -55,7 +55,7 @@ const menuItem = (role: string, checkable: boolean) =>
   defineComponent({
     inheritAttrs: false,
     props: {
-      checked: { type: Boolean, default: false },
+      defaultChecked: { type: Boolean, default: false },
       disabled: Boolean,
       href: String,
     },
@@ -65,7 +65,7 @@ const menuItem = (role: string, checkable: boolean) =>
           ...attrs,
           role,
           tabindex: -1,
-          "aria-checked": checkable ? props.checked : undefined,
+          "aria-checked": checkable ? props.defaultChecked : undefined,
         };
         const inner = props.disabled
           ? h("span", { ...shared, "aria-disabled": "true" }, slots.default?.())

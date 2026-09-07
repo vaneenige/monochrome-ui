@@ -65,13 +65,17 @@ export default () => (
         <Menu.Item data-testid="item" data-action="item-clicked">
           Action
         </Menu.Item>
-        <Menu.CheckboxItem data-testid="checkbox" data-action="checkbox-clicked" checked={false}>
+        <Menu.CheckboxItem
+          data-testid="checkbox"
+          data-action="checkbox-clicked"
+          defaultChecked={false}
+        >
           Bold
         </Menu.CheckboxItem>
-        <Menu.RadioItem data-action="radio-1-clicked" checked>
+        <Menu.RadioItem data-action="radio-1-clicked" defaultChecked>
           Light
         </Menu.RadioItem>
-        <Menu.RadioItem data-testid="radio-2" data-action="radio-2-clicked" checked={false}>
+        <Menu.RadioItem data-testid="radio-2" data-action="radio-2-clicked" defaultChecked={false}>
           Dark
         </Menu.RadioItem>
         <Menu.Item data-testid="item-link" href="#menu-link-nav">

@@ -3,7 +3,7 @@ import { Collapsible, Menu } from "monochrome/react";
 export default () => (
   <>
     <div data-testid="sidebar" style={{ width: "250px", height: "400px", overflow: "auto" }}>
-      <Collapsible.Root open>
+      <Collapsible.Root defaultOpen>
         <Collapsible.Trigger data-testid="collapsible-trigger">Section</Collapsible.Trigger>
         <Collapsible.Panel>
           <Menu.Root>

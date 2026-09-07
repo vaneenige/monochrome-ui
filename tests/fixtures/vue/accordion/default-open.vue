@@ -16,7 +16,7 @@ import { Accordion } from "monochrome/vue"
         </Accordion.Panel>
       </Accordion.Item>
       <Accordion.Item
-        :open="true"
+        :default-open="true"
        
       >
         <Accordion.Header>

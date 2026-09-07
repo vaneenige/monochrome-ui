@@ -161,13 +161,13 @@
     "gzipSizes": {
       "accordion": {
         "core": 998,
-        "react": 466,
-        "vue": 674
+        "react": 473,
+        "vue": 679
       },
       "collapsible": {
         "core": 662,
-        "react": 424,
-        "vue": 615
+        "react": 432,
+        "vue": 619
       },
       "dialog": {
         "core": 769,
@@ -176,18 +176,18 @@
       },
       "index": {
         "core": 3293,
-        "react": 1987,
-        "vue": 2224
+        "react": 1998,
+        "vue": 2232
       },
       "menu": {
         "core": 2277,
-        "react": 683,
-        "vue": 883
+        "react": 690,
+        "vue": 884
       },
       "menubar": {
         "core": 2277,
-        "react": 912,
-        "vue": 1149
+        "react": 918,
+        "vue": 1151
       },
       "popover": {
         "core": 1007,
@@ -199,8 +199,8 @@
       },
       "tabs": {
         "core": 1009,
-        "react": 550,
-        "vue": 802
+        "react": 553,
+        "vue": 807
       },
       "tooltip": {
         "core": 1007,

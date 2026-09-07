@@ -73,21 +73,21 @@ function App() {
           <Menu.Separator data-testid="separator" />
           <Menu.CheckboxItem
             data-testid="checkbox-item"
-            checked={checked}
+            defaultChecked={checked}
             onClick={() => setChecked((prev) => !prev)}
           >
             Checkbox
           </Menu.CheckboxItem>
           <Menu.RadioItem
             data-testid="radio-a"
-            checked={radio === "a"}
+            defaultChecked={radio === "a"}
             onClick={() => setRadio("a")}
           >
             Radio A
           </Menu.RadioItem>
           <Menu.RadioItem
             data-testid="radio-b"
-            checked={radio === "b"}
+            defaultChecked={radio === "b"}
             onClick={() => setRadio("b")}
           >
             Radio B

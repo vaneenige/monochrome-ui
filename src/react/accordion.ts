@@ -22,14 +22,14 @@ function Root({ children, ...props }: BaseProps): ReactElement {
 
 function Item({
   children,
-  open,
+  defaultOpen,
   disabled,
   ...props
-}: BaseProps & { open?: boolean; disabled?: boolean }): ReactElement {
+}: BaseProps & { defaultOpen?: boolean; disabled?: boolean }): ReactElement {
   const baseId = useId();
   return createElement(
     AccordionContext,
-    { value: { baseId, open: open ?? false, disabled: disabled ?? false } },
+    { value: { baseId, open: defaultOpen ?? false, disabled: disabled ?? false } },
     createElement("div", props, children),
   );
 }

@@ -36,7 +36,7 @@ const List = defineComponent({
 const Tab = defineComponent({
   props: {
     value: { type: String, required: true },
-    selected: {
+    defaultSelected: {
       type: [Boolean, null] as PropType<boolean | null>,
       default: null,
     },
@@ -46,7 +46,7 @@ const Tab = defineComponent({
     const ctx = requireInject(TabsKey, "Tabs.List/Tab/Panel");
     const fullId = computed(() => buildId(ctx.baseId, props.value));
     const isSelected = computed(() =>
-      props.selected !== null ? props.selected : props.value === ctx.selected,
+      props.defaultSelected !== null ? props.defaultSelected : props.value === ctx.selected,
     );
     return () =>
       h(
@@ -68,7 +68,7 @@ const Tab = defineComponent({
 const Panel = defineComponent({
   props: {
     value: { type: String, required: true },
-    selected: {
+    defaultSelected: {
       type: [Boolean, null] as PropType<boolean | null>,
       default: null,
     },
@@ -78,7 +78,7 @@ const Panel = defineComponent({
     const ctx = requireInject(TabsKey, "Tabs.List/Tab/Panel");
     const fullId = computed(() => buildId(ctx.baseId, props.value));
     const isSelected = computed(() =>
-      props.selected !== null ? props.selected : props.value === ctx.selected,
+      props.defaultSelected !== null ? props.defaultSelected : props.value === ctx.selected,
     );
     return () =>
       h(

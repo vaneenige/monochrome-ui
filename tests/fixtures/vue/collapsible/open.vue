@@ -4,7 +4,7 @@ import { Collapsible } from "monochrome/vue"
 
 <template>
   <div>
-    <Collapsible.Root :open="true">
+    <Collapsible.Root :default-open="true">
       <Collapsible.Trigger data-testid="open-collapsible-trigger">
         Hide information
       </Collapsible.Trigger>

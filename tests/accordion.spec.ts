@@ -51,7 +51,7 @@ test.describe("Accordion", () => {
   });
 
   test.describe("Initial state", () => {
-    test("respects the `open` prop on initial render", async ({ page, renderer }) => {
+    test("respects the `defaultOpen` prop on initial render", async ({ page, renderer }) => {
       await page.goto(`/${renderer}/accordion/default-open`);
       await expect(page.getByTestId("default-content-2")).toBeVisible();
       await expect(page.getByTestId("default-trigger-2")).toHaveAttribute("aria-expanded", "true");

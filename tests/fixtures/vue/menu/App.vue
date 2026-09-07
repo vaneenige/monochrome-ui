@@ -101,21 +101,21 @@ function handleItemClick(index: number) {
         <Menu.Separator data-testid="separator" />
         <Menu.CheckboxItem
           data-testid="checkbox-item"
-          :checked="checked"
+          :default-checked="checked"
           @click="checked = !checked"
         >
           Checkbox
         </Menu.CheckboxItem>
         <Menu.RadioItem
           data-testid="radio-a"
-          :checked="radio === 'a'"
+          :default-checked="radio === 'a'"
           @click="radio = 'a'"
         >
           Radio A
         </Menu.RadioItem>
         <Menu.RadioItem
           data-testid="radio-b"
-          :checked="radio === 'b'"
+          :default-checked="radio === 'b'"
           @click="radio = 'b'"
         >
           Radio B

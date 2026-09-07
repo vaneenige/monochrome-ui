@@ -11,7 +11,7 @@ const Root = defineComponent({
 
 const Item = defineComponent({
   props: {
-    open: { type: Boolean, default: false },
+    defaultOpen: { type: Boolean, default: false },
     disabled: { type: Boolean, default: false },
   },
   setup(props, { slots }) {
@@ -20,7 +20,7 @@ const Item = defineComponent({
       AccordionKey,
       reactive({
         baseId,
-        open: toRef(props, "open"),
+        open: toRef(props, "defaultOpen"),
         disabled: toRef(props, "disabled"),
       }),
     );

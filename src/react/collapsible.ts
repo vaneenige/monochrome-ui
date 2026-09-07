@@ -13,14 +13,14 @@ function useCollapsibleContext() {
 
 function Root({
   children,
-  open,
+  defaultOpen,
   disabled,
   ...props
-}: BaseProps & { open?: boolean; disabled?: boolean }): ReactElement {
+}: BaseProps & { defaultOpen?: boolean; disabled?: boolean }): ReactElement {
   const baseId = useId();
   return createElement(
     CollapsibleContext,
-    { value: { baseId, open: open ?? false, disabled: disabled ?? false } },
+    { value: { baseId, open: defaultOpen ?? false, disabled: disabled ?? false } },
     createElement("div", props, children),
   );
 }

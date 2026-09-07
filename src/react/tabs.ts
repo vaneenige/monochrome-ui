@@ -45,17 +45,17 @@ function List({ children, ...props }: BaseProps): ReactElement {
 function Tab({
   children,
   value,
-  selected,
+  defaultSelected,
   disabled,
   ...props
 }: BaseProps & {
   value: string;
-  selected?: boolean;
+  defaultSelected?: boolean;
   disabled?: boolean;
 }): ReactElement {
   const context = useTabsContext();
   const fullId = buildId(context.baseId, value);
-  const isSelected = selected ?? value === context.selected;
+  const isSelected = defaultSelected ?? value === context.selected;
   return createElement(
     "button",
     {
@@ -75,17 +75,17 @@ function Tab({
 function Panel({
   children,
   value,
-  selected,
+  defaultSelected,
   focusable = true,
   ...props
 }: BaseProps & {
   value: string;
-  selected?: boolean;
+  defaultSelected?: boolean;
   focusable?: boolean;
 }): ReactElement {
   const context = useTabsContext();
   const fullId = buildId(context.baseId, value);
-  const isSelected = selected ?? value === context.selected;
+  const isSelected = defaultSelected ?? value === context.selected;
   return createElement(
     "div",
     {

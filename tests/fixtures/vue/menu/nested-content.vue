@@ -8,7 +8,7 @@ import { Collapsible, Menu } from "monochrome/vue"
       data-testid="sidebar"
       style="width: 250px; height: 400px; overflow: auto"
     >
-      <Collapsible.Root :open="true">
+      <Collapsible.Root :default-open="true">
         <Collapsible.Trigger data-testid="collapsible-trigger">
           Section
         </Collapsible.Trigger>

@@ -17,19 +17,19 @@ import { Menu } from "monochrome/vue"
       <Menu.Popover data-testid="list">
         <Menu.CheckboxItem
           data-testid="checkbox-1"
-          :checked="false"
+          :default-checked="false"
         >
           Bold
         </Menu.CheckboxItem>
         <Menu.CheckboxItem
           data-testid="checkbox-2"
-          :checked="true"
+          :default-checked="true"
         >
           Italic
         </Menu.CheckboxItem>
         <Menu.CheckboxItem
           data-testid="checkbox-disabled"
-          :checked="false"
+          :default-checked="false"
           :disabled="true"
         >
           Strikethrough
@@ -37,32 +37,32 @@ import { Menu } from "monochrome/vue"
         <Menu.Separator data-testid="separator-1" />
         <Menu.RadioItem
           data-testid="radio-a1"
-          :checked="true"
+          :default-checked="true"
         >
           Small
         </Menu.RadioItem>
         <Menu.RadioItem
           data-testid="radio-a2"
-          :checked="false"
+          :default-checked="false"
         >
           Medium
         </Menu.RadioItem>
         <Menu.RadioItem
           data-testid="radio-a3"
-          :checked="false"
+          :default-checked="false"
         >
           Large
         </Menu.RadioItem>
         <Menu.Separator data-testid="separator-2" />
         <Menu.RadioItem
           data-testid="radio-b1"
-          :checked="true"
+          :default-checked="true"
         >
           Red
         </Menu.RadioItem>
         <Menu.RadioItem
           data-testid="radio-b2"
-          :checked="false"
+          :default-checked="false"
         >
           Blue
         </Menu.RadioItem>

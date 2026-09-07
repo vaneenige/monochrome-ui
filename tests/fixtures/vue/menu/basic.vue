@@ -125,21 +125,21 @@ import { Menu } from "monochrome/vue"
         <Menu.CheckboxItem
           data-testid="checkbox"
           data-action="checkbox-clicked"
-          :checked="false"
+          :default-checked="false"
         >
           Bold
         </Menu.CheckboxItem>
         <Menu.RadioItem
          
           data-action="radio-1-clicked"
-          :checked="true"
+          :default-checked="true"
         >
           Light
         </Menu.RadioItem>
         <Menu.RadioItem
           data-testid="radio-2"
           data-action="radio-2-clicked"
-          :checked="false"
+          :default-checked="false"
         >
           Dark
         </Menu.RadioItem>
