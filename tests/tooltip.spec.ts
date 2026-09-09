@@ -28,7 +28,7 @@ test.describe("Tooltip", () => {
     });
   });
 
-  test.describe("Hover", () => {
+  test.describe("Activation (hover)", () => {
     test("shows on hover, hides when hover leaves, switches across triggers", async ({ page }) => {
       await page.getByTestId("tooltip-trigger").hover();
       await expect(page.getByTestId("tooltip-content")).toBeVisible();
@@ -66,7 +66,7 @@ test.describe("Tooltip", () => {
     });
   });
 
-  test.describe("Focus", () => {
+  test.describe("Activation (focus)", () => {
     test("shows on focus and hides on blur", async ({ page }) => {
       await page.getByTestId("tooltip-trigger").focus();
       await expect(page.getByTestId("tooltip-content")).toBeVisible();
@@ -98,7 +98,7 @@ test.describe("Tooltip", () => {
     });
   });
 
-  test.describe("Mixed hover and focus", () => {
+  test.describe("Activation (mixed)", () => {
     test("hover wins over focus, then unhover falls back to the focused trigger", async ({
       page,
     }) => {
@@ -225,7 +225,7 @@ test.describe("Tooltip", () => {
     });
   });
 
-  test.describe("Interaction with other components", () => {
+  test.describe("Composition", () => {
     test("does not block clicks on popover or menu triggers", async ({ page }) => {
       await page.getByTestId("popover-trigger").click();
       await expect(page.getByTestId("popover-content")).toBeVisible();

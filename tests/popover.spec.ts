@@ -99,7 +99,7 @@ test.describe("Popover", () => {
     });
   });
 
-  test.describe("Content interaction", () => {
+  test.describe("Edge cases", () => {
     test("clicks inside content do not close the popover", async ({ page }) => {
       await page.getByTestId("click-trigger").click();
       await page.getByTestId("click-text").click();
@@ -112,7 +112,9 @@ test.describe("Popover", () => {
       await expect(page.getByTestId("output")).toHaveText("copy-clicked");
       await expect(page.getByTestId("click-content")).toBeVisible();
     });
+  });
 
+  test.describe("Dismissal", () => {
     test("outside click closes the popover", async ({ page }) => {
       await page.getByTestId("click-trigger").click();
       await page.getByTestId("focus-before").click();
@@ -162,7 +164,7 @@ test.describe("Popover", () => {
     });
   });
 
-  test.describe("Dismissal", () => {
+  test.describe("Dismissal (scroll)", () => {
     test("dismisses on page scroll", async ({ page }) => {
       await page.setViewportSize({ width: 800, height: 300 });
       await page.evaluate(() => {
@@ -204,7 +206,7 @@ test.describe("Popover", () => {
     });
   });
 
-  test.describe("Mutual exclusion", () => {
+  test.describe("Multiple", () => {
     test("opening another popover closes the first", async ({ page }) => {
       await page.getByTestId("click-trigger").click();
       await page.getByTestId("second-trigger").click();
@@ -224,7 +226,7 @@ test.describe("Popover", () => {
     });
   });
 
-  test.describe("Nested surfaces", () => {
+  test.describe("Composition (menu)", () => {
     test.beforeEach(async ({ page, renderer }) => {
       test.skip(renderer !== "html", "Cross-component fixture is plain HTML");
       await page.goto("/html/popover/with-menu");

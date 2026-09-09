@@ -33,9 +33,8 @@ if (hasDocument) {
 
   let rovingBoundary: Element | null = null;
 
-  const menuStack: HTMLElement[] = [];
   let menuHighlighted: HTMLElement | null = null;
-
+  const menuStack: HTMLElement[] = [];
   let safeX: number | null = null;
   let safeY = 0;
 

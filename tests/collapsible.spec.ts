@@ -106,7 +106,7 @@ test.describe("Collapsible", () => {
     });
   });
 
-  test.describe("Keyboard inertness", () => {
+  test.describe("Keyboard", () => {
     test("Arrow keys do not move focus off the trigger", async ({ page, renderer }) => {
       await page.goto(`/${renderer}/collapsible/multiple`);
       const trigger = page.getByTestId("multi-trigger-1");
@@ -256,7 +256,7 @@ test.describe("Collapsible", () => {
     });
   });
 
-  test.describe("React", () => {
+  test.describe("Edge cases", () => {
     test("`ref` attaches to the trigger host", async ({ page, renderer }) => {
       test.skip(renderer !== "react", "Ref as a prop is a React wrapper API");
       await page.goto("/react/collapsible/ref");

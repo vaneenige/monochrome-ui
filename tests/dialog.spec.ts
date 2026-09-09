@@ -51,7 +51,7 @@ test.describe("Dialog", () => {
     });
   });
 
-  test.describe("Opening", () => {
+  test.describe("Activation", () => {
     test("opens on click, Enter, or Space and reflects dialog.open", async ({ page }) => {
       for (const action of ["click", "Enter", "Space"] as const) {
         if (action === "click") {
@@ -116,7 +116,7 @@ test.describe("Dialog", () => {
     });
   });
 
-  test.describe("Closing", () => {
+  test.describe("Dismissal", () => {
     test("closes via Close button (mouse and keyboard) and via Escape", async ({ page }) => {
       await page.getByTestId("primary-trigger").click();
       await page.getByTestId("primary-close").click();
@@ -171,7 +171,7 @@ test.describe("Dialog", () => {
     });
   });
 
-  test.describe("Tabs inside dialog", () => {
+  test.describe("Composition (tabs)", () => {
     test("initial tab order reflects the selected tab and excludes inactive panel content", async ({
       page,
       browserName,
@@ -211,7 +211,7 @@ test.describe("Dialog", () => {
     });
   });
 
-  test.describe("Overlay stacking", () => {
+  test.describe("Composition (overlays)", () => {
     test("opening the dialog dismisses any open popover, menu, or tooltip", async ({ page }) => {
       await page.getByTestId("popover-trigger").click();
       await expect(page.getByTestId("popover-content")).toBeVisible();

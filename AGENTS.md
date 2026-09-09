@@ -8,417 +8,79 @@ React and Vue wrappers. The core is framework-agnostic and
 works on plain HTML; import it once and every correctly-
 structured component on the page becomes interactive.
 
-## North stars (non-negotiables)
+## Read first
 
-These aren't preferences. Break any of them and it isn't monochrome
-any more:
+- `PRINCIPLES.md`: the six north stars (DOM is the source of
+  truth, event delegation on `window` only, zero timers, zero
+  runtime dependencies, Baseline 2024, one file per component)
+  and the shape choices that follow from them. Read it before
+  touching `src/`. Breaking a north star is never a fix.
+- `docs/`: how each mechanism works. Overlay files are
+  `menu.md`, `popover.md`, `tooltip.md`, `dialog.md`. Shared
+  helpers plus Accordion, Tabs, and Collapsible live in
+  `dom.md`. Wrappers in `wrappers.md`. The core carries no
+  comments; these files are its comments. Read the one for
+  the component you are debugging, skip the rest.
+- This file: how to work in the repo. Rules only.
 
-1. **DOM is the source of truth.** Every decision reads
-   `aria-expanded`, `aria-selected`, `aria-checked`,
-   `aria-disabled`. There is no internal state object mirroring the
-   DOM anywhere in the library.
-2. **Event delegation only.** Listeners go on `window`. Zero
-   per-element listeners. Each component registers only the
-   events it handles. Combined, the set is still the nine:
-   `pointerdown`, `pointerup`, `click`, `pointermove`, `keydown`,
-   `scroll`, `resize`, `focusin`, `focusout`.
-3. **Zero timers.** No `setTimeout`, `requestAnimationFrame`,
-   `queueMicrotask`, debounce, or throttle. Every action is
-   synchronous within its event.
-4. **Zero runtime dependencies.** Shared helpers (`src/dom.ts`)
-   import nothing. Components import only those helpers. The
-   wrappers import only their framework (as peer deps) plus one
-   side-effect import of their own core file, so a single wrapper
-   import ships both markup and behavior.
-5. **Baseline 2024 browsers.** We rely on the Popover API. No
-   polyfills shipped.
-6. **One file per component.** Shared helpers live in
-   `src/dom.ts`. Each component is `src/{name}.ts` and registers
-   its own window listeners. `src/index.ts` only imports every
-   component so `import "monochrome"` still lights up the page.
-   Components do not import each other.
+## Where things go
 
-## Why the core looks weird (and should stay weird)
+Every change has exactly one home. Pick it before writing prose.
 
-Six architectural choices that explain the _shape_ of the library.
-Each looks odd at a glance and each has a specific reason. Don't
-"fix" them.
+- A constraint that, if broken, means "not monochrome":
+  `PRINCIPLES.md` › North stars. Needs the maintainer's sign-off.
+- Why the core has a shape (a pattern, not a mechanism):
+  `PRINCIPLES.md` › Why the core looks weird.
+- How a component behaves, including every bug fix that changes
+  behaviour: `docs/<component>.md`, inside the paragraph that
+  owns that mechanism. Accordion, Tabs, Collapsible, and shared
+  helpers live in `docs/dom.md`.
+- Wrapper-only behaviour (React, Vue): `docs/wrappers.md`.
+- Router behaviour: TSDoc in `src/router.ts`, never markdown.
+- How code is written (style, naming, order): this file ›
+  Code style, as a rule.
+- Toolchain, build, gate: this file › Build pipeline.
+- Test naming or structure: this file › Test naming.
+- What a component does for consumers: `README.md`.
 
-**DOM-as-state.** Reading ARIA attrs on every event looks wasteful
-compared to caching in a JS object. It isn't: the cache would drift
-the moment a user, a framework, or devtools mutates the DOM, and
-tracking who owns what becomes a maintenance tax. With DOM-as-state
-there is exactly one truth and we never have to reconcile.
+Writing a mechanism paragraph in `docs/`:
 
-**Global delegated listeners.** Per-instance listeners scale with
-component count and require teardown on unmount. Window listeners
-are constant cost per component (not per instance), require zero
-teardown, and automatically cover dynamically-inserted DOM without
-re-wiring. Each file registers its own; the combined entry does
-not own a dispatcher.
+- One mechanism per paragraph, with a bold lead that names it.
+  First sentence states the behaviour, then the why, then the
+  edge cases. A paragraph past fifteen lines is two mechanisms;
+  split it.
+- Edit the paragraph that owns the mechanism. Never append a
+  sentence to the nearest paragraph because it was open.
+- Every fact once. When a second paragraph needs it, cross-
+  reference (`see docs/popover.md`) instead of restating.
+- Present tense, declarative: what the code does now. Never what
+  it used to do, or which commit changed it.
+- Identifiers only where a reader would grep for them, and only
+  identifiers that exist in `src/`. Renaming code renames the
+  doc in the same commit.
+- Prose style below applies: no em dashes, hard wrap at 66-70.
 
-**ID prefix dispatch.** We route events to handlers by checking the
-prefix of `target.id` (`mct:`, `mcc:`, `mcr:`). No classes, no data
-attributes, no registration table. Enum values spell out the full
-component name with a trailing colon (`mct:accordion:`,
-`mct:dialog-open:`), exactly as the ids appear in the DOM.
+Writing in this file:
 
-**Module-level `let` for state.** No classes, no `this`, no closures
-passed down. Handlers share state through module-scope variables
-(`menuStack`, `popoverShown`, `tooltipShown`, …). This is why
-each component is one file: the state is part of that file's
-mental model, and no other component reads it.
-
-**`should*` driver flags for cross-handler communication.** The
-conventional move is to thread a mutable parameter (or return a
-result object) through every function the event visits, so each
-layer can report "I want preventDefault", "I matched a letter",
-"I'm doing a radio sweep" back up. The core skips all of that:
-flags like `shouldPreventDefault`, `shouldMatchLetter`, and
-`shouldResetRadio` live at module scope. A deep callback sets one
-during event processing; the top-level listener reads and clears
-it at the tail. No parameter plumbing, no return-value threading,
-no wrapper objects. It looks unconventional because shared mutable
-state usually is, but every flag's lifetime is bounded by a single
-synchronous event cycle (cleared at the top of each listener), so
-there's no reentrancy to reason about. Saves real bytes on every
-function signature it removes, and it makes the "where does this
-side effect come from?" question one grep away.
-
-**Wrappers use `createElement` / `h`, not JSX / SFC.** Eliminates
-`react/jsx-runtime` from the React bundle and halves the Vue bundle
-(no SFC patch-flag machinery). Source stays framework-agnostic in
-style.
-
-## Clever tricks
-
-Specific mechanisms inside the core and router. Read this section
-when you're debugging a particular behaviour; skip it when you just
-want the architecture.
-
-**`while` with sibling pointers, not `querySelectorAll`.** Every
-DOM walk in the core is a hand-rolled loop: `let item =
-root.firstElementChild; while (item) { ...; item =
-item.nextElementSibling }`. `querySelectorAll` would allocate a
-NodeList and run a selector parser for structure we already know
-(Accordion items are direct children of the root; each trigger
-sits inside an h2-h6 Header, so the walk follows that item's
-first-child chain to `mct:accordion:`; Tab buttons are direct
-children of the List). A sibling-pointer walk costs nothing,
-makes iteration order explicit (Accordion closes others before
-toggling the trigger, Tabs toggles off-and-on in one pass), and
-lets a single traversal do work that a list plus follow-up would
-split in two.
-
-**Walk-up then walk-down for click dispatch.** Single-prefix
-clicks (Collapsible, Accordion, Tabs, Tooltip suppress) use
-`findAncestor` from the event target. Dialog open/close uses
-it too: the nearest matching prefix is the whole decision.
-Popover click only toggles a trigger. Overlay components keep
-a hand-rolled walk where one pass mixes prefixes with roles
-(Menu `pointerup` activation, href `click`, `pointermove`
-hover path). Menu open/dismiss lives on `pointerdown` and
-item activation on `pointerup`. Other components miss the
-trailing `click` because they dispatch on their own ID
-prefixes. Popover dismisses on outside `pointerdown` so a
-Menu opening on pointerdown closes it without either file
-naming the other.
-
-**`findAncestor` over `closest()`.** `findAncestor(el, prefix)`
-walks `parentElement` up checking `id.startsWith(prefix)`.
-`closest(".foo")` would require classes or data attributes, which
-is the exact shadow registry the ID-prefix scheme exists to avoid.
-The manual walk is fewer bytes, inlines into a single loop, and
-doesn't pull in the CSS selector engine. Prefix families do
-not overlap (`mct:` vs `mcc:`), so a trigger is never a
-content hit: start at the element itself. Do not pass
-`parentElement` to skip it.
-
-**Array-as-nullable-stack.** `menuStack[0]` is "is any menu
-open?", `menuStack[1]` is "is a submenu open?",
-`menuStack.pop()` closes the topmost. No `.length` check, no
-parallel `openMenu: HTMLElement | null` variable, no wrapper type.
-One array doubles as flag, stack, and cursor.
-
-**Roving-boundary sentinel.** A generic sibling walker can't
-distinguish "walked past the end and wrapped" from "kept going
-past the start". On an all-disabled list the naive walker loops
-forever. `rovingBoundary` remembers the first candidate the walker
-rejected; if we ever see it again we give up. One pointer, zero
-counters, zero extra passes. Accordion and Tabs also
-`preventDefault` when the walker gives up, so an all-disabled
-list does not scroll. Both bail out of `keydown` on an Alt /
-Ctrl / Meta modifier so browser shortcuts such as back and
-forward pass through untouched. Menu uses the same give-up
-`preventDefault` so Home / End / typeahead on an empty or
-all-disabled menu do not scroll either. Cleared at the top
-of every `keydown`, `click`, and `pointerup` (all three
-listeners drive walks) so each interaction starts with a
-fresh boundary.
-
-**Radio sweep reuses the navigation walker.** Activating a
-`menuitemradio` must clear `aria-checked` on every adjacent radio
-up to the group boundary. Instead of writing a dedicated sweep,
-`menuActivate` sets three module flags (`shouldResetRadio`,
-`radioHeadDone`, `radioTailChain`) and calls the same `menuNext`
-used for ArrowDown. `menuRoving` notices the non-null driver state
-and switches into sweep mode: clear radios in the "head" half,
-buffer them past the wrap, flush the tail once the activated item
-is reached. One engine, three behaviours (plain roving, typeahead,
-radio sweep), selected by which module-scope flag is non-null.
-
-**Menu Enter/Space in `keydown`.** Accordion, Tabs, and the other
-triggers still rely on the browser's synthesized `click` for
-Enter/Space. Menu cannot: `pointerdown` already opened or
-dismissed the menu, so keyboard activation lives in
-`keydown` (`menuOpen` / `menu` / `menuActivate`) with
-`preventDefault` so Space does not scroll. Trigger and item
-keys share one `switch (key)`. Each case branches on whether
-the target is a trigger, a root trigger, or in a popover.
-ArrowRight on a submenu trigger opens or roves in and does
-not fall through to a menubar step, so an empty submenu
-cannot move the bar. After `menuActivate` on a non-href
-item, `keydown` dispatches `target.click()` so keyboard
-activation produces the same click a pointer session does:
-user `onclick` handlers fire, and a menuitem that is also
-another component's trigger (a `mct:dialog-open:` item)
-works without Menu naming that component. Checkbox and radio
-items leave the menu open; that click still does not match
-other prefixes. Enter/Space on a submenu trigger call `menu`
-with `Focus.First`, so an already-open submenu moves focus
-to the first item. Root menu buttons still `menuOpen`
-(toggle closed if already the stack root). Menubar items
-also call `menu` with `Focus.First`, so Enter on an open
-trigger moves into the menu instead of closing it. `menu`
-treats `Focus.First` / `Focus.Last` on an already-open menu
-as rove-in, not close. Enter on an href menuitem is the
-exception: no `preventDefault`, so the synthesized `click`
-navigates and the click listener closes the menu. Enter on
-an `aria-disabled` href does `preventDefault`, so the
-browser does not navigate. Pointer clicks on a disabled
-`<a>` still navigate natively; that is the consumer's `href`
-to remove. Tab / Shift+Tab close every open menu whenever
-`menuStack[0]`, including from a pointer-opened standalone
-trigger (`role="button"`); they do not `preventDefault`.
-Root ArrowDown / ArrowUp, and every arrow key on a menuitem,
-`preventDefault`, so empty and all-disabled menus do not
-scroll and horizontal arrows on a standalone item do not
-scroll the page sideways.
-
-**Pointer session.** A menu gesture is a pointer session, not a
-click. `pointerdown` on a trigger opens or toggles;
-`pointerdown` outside dismisses; `pointerup` on a plain
-menuitem activates. Non-primary buttons (`button !== 0`) are
-ignored. The trailing `click` is left alone: other components
-dispatch on their own ID prefixes, so a click that started on
-`mct:menu:` does not toggle a disclosure. A real press on a
-disclosure has its own `pointerdown`, which already closed the
-menu. Playwright `.click()` still works: it fires
-`pointerdown`. `pointerup` on an href calls `el.click()` instead
-of activating, so sticky-drag navigates (the browser does not
-synthesize click across elements) and the click listener
-closes the menu once, the same path Enter on an href takes.
-Same-element press then fires a real click too (hash
-navigation is idempotent).
-
-**Tooltip Escape in capture.** When a tooltip is shown, its
-`keydown` listener runs in capture and
-`stopImmediatePropagation`s on Escape. The first Escape
-dismisses the tooltip; a Menu or Popover still open sees the
-second Escape. No import-order coordinator, and Tooltip does
-not name those components.
-
-**Popover Escape yields to nested surfaces.** Popover skips an
-Escape that is already `defaultPrevented` (a Menu inside the
-popover consumed it first) and one whose target sits in a nested
-surface: the walk from the event target up to the popover content
-stops at any element whose `popover` IDL property is set. The
-second check reads the DOM, so a keyboard session inside a nested
-menu is safe in any registration order. A pointer-opened menu
-leaves focus on its trigger, outside the nested surface, so that
-case rests on the first check and on Menu's `keydown` running
-before Popover's: `src/index.ts` and the wrapper indexes import
-`menu` before `popover`, and per-component imports must keep that
-order. Otherwise Escape closes the popover and focuses its trigger.
-
-**Tooltip triggers are any element.** Both the hover and the
-focus path resolve the trigger with `findAncestor`, so a link or
-an input carrying the `mct:tooltip:` id shows its tooltip on focus
-as well as on hover. `focusout` only checks `relatedTarget`: while
-`tooltipFocused` is set, focus is on or inside that trigger, so a
-blur to nowhere always means leaving it.
-
-**Dialog Escape is native.** `showModal()` already closes on
-Escape and restores focus to the trigger. The Close button is
-the only path that needs `dialogClose`. Native close (Escape,
-form `method="dialog"`) leaves the module refs stale;
-`dialogOpen` guards on `dialogContent.open`.
-
-**Sibling submenu replace.** Opening a menu closes every stack
-entry whose content does not contain the new trigger
-(`menuTrim`). Pointer hover already did this via
-`triggerPath`. Keyboard `menu` shares that
-walk, so hover-open A then ArrowRight on sibling B cannot
-leave both open. Menu `keydown` then trims the same way
-against `document.activeElement`, except when focus is still
-the open trigger. Hover-open a submenu then ArrowDown
-through the parent therefore closes it. ArrowRight still
-enters. Close only clears `data-highlighted` when the
-painted item lives in that menu's content, so the next
-parent item keeps its highlight. `Focus.Trigger` close
-(`ArrowLeft` / Escape) paints a menuitem trigger, so
-leaving a submenu is not an empty slot. `Focus.None`
-does not, so sibling hover is not overwritten.
-
-**Menubar tab-stop claim.** The first `Menubar.Menu` claims
-`tabindex=0`; every other trigger gets `-1` and is reached
-via arrow keys. Bare `Menubar.Item`s must come after the
-first `Menubar.Menu`, or initial tab focus lands past the
-visually first item. React keys the claim by the claimer's
-id so a Menu that re-renders alone re-claims its slot, and
-StrictMode double-render agrees. Root resets the claim
-during render because a children change re-renders Root, and
-the next pass re-claims in document order. Vue holds the
-claimer id in a ref: claiming is idempotent per id,
-unmounting releases, and each Menu tracks the ref through a
-`watchEffect` so the earliest surviving Menu becomes the tab
-stop. `Menubar.Menu` provides the Menu context itself (`tabStop`
-from the claim, `item` true), so `Menubar.Trigger`,
-`Menubar.Popover`, and `Menubar.Group` are `Menu.Trigger`,
-`Menu.Popover`, and `Menu.Group`. There is no menubar-specific
-slot context.
-
-**Popover API with CSS-variable positioning.** The core publishes
-the trigger rect (`--top`, `--right`, `--bottom`, `--left`, in
-TRBL order) and the content's own size (`--width`, `--height`)
-as CSS custom properties on the content element. All positioning
-happens in CSS. No JS layout math, no `z-index` management (top
-layer handles that).
-
-**Resize repositions, scroll dismisses.** `resize` re-runs
-`position` for every open surface (the whole `menuStack`,
-`popoverShown`, `tooltipShown`) instead of closing it. On Android
-the soft keyboard fires a window `resize`, so a popover holding an
-input would otherwise close the moment its field gained focus.
-Scroll still dismisses: a surface that follows a moving trigger is
-a different design.
-
-**Safety triangle in JS.** When a submenu is open, pointermove
-records the last cursor point inside the topmost open submenu
-trigger (the apex). Later moves skip hover activation while the cursor is
-inside the triangle from that apex to the submenu's near
-vertical edge (`clamp(left, apexX, right)` as the base) and
-still moving toward the submenu. A failed test (left the
-path, or arrived in the submenu where `t > 1`) clears the
-apex; hover the trigger again to re-arm. Pointermove focuses the
-enabled item under the pointer (React Aria / Base UI) so Arrow
-keys continue from there; `data-highlighted` follows that item.
-`showPopover` can leave focus on the content node, and a
-click on a label or separator inside the menu blurs the item
-to `body`, so `Focus.None` open focuses the trigger and
-`keydown` from a `mcc:menu:` surface or from `body` retargets
-to the painted item or the stack top and focuses it, so the
-tail trim sees a live element. Opening a root menu clears a
-`data-highlighted` left on a menubar trigger by an earlier
-Escape or bar roving, unless it is the trigger being opened,
-so that retarget never picks an item from a closed session.
-Home, End, and typeahead on an already-open root
-trigger (click-open, or that retarget when nothing is
-painted) rove the open menu; they do not open a closed one,
-and they do not apply to menubar items (Home / End /
-typeahead stay on the bar). `menuHighlight` focuses even
-when the painted item did not change, so a later move on
-the same trigger repairs stolen focus.
-Pointer only paints an enabled item. Leaving the menu, or
-hovering a disabled item, label, or separator, leaves
-`data-highlighted` on the last item so keyboard still has a
-visible current item. Triangle travel still skips open, close, and
-highlight: focus stays on the submenu trigger so items under
-the path cannot steal it. No overlay, no CSS vars, no timers.
-Hover can leave focus inside the popover. A `Focus.None` close
-focuses the trigger first when the active element is inside
-the content, with `preventScroll` so a document scroll that
-dismissed the menu is not undone, and `hidePopover` never
-drops a focused node that lives in the menu. Enter on an href
-does not activate in `keydown`; the synthesized `click` both
-navigates and closes. Sticky-drag onto an href uses the
-`pointerup` `click()` above.
-
-**Menubar by role.** `menubarItem` walks up to the element
-whose parent is `role="menubar"`: the bar-level wrapper that
-ArrowRight / ArrowLeft rove. Hover-switch compares the
-menubars of the two wrappers instead of assuming trigger,
-wrapper, menubar depth. In `keydown` the walk starts from the
-open root trigger when a menu is open, so a menubar popover
-rendered outside the bar still steps; it falls back to the
-focused item. A standalone menu has no menubar ancestor, so
-ArrowRight / ArrowLeft on its items are inert without walking
-unrelated siblings. `keydown` computes the popover and menubar
-walks only for a menu trigger or menuitem target; any other
-keystroke on the page costs two checks and a switch.
-
-**Single-letter typeahead, on purpose.** A printable key
-(any single character except Space, in any script) moves
-focus to the next enabled item whose text starts with that
-character; pressing it again cycles. There is no prefix
-buffer. Multi-character typeahead needs a window ("keys
-within 500 ms belong together"), and inside that window the
-same two keystrokes mean different things depending on how
-fast they were typed. Even without a `setTimeout` (Blink and
-WebKit implement `<select>` typeahead by comparing event
-timestamps) the behaviour is hidden state driven by wall-clock
-pace, and this core has none of that: every outcome is a
-function of the DOM and the event. APG asks for exactly the
-single-character behaviour for menus and marks even that
-optional; the multi-character form belongs to the listbox
-pattern. Menus are short, and repeat-to-cycle covers shared
-first letters. `shouldMatchLetter` carries the letter into the
-roving walk for that keydown only.
-
-**Signed movement for triangle direction.** "Is the cursor
-moving toward the submenu?" is
-`(submenuLeft - triggerRight) * event.movementX >= 0`.
-Submenu to the right: `left - right` is positive, so the
-product stays non-negative while `movementX >= 0` (moving
-right). Submenu to the left: inverted, same expression. One
-signed multiplication covers both sides without a branch.
-The submenu popover is resolved live from the topmost
-trigger's `aria-controls` while testing the triangle, and
-its rect is measured then, not at open time: stale state
-cannot survive a close, and `@starting-style` transforms
-leave the rect wrong until the animation settles anyway.
-
-**RTL by mirroring the key, once.** Horizontal arrows are
-spatial: with `dir="rtl"` the item visually to the right is the
-previous DOM sibling, submenus fly out to the left, and every
-ArrowLeft/ArrowRight meaning flips. Instead of branching at each
-dispatch site, `keydown` swaps ArrowLeft and ArrowRight into a
-local `key` when `document.dir` is `"rtl"` and dispatches on
-that. The switches keep reading as the LTR spec; RTL is one
-input transform. Logical keys (Home, End, Tab, typeahead) follow
-DOM order and pass through untouched. Direction is read from
-`document.dir` on every keydown (DOM as state, never cached);
-consumers declare `dir` on `<html>`. The pointer layer needs no
-branch at all: the safety triangle's near-edge clamp and
-signed-movement test are side-agnostic, and which side anything
-opens on is consumer CSS.
-
-**Monotonic token for async cancellation.** The router uses a
-counter that increments on every `navigateTo`; callbacks check if
-their token is still the latest before touching the DOM. Handles
-rapid-fire clicks without locks or cancelation tokens.
+- Rules, not rationale. If a rule needs a why, the why is a
+  mechanism (`docs/`) or a principle (`PRINCIPLES.md`); link it.
+- Two lines per rule where possible, at most one identifier as
+  an example. Example lists rot on the next rename.
+- Under 350 lines. When a section outgrows that, something in it
+  is a mechanism and belongs in `docs/`.
 
 ## Code style
 
-Rules only. Rationale lives in "Why the core looks weird" and
-"Clever tricks" above.
+Rules only. Rationale lives in `PRINCIPLES.md`; mechanisms live
+in `docs/`.
 
 ### Formatting
 
 - oxfmt defaults (`.oxfmtrc.json`, no overrides beyond ignoring
   `.html`/`.vue`/`.css`): 2-space indent, semicolons, double quotes,
-  80-char line width. oxlint (`.oxlintrc.json`) runs its default
-  `correctness` rules with the default plugins. `bun run lint` runs
+  80-char line width. oxlint (`.oxlintrc.json`) runs the
+  `correctness` category with the `typescript`, `unicorn`, and
+  `oxc` plugins. `bun run lint` runs
   `oxlint` then `oxfmt --check`, covering both lint and format, and
   runs first in the pre-commit hook.
 - `.js` extensions on value imports (NodeNext resolution).
@@ -428,10 +90,8 @@ Rules only. Rationale lives in "Why the core looks weird" and
 - Arrow functions in the core and router. React wrappers use
   `function` declarations for components (React convention, better
   stack traces). Vue wrappers use `defineComponent` with
-  method-shorthand `setup`. Menu's Item, CheckboxItem, and
-  RadioItem come from one `menuItem(role, checkable)` factory in
-  both wrappers; its React product is a named function expression,
-  so all three trace as `MenuItem`.
+  method-shorthand `setup`. Menu's item components come
+  from one factory in both wrappers (`docs/wrappers.md`).
 - Enum-typed mode parameters instead of option objects when
   the set is small: `menu(trigger, mode: Focus)`.
 - No optional parameters that every caller supplies, and no
@@ -439,8 +99,7 @@ Rules only. Rationale lives in "Why the core looks weird" and
   contract; unused generality is negative value here.
 - Extract a helper at the second verbatim repetition of a
   multi-line pattern when it saves minified bytes
-  (`tooltipSuppress`, `menubarStep`, `menuTrim`,
-  `toggleDisclosure`).
+  (`menuTrim`).
 
 ### Control flow
 
@@ -480,19 +139,20 @@ Rules only. Rationale lives in "Why the core looks weird" and
 
 ### State
 
-- Module-level `let` for mutable state shared between handlers;
-  module-level `const` for structures (stacks, maps, parsers).
+- File-scope `let`, inside the `hasDocument` guard, for mutable
+  state shared between handlers; file-scope `const` for
+  structures (stacks, maps, parsers).
 - No classes, no `this`, no closures-over-state threaded through
   call chains.
 - `should*` flags drive cross-handler signalling within a single
-  event cycle; cleared at the top of each listener.
+  event cycle.
 
 ### Types
 
 - Enums for related string constants (`Prefix.TriggerMenu`,
   `Focus.First`). Numeric enums for mode-select flags, string
   enums for stable identifiers that appear in the DOM.
-- Named-tuple types for 2-3 field shapes that stay module-private:
+- Named-tuple types for 2-3 field shapes that stay file-private:
   `type Fetched = [html: string, url: string]`.
 - Type guards as `is`-predicates (`isElement`, `isTrigger`,
   `isMenuItem`, `canHandle`). Narrow once at the listener entry;
@@ -503,17 +163,11 @@ PropType<...>` where Vue's prop typing requires it.)
 
 ### Events
 
-- `addEventListener` on `window` / `document` only.
-  Listeners are never removed.
+- `addEventListener` on `window` only. Listeners are never
+  removed.
 - Custom events (`mc:navigate`) for cross-boundary signals the
   wrappers need. No callback props or event-emitter exports from
   the core.
-- Menu open/dismiss/activate on `pointerdown` / `pointerup`.
-  Enter/Space for menu are handled in `keydown` with
-  `preventDefault`. Tooltip Escape is capture-phase. Popover
-  Escape yields when already default-prevented or when the
-  target sits in a nested popover. Dialog Escape is native.
-- `resize` repositions open surfaces; `scroll` dismisses them.
 - `void` on fire-and-forget promise expressions.
 
 ### Naming
@@ -557,16 +211,14 @@ correct place. It applies to:
 
 - Enum members. Family checks (`Content`, `Trigger`) sort in
   with their specifics and land first automatically.
-- Module state, alphabetical within its blank-line group.
+- File-scope state, alphabetical within its blank-line group.
   Groups in order: driver flags, generic state, then one group
   per component, components alphabetical.
 - Type guards, generic helpers, roving callbacks, component
   clusters, and the functions within a cluster.
 - Dispatch chains (`else if` prefix ladders). One exception: a
-  check that must short-circuit the ladder stays first. The menu
-  click and `pointerup` walks break on `mct:menu:` before item
-  activation so a submenu trigger that is also a link never
-  activates.
+  check that must short-circuit the ladder stays first
+  (`docs/menu.md`, "Walks break on `mct:menu:`").
 
 Fixed, non-alphabetical orders that stay fixed:
 
@@ -584,7 +236,8 @@ Fixed, non-alphabetical orders that stay fixed:
 ## Prose style
 
 Applies to all prose in the repo: code comments, TSDoc, README,
-AGENTS.md, commit messages, PR descriptions.
+PRINCIPLES.md, AGENTS.md, `docs/`, commit messages, PR
+descriptions.
 
 - **No em dashes (`—`).** Use a period, colon, semicolon, or
   parentheses instead. oxlint doesn't lint prose, so this is on the
@@ -599,9 +252,9 @@ AGENTS.md, commit messages, PR descriptions.
 ## Comment policy
 
 - Core (`src/dom.ts`, `src/index.ts`, each `src/{component}.ts`):
-  **no comments.** Behaviour and rationale live in this file
-  ("Why the core looks weird" and "Clever tricks"), never in the
-  source. When a mechanism needs explaining, explain it here.
+  **no comments.** Behaviour lives in `docs/` (Where things go)
+  and rationale in `PRINCIPLES.md`, never in the source. When a
+  mechanism needs explaining, explain it there.
 - `src/router.ts`: **fully commented.** TSDoc (`/** */`) for
   every declared symbol. Inline `//` for non-obvious decisions.
   File-top `@file` header explaining architecture, invariants,
@@ -671,10 +324,20 @@ menu`).
   consistent within a single test name.
 - **One sentence, sentence-case, no trailing period, ≤80 chars.**
   Code identifiers keep their casing.
-- **Describe blocks use a fixed top-level vocabulary** so the same
-  capability has the same name across components: `ARIA`,
+- **Describe blocks use a fixed vocabulary** so the same
+  capability has the same name in every component spec: `ARIA`,
   `Initial state`, `Activation`, `Keyboard`, `Mouse`,
-  `Focus management`, `Disabled`, `Edge cases`,
-  `Structure independence`, `Click handler`, `Dynamic`. Per-component
-  refinements (`Trigger keyboard`, `Item keyboard`, `Keyboard
-(horizontal)`) are fine when the structure genuinely splits.
+  `Focus management`, `Dismissal`, `Modality`, `Disabled`,
+  `Nested`, `Multiple`, `Composition`, `Scroll prevention`,
+  `Positioning`, `Structure independence`, `Click handler`,
+  `Dynamic`, `Edge cases`. `Nested` is the component inside
+  itself. `Composition` is the component used with another one
+  (adjacent or nested inside it). `Multiple` is independent
+  instances on one page. `Dismissal` is closing by anything
+  other than the trigger. `Modality` is blocking background
+  interaction while open.
+- **A slice of one term appends a parenthesised qualifier**:
+  `Keyboard (RTL)`, `Mouse (safety triangle)`,
+  `Composition (dialog)`. No other describe names. The component
+  describe itself (`Menu`, `Menubar`) and the non-component specs
+  (router, SSR, axe, architecture) sit outside the vocabulary.

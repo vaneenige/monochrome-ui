@@ -217,7 +217,7 @@ test.describe("Tabs", () => {
     });
   });
 
-  test.describe("Tab order", () => {
+  test.describe("Focus management", () => {
     test.beforeEach(async ({ page, renderer }) => {
       await page.goto(`/${renderer}/tabs/horizontal`);
     });
@@ -371,7 +371,7 @@ test.describe("Tabs", () => {
     });
   });
 
-  test.describe("Non-focusable panels", () => {
+  test.describe("Focus management (non-focusable panels)", () => {
     test.beforeEach(async ({ page, renderer }) => {
       await page.goto(`/${renderer}/tabs/non-focusable`);
     });

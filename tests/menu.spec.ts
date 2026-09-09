@@ -115,7 +115,7 @@ test.describe("Menu", () => {
     });
   });
 
-  test.describe("Trigger keyboard", () => {
+  test.describe("Keyboard (trigger)", () => {
     for (const key of ["Enter", "Space", "ArrowDown"] as const) {
       test(`${key} opens the menu and focuses the first item`, async ({ page }) => {
         await page.getByTestId("root-trigger").focus();
@@ -218,7 +218,7 @@ test.describe("Menu", () => {
     });
   });
 
-  test.describe("Item keyboard", () => {
+  test.describe("Keyboard (item)", () => {
     test.beforeEach(async ({ page }) => {
       await openRootViaKeyboard(page);
     });
@@ -265,7 +265,7 @@ test.describe("Menu", () => {
     });
   });
 
-  test.describe("Submenu keyboard", () => {
+  test.describe("Keyboard (submenu)", () => {
     test.beforeEach(async ({ page }) => {
       await openRootViaKeyboard(page);
     });
@@ -395,7 +395,7 @@ test.describe("Menu", () => {
     });
   });
 
-  test.describe("Pointer session", () => {
+  test.describe("Mouse (pointer session)", () => {
     test("pointerdown on trigger opens the menu without moving focus to the first item", async ({
       page,
     }) => {
@@ -482,7 +482,7 @@ test.describe("Menu", () => {
     });
   });
 
-  test.describe("Pointer session with disclosure", () => {
+  test.describe("Composition (disclosure)", () => {
     test.beforeEach(async ({ page, renderer }) => {
       await page.goto(`/${renderer}/menu/with-disclosure`);
     });
@@ -508,7 +508,7 @@ test.describe("Menu", () => {
     });
   });
 
-  test.describe("Activation with dialog", () => {
+  test.describe("Composition (dialog)", () => {
     test.beforeEach(async ({ page, renderer }) => {
       await page.goto(`/${renderer}/menu/with-dialog`);
     });
@@ -813,7 +813,7 @@ test.describe("Menu", () => {
     });
   });
 
-  test.describe("Highlight", () => {
+  test.describe("Focus management (highlight)", () => {
     test("keyboard roving sets `data-highlighted` on the focused item", async ({ page }) => {
       await openRootViaKeyboard(page);
       await expect(page.getByTestId("root-item-1")).toHaveAttribute("data-highlighted", "");
@@ -845,8 +845,8 @@ test.describe("Menu", () => {
     });
   });
 
-  test.describe("Trigger with nested SVG", () => {
-    test("clicking the SVG opens the menu", async ({ page }) => {
+  test.describe("Activation", () => {
+    test("opens via a click on a nested SVG inside the trigger", async ({ page }) => {
       const svg = page.getByTestId("svg-icon");
       const list = page.getByTestId("svg-list");
       await svg.click();
@@ -856,7 +856,7 @@ test.describe("Menu", () => {
     });
   });
 
-  test.describe("Scroll dismissal", () => {
+  test.describe("Dismissal (scroll)", () => {
     test("scroll on a nested element closes the menu", async ({ page }) => {
       await openRoot(page);
       await page.getByTestId("scroll-container").dispatchEvent("scroll");
@@ -951,7 +951,7 @@ test.describe("Menu", () => {
   });
 });
 
-test.describe("Typeahead", () => {
+test.describe("Keyboard (typeahead)", () => {
   test.beforeEach(async ({ page, renderer }) => {
     await page.goto(`/${renderer}/menu/typeahead`);
     await page.getByTestId("typeahead-trigger").focus();
@@ -1134,7 +1134,7 @@ test.describe("Menubar", () => {
     });
   });
 
-  test.describe("Keyboard navigation", () => {
+  test.describe("Keyboard", () => {
     test("ArrowRight / ArrowLeft wrap around menubar items", async ({ page }) => {
       await page.getByTestId("menubar-trigger-1").focus();
       await page.keyboard.press("ArrowRight");
@@ -1546,7 +1546,7 @@ test.describe("Menubar", () => {
   });
 });
 
-test.describe("Separate and mixed menus", () => {
+test.describe("Multiple", () => {
   test("separate root menus do not switch on hover", async ({ page, renderer }) => {
     await page.goto(`/${renderer}/menu/separate`);
     await page.getByTestId("menu-a-trigger").click();
@@ -1587,7 +1587,7 @@ test.describe("Separate and mixed menus", () => {
   });
 });
 
-test.describe("Menu inside a collapsible sidebar", () => {
+test.describe("Composition (collapsible)", () => {
   test.beforeEach(async ({ page, renderer }) => {
     await page.goto(`/${renderer}/menu/nested-content`);
   });
@@ -1615,7 +1615,7 @@ test.describe("Menu inside a collapsible sidebar", () => {
   });
 });
 
-test.describe("Safety triangle", () => {
+test.describe("Mouse (safety triangle)", () => {
   type PointerOpts = {
     testId: string;
     x: number;
@@ -1823,7 +1823,7 @@ test.describe("Safety triangle", () => {
   });
 });
 
-test.describe("Sibling submenus", () => {
+test.describe("Nested (sibling submenus)", () => {
   test.beforeEach(async ({ page, renderer }) => {
     await page.goto(`/${renderer}/menu/siblings`);
     await page.getByTestId("trigger").click();
@@ -1878,7 +1878,7 @@ test.describe("Sibling submenus", () => {
   });
 });
 
-test.describe("Checkbox and radio items", () => {
+test.describe("Activation (checkbox and radio)", () => {
   test.beforeEach(async ({ page, renderer }) => {
     await page.goto(`/${renderer}/menu/checkbox-radio`);
     await page.getByTestId("trigger").click();
@@ -2048,7 +2048,7 @@ test.describe("Click handler", () => {
   }
 });
 
-test.describe("Link items", () => {
+test.describe("Activation (href)", () => {
   test.beforeEach(async ({ page, renderer }) => {
     await page.goto(`/${renderer}/menu/basic`);
     await page.getByTestId("trigger").click();
@@ -2249,7 +2249,7 @@ test.describe("Structure independence", () => {
   });
 });
 
-test.describe("Disabled trigger", () => {
+test.describe("Disabled", () => {
   test.beforeEach(async ({ page, renderer }) => {
     await page.goto(`/${renderer}/menu/disabled-trigger`);
   });
@@ -2273,7 +2273,7 @@ test.describe("Disabled trigger", () => {
   });
 });
 
-test.describe("Menubar dynamic", () => {
+test.describe("Dynamic (menubar)", () => {
   test("keeps exactly one menubar tab stop across partial re-renders", async ({
     page,
     renderer,

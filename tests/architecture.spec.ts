@@ -1,9 +1,10 @@
 import { readdirSync, readFileSync } from "node:fs";
 import { expect, test } from "./fixtures";
 
-// Decision tests: the non-negotiables from AGENTS.md, encoded as
-// source greps so drift is caught before review. Paths are relative
-// to the repo root (Playwright's working directory).
+// Decision tests: north stars from PRINCIPLES.md, plus DOM /
+// type / wrapper greps from AGENTS.md Code style, encoded as
+// source greps so drift is caught before review. Paths are
+// relative to the repo root (Playwright's working directory).
 const helper = readFileSync("src/dom.ts", "utf8");
 const combined = readFileSync("src/index.ts", "utf8");
 const router = readFileSync("src/router.ts", "utf8");

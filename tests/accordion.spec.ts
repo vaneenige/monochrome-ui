@@ -141,7 +141,7 @@ test.describe("Accordion", () => {
     });
   });
 
-  test.describe("Keyboard navigation", () => {
+  test.describe("Keyboard", () => {
     test.beforeEach(async ({ page, renderer }) => {
       await page.goto(`/${renderer}/accordion/single`);
     });

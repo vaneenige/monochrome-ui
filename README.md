@@ -63,8 +63,10 @@ element. No polyfills shipped.
 ## Contributing
 
 Library development uses Bun 1.4.2 (`bun install`, `bun run build`,
-`bun run test`). See [AGENTS.md](./AGENTS.md) for architecture,
-invariants, and code style.
+`bun run test`). [PRINCIPLES.md](./PRINCIPLES.md) holds the
+non-negotiables, [AGENTS.md](./AGENTS.md) how to work in the
+repo, and [docs/](./docs) how each mechanism works. Router notes
+live in `src/router.ts` TSDoc, not markdown.
 
 ## License
 
