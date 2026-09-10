@@ -18,9 +18,10 @@ structured component on the page becomes interactive.
 - `docs/`: how each mechanism works. Overlay files are
   `menu.md`, `popover.md`, `tooltip.md`, `dialog.md`. Shared
   helpers plus Accordion, Tabs, and Collapsible live in
-  `dom.md`. Wrappers in `wrappers.md`. The core carries no
-  comments; these files are its comments. Read the one for
-  the component you are debugging, skip the rest.
+  `dom.md`. Router in `router.md`. Wrappers in `wrappers.md`.
+  The core and router carry no comments; these files are
+  their comments. Read the one for the component you are
+  debugging, skip the rest.
 - This file: how to work in the repo. Rules only.
 
 ## Where things go
@@ -36,7 +37,7 @@ Every change has exactly one home. Pick it before writing prose.
   owns that mechanism. Accordion, Tabs, Collapsible, and shared
   helpers live in `docs/dom.md`.
 - Wrapper-only behaviour (React, Vue): `docs/wrappers.md`.
-- Router behaviour: TSDoc in `src/router.ts`, never markdown.
+- Router behaviour: `docs/router.md`.
 - How code is written (style, naming, order): this file ›
   Code style, as a rule.
 - Toolchain, build, gate: this file › Build pipeline.
@@ -251,22 +252,16 @@ descriptions.
 
 ## Comment policy
 
-- Core (`src/dom.ts`, `src/index.ts`, each `src/{component}.ts`):
-  **no comments.** Behaviour lives in `docs/` (Where things go)
-  and rationale in `PRINCIPLES.md`, never in the source. When a
-  mechanism needs explaining, explain it there.
-- `src/router.ts`: **fully commented.** TSDoc (`/** */`) for
-  every declared symbol. Inline `//` for non-obvious decisions.
-  File-top `@file` header explaining architecture, invariants,
-  and file layout.
+- Core (`src/dom.ts`, `src/index.ts`, each `src/{component}.ts`)
+  and the router (`src/router.ts`): **no comments.** Behaviour
+  lives in `docs/` (Where things go) and rationale in
+  `PRINCIPLES.md`, never in the source. When a mechanism needs
+  explaining, explain it there.
 - `src/react/*`, `src/vue/*`: **no comments** except
   `// oxlint-disable-next-line` pragmas where required. Each file is
   small and self-evident.
 - Tests: no comments except when the _why_ of a setup step would
   surprise the next reader (race conditions, sentinel globals, etc.).
-
-Rolldown's minifier drops all comments from `dist/`, so the
-router's comments never reach the published bundles.
 
 ## Build pipeline
 

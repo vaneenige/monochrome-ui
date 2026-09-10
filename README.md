@@ -57,8 +57,11 @@ The React and Vue wrappers generate the same HTML and ARIA; all interactivity co
 
 ## Browser support
 
-Baseline 2024. Uses the Popover API and the native `<dialog>`
+Core: Baseline 2024. Uses the Popover API and the native `<dialog>`
 element. No polyfills shipped.
+
+Router: Navigation API (Baseline 2026). Older browsers keep full
+page loads; `import "monochrome/router"` is a no-op there.
 
 ## Contributing
 
@@ -66,7 +69,7 @@ Library development uses Bun 1.4.2 (`bun install`, `bun run build`,
 `bun run test`). [PRINCIPLES.md](./PRINCIPLES.md) holds the
 non-negotiables, [AGENTS.md](./AGENTS.md) how to work in the
 repo, and [docs/](./docs) how each mechanism works. Router notes
-live in `src/router.ts` TSDoc, not markdown.
+live in [`docs/router.md`](./docs/router.md).
 
 ## License
 

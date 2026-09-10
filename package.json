@@ -195,7 +195,7 @@
         "vue": 722
       },
       "router": {
-        "core": 1281
+        "core": 957
       },
       "tabs": {
         "core": 1009,
@@ -209,10 +209,10 @@
       }
     },
     "tests": {
-      "total": 481,
+      "total": 480,
       "a11y": 20,
       "accordion": 34,
-      "architecture": 11,
+      "architecture": 10,
       "collapsible": 25,
       "dialog": 22,
       "menu": 228,

@@ -102,6 +102,7 @@ test.describe("Router", () => {
         link.click();
       });
       await page.waitForURL("**/html/router/docs");
+      await expect(page.getByTestId("page-title")).toHaveText("Docs");
       const sentinel = await page.evaluate(() => window.__sentinel);
       expect(sentinel).toBeUndefined();
     });
@@ -128,6 +129,7 @@ test.describe("Router", () => {
       });
       await page.getByTestId("nav-reference").click();
       await expect(page).toHaveURL("/html/router/reference");
+      await expect(page.getByTestId("page-title")).toHaveText("Reference");
       expect(await page.locator("[data-area='sidebar']").getAttribute("data-preserved")).toBeNull();
     });
   });
@@ -243,13 +245,13 @@ test.describe("Router", () => {
         .toBe(true);
     });
 
-    test("takes ownership of scroll restoration", async ({ page }) => {
+    test("leaves scroll restoration to the browser", async ({ page }) => {
       await page.goto("/html/router/index");
       const mode = await page.evaluate(() => history.scrollRestoration);
-      expect(mode).toBe("manual");
+      expect(mode).toBe("auto");
     });
 
-    test("handles back navigation via `popstate`", async ({ page }) => {
+    test("handles back navigation", async ({ page }) => {
       await page.goto("/html/router/index");
       await page.getByTestId("nav-about").click();
       await expect(page.getByTestId("page-title")).toHaveText("About");
@@ -309,6 +311,15 @@ test.describe("Router", () => {
       await expect(page).toHaveURL("/html/router/scroll");
       await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(600);
     });
+
+    test("restores scroll position on reload", async ({ page, browserName }) => {
+      test.skip(browserName === "webkit", "Playwright WebKit does not restore scroll on reload");
+      await page.goto("/html/router/scroll");
+      await page.evaluate(() => window.scrollTo(0, 600));
+      await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(600);
+      await page.reload();
+      await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(600);
+    });
   });
 
   test.describe("Fallback", () => {
@@ -317,8 +328,10 @@ test.describe("Router", () => {
       await page.evaluate(() => {
         window.__sentinel = 1;
       });
+      const loaded = page.waitForEvent("load");
       await page.getByTestId("nav-missing").click();
-      await page.waitForURL("**/html/router/does-not-exist");
+      await loaded;
+      await expect(page).toHaveURL(/does-not-exist/);
       const sentinel = await page.evaluate(() => window.__sentinel);
       expect(sentinel).toBeUndefined();
     });
@@ -330,38 +343,6 @@ test.describe("Router", () => {
       await page.getByTestId("nav-redirect").click();
       await expect(page).toHaveURL("/html/router/about");
       await expect(page.getByTestId("page-title")).toHaveText("About");
-    });
-
-    test("bounds the cache when a redirect adds its alias entry", async ({ page }) => {
-      await page.goto("/html/router/index");
-      // Prefetch 32 distinct keys (query strings keep them distinct)
-      // to fill the cache exactly to its bound.
-      await page.evaluate(() => {
-        for (let i = 0; i < 32; i++) {
-          const anchor = document.createElement("a");
-          anchor.href = `/html/router/about?i=${i}`;
-          document.body.append(anchor);
-          anchor.dispatchEvent(new MouseEvent("mouseover", { bubbles: true }));
-        }
-      });
-      // A redirect writes two entries (the requested key and the
-      // resolved alias), so it has to evict two: the oldest for the
-      // key, the next-oldest for the alias. Navigating rather than
-      // hovering guarantees the alias is written before we assert.
-      await page.evaluate(() => {
-        document.querySelector<HTMLAnchorElement>("[data-testid='nav-redirect']")?.click();
-      });
-      await expect(page).toHaveURL("/html/router/about");
-      // The second-oldest key is gone, so warming it hits the network.
-      const requests: string[] = [];
-      page.on("request", (request) => requests.push(request.url()));
-      await page.evaluate(() => {
-        const anchor = document.createElement("a");
-        anchor.href = "/html/router/about?i=1";
-        document.body.append(anchor);
-        anchor.dispatchEvent(new MouseEvent("mouseover", { bubbles: true }));
-      });
-      await expect.poll(() => requests.filter((url) => url.endsWith("?i=1")).length).toBe(1);
     });
 
     test("falls back to real navigation on a cross-origin redirect", async ({ page }) => {
@@ -472,6 +453,7 @@ test.describe("Router", () => {
       });
       await page.getByTestId("nav-about").click();
       await expect(page).toHaveURL("/html/router/about");
+      await expect(page.getByTestId("page-title")).toHaveText("About");
       const count = await page.evaluate(() => window.__navCount);
       expect(count).toBe(1);
     });
