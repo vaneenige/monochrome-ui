@@ -1,0 +1,17 @@
+#!/bin/sh
+set -e
+
+# GitHub Actions (the release workflow) may push to main. Local
+# developers open a pull request. CI is set on the runner.
+if [ -n "$CI" ]; then
+  exit 0
+fi
+
+while read local_ref local_sha remote_ref remote_sha; do
+  case "$remote_ref" in
+  refs/heads/main)
+    echo "pre-push: direct pushes to main are not allowed. Open a pull request." >&2
+    exit 1
+    ;;
+  esac
+done

@@ -2,13 +2,18 @@ import { defineConfig } from "@playwright/test";
 
 type Options = { renderer: "html" | "react" | "vue" };
 
+const ci = !!process.env.CI;
+
 export default defineConfig<Options>({
 	fullyParallel: true,
+	forbidOnly: ci,
+	retries: ci ? 1 : 0,
+	reporter: ci ? [["github"], ["html", { open: "never" }]] : [["list"]],
 	use: {
 		baseURL: "http://localhost:4000",
 		video: "off",
 		screenshot: "off",
-		trace: "off",
+		trace: ci ? "on-first-retry" : "off",
 	},
 	projects: [
 		{ name: "html", use: { renderer: "html" } },

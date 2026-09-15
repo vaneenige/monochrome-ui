@@ -114,7 +114,9 @@
   ],
   "scripts": {
     "build": "NODE_ENV=production bun build.ts",
-    "test": "bun --bun playwright test",
+    "test": "bun --bun playwright test --project=html --project=react --project=vue",
+    "test:all": "bun --bun playwright test",
+    "test:install": "bunx playwright install chromium",
     "lint": "oxlint src tests build.ts && oxfmt --check src tests build.ts",
     "lint:fix": "oxlint --fix src tests build.ts && oxfmt src tests build.ts",
     "format": "oxfmt src tests build.ts",

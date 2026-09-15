@@ -23,13 +23,8 @@ bun run build
 
 bun run typecheck
 
-# Run the full Playwright suite. ~22s but catches regressions before
-# they reach the branch; the library's accessibility guarantees are
-# only as good as the tests that pin them.
-bun run test
-
 # Stage the build-touched package.json only after every gate has
-# passed. If lint / typecheck / build / test had failed earlier, the
+# passed. If lint / typecheck / build had failed earlier, the
 # rewrite stays in the working tree, not the index, so an aborted
 # commit leaves no half-staged state behind.
 git add package.json

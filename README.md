@@ -65,8 +65,14 @@ page loads; `import "monochrome/router"` is a no-op there.
 
 ## Contributing
 
-Library development uses Bun 1.4.2 (`bun install`, `bun run build`,
-`bun run test`). [PRINCIPLES.md](./PRINCIPLES.md) holds the
+Library development uses Bun 1.4.2. Open a pull request
+against `main`; do not push to it. After `bun install`,
+fetch Chromium with `bun run test:install`, then
+`bun run test`. Linux may need
+`bunx playwright install --with-deps chromium` (sudo) if
+the browser will not launch. `bun run test:all` is the CI
+matrix (Chromium, WebKit, Firefox).
+[PRINCIPLES.md](./PRINCIPLES.md) holds the
 non-negotiables, [AGENTS.md](./AGENTS.md) how to work in the
 repo, and [docs/](./docs) how each mechanism works. Router notes
 live in [`docs/router.md`](./docs/router.md).

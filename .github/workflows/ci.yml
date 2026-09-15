@@ -5,9 +5,17 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  workflow_call:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
 
 jobs:
-  check:
+  quality:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7.0.1
@@ -24,6 +32,59 @@ jobs:
 
       - run: bun run typecheck
 
-      - run: bunx playwright install chromium webkit firefox
+      - run: git diff --exit-code package.json
 
-      - run: bun run test
+  browsers:
+    needs: quality
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - browser: chromium
+            install: chromium
+            project: "--project=html --project=react --project=vue"
+          - browser: webkit
+            install: webkit
+            project: "--project=html-webkit"
+          - browser: firefox
+            install: firefox
+            project: "--project=html-firefox"
+    steps:
+      - uses: actions/checkout@v7.0.1
+
+      - uses: oven-sh/setup-bun@v2.2.0
+        with:
+          bun-version-file: .bun-version
+
+      - run: bun install --frozen-lockfile
+
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ matrix.browser }}-${{ hashFiles('bun.lock') }}
+
+      - run: bunx playwright install --with-deps ${{ matrix.install }}
+
+      - run: bun --bun playwright test ${{ matrix.project }}
+
+      - if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-${{ matrix.browser }}
+          path: |
+            playwright-report/
+            test-results/
+          if-no-files-found: ignore
+          retention-days: 7
+
+  ci:
+    name: ci
+    if: ${{ always() && !cancelled() }}
+    needs: [quality, browsers]
+    runs-on: ubuntu-latest
+    steps:
+      - name: All gates passed
+        run: |
+          test "${{ needs.quality.result }}" = "success"
+          test "${{ needs.browsers.result }}" = "success"

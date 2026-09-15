@@ -21,7 +21,11 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  check:
+    uses: ./.github/workflows/ci.yml
+
   release:
+    needs: check
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7.0.1
@@ -32,15 +36,7 @@ jobs:
 
       - run: bun install --frozen-lockfile
 
-      - run: bun run lint
-
       - run: bun run build
-
-      - run: bun run typecheck
-
-      - run: bunx playwright install chromium webkit firefox
-
-      - run: bun run test
 
       - name: Bump version
         env:
@@ -70,6 +66,6 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A
-          git commit -m "v${VERSION}"
+          git commit --no-verify -m "v${VERSION}"
           git tag -a "v${VERSION}" -m "v${VERSION}"
           git push origin HEAD --follow-tags

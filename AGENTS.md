@@ -287,14 +287,25 @@ a docs-site submodule, the parent links it via `file:` rather
 than as a workspace member, so `bun install` here owns its own
 `node_modules` and lockfile.
 
-**Every commit runs the full gate.** The pre-commit hook runs
-lint, typecheck, build, and the complete test suite, then stages
-the restamped `package.json`. Never bypass it with `--no-verify`,
-and never defer the `versionMeta` rewrite to a later commit: every
-commit must carry the sizes and test counts produced by its own
-tree, so any checkout of any commit reports honest numbers. This
-applies to multi-commit series too; run the gate once per commit,
-not once at the end.
+**Every commit restamps `versionMeta`.** The pre-commit hook
+runs lint, build, and typecheck, then stages the restamped
+`package.json`. Never `--no-verify`, and never defer the
+rewrite: every commit carries sizes and counts from its
+own tree. Run the gate once per commit. Playwright
+`--list` during build needs no browsers.
+
+`bun run test` is Chromium (`html`, `react`, `vue`).
+`bun run test:all` is the merge gate (WebKit and Firefox
+too) and runs in CI on the pull request. Install Chromium
+with `bun run test:install`; do not postinstall browsers.
+
+CI `quality` fails if `package.json` drifts from the
+restamp. The required check is `ci`. Open a pull request
+against `main`; the pre-push hook blocks direct pushes
+unless `CI` is set. Only GitHub Actions may push to `main`
+(the release workflow). Ruleset: block force pushes and
+deletions, require a pull request (0 approvals), require
+`ci` and an up-to-date branch, bypass GitHub Actions only.
 
 ## Test naming
 
