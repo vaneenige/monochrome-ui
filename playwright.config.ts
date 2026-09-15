@@ -16,9 +16,9 @@ export default defineConfig<Options>({
 		trace: ci ? "on-first-retry" : "off",
 	},
 	projects: [
-		{ name: "html", use: { renderer: "html" } },
-		{ name: "react", use: { renderer: "react" } },
-		{ name: "vue", use: { renderer: "vue" } },
+		{ name: "html", use: { renderer: "html", browserName: "chromium" } },
+		{ name: "react", use: { renderer: "react", browserName: "chromium" } },
+		{ name: "vue", use: { renderer: "vue", browserName: "chromium" } },
 		{ name: "html-webkit", use: { renderer: "html", browserName: "webkit" } },
 		{ name: "html-firefox", use: { renderer: "html", browserName: "firefox" } },
 	],

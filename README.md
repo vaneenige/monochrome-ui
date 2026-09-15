@@ -22,7 +22,7 @@ npm install monochrome
 ```
 
 ```ts
-// every component, one flat file — for pages that ship no other
+// every component, one flat file. For pages that ship no other
 // monochrome import; don't combine with the granular imports below
 import "monochrome"
 
@@ -32,7 +32,7 @@ import "monochrome/menu"
 // optional router
 import "monochrome/router"
 
-// React wrappers — each auto-imports its own core, so one import
+// React wrappers: each auto-imports its own core, so one import
 // wires markup and behavior, tree-shaken to the components you use
 import { Accordion, Menu } from "monochrome/react"
 
@@ -66,13 +66,28 @@ page loads; `import "monochrome/router"` is a no-op there.
 ## Contributing
 
 Library development uses Bun 1.4.2. Open a pull request
-against `main`; do not push to it. Commits do not need
-browsers: `bun install`, `bun run build`, and the hook
-are enough. To run tests locally: `bun run test:install`
-then `bun run test` (Chromium). Linux may need
-`bunx playwright install --with-deps chromium` (sudo) if
-the browser will not launch. `bun run test:all` is the CI
-matrix (Chromium, WebKit, Firefox).
+against `main`; do not push to it.
+
+```bash
+bun install
+```
+
+That installs dependencies and points Git at the repo
+hooks. A commit runs lint, build, and typecheck. No
+browsers.
+
+To run tests locally:
+
+```bash
+bun run test:install
+bun run test
+```
+
+Linux may need
+`bunx playwright install --with-deps chromium` (sudo)
+if Chromium will not launch. The full matrix is
+`bun run test:install:all` then `bun run test:all`.
+CI runs that matrix on the pull request.
 [PRINCIPLES.md](./PRINCIPLES.md) holds the
 non-negotiables, [AGENTS.md](./AGENTS.md) how to work in the
 repo, and [docs/](./docs) how each mechanism works. Router notes

@@ -38,6 +38,8 @@ jobs:
 
       - run: bun run build
 
+      - run: test -f dist/index.js
+
       - name: Bump version
         env:
           BUMP: ${{ inputs.bump }}
@@ -65,7 +67,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A
+          git add package.json
           git commit --no-verify -m "v${VERSION}"
           git tag -a "v${VERSION}" -m "v${VERSION}"
           git push origin HEAD --follow-tags
