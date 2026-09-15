@@ -5,27 +5,29 @@ import { MenuKey, requireInject } from "./shared.js";
 const Root = defineComponent({
   setup(_, { slots }) {
     const id = useId();
-    provide(MenuKey, { id, tabStop: true, item: false });
+    provide(MenuKey, { id, item: false });
     return () => slots.default?.();
   },
 });
 
 const Trigger = defineComponent({
+  inheritAttrs: false,
   props: {
     disabled: Boolean,
   },
-  setup(props, { slots }) {
+  setup(props, { slots, attrs }) {
     const ctx = requireInject(MenuKey, "Menu.Trigger");
     return () =>
       h(
         "button",
         {
+          ...attrs,
           type: "button",
           id: `mct:menu:${ctx.id}`,
           "aria-controls": `mcc:menu:${ctx.id}`,
           "aria-expanded": "false",
           "aria-haspopup": "menu",
-          tabindex: ctx.tabStop ? 0 : -1,
+          tabindex: attrs.tabindex ?? (ctx.item ? -1 : 0),
           role: ctx.item ? "menuitem" : "button",
           "aria-disabled": props.disabled || undefined,
         },
@@ -64,7 +66,7 @@ const menuItem = (role: string, checkable: boolean) =>
         const shared = {
           ...attrs,
           role,
-          tabindex: -1,
+          tabindex: attrs.tabindex ?? -1,
           "aria-checked": checkable ? props.defaultChecked : undefined,
         };
         const inner = props.disabled
@@ -96,7 +98,7 @@ const Separator = defineComponent({
 const Group = defineComponent({
   setup(_, { slots }) {
     const id = useId();
-    provide(MenuKey, { id, tabStop: false, item: true });
+    provide(MenuKey, { id, item: true });
     return () => h("li", { role: "none" }, slots.default?.());
   },
 });

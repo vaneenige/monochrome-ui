@@ -162,37 +162,37 @@
       "accordion": {
         "core": 998,
         "react": 473,
-        "vue": 679
+        "vue": 668
       },
       "collapsible": {
         "core": 662,
         "react": 432,
-        "vue": 619
+        "vue": 608
       },
       "dialog": {
         "core": 769,
         "react": 528,
-        "vue": 738
+        "vue": 726
       },
       "index": {
         "core": 3293,
-        "react": 1998,
-        "vue": 2232
+        "react": 1900,
+        "vue": 2054
       },
       "menu": {
         "core": 2277,
-        "react": 690,
-        "vue": 884
+        "react": 689,
+        "vue": 871
       },
       "menubar": {
         "core": 2277,
-        "react": 918,
-        "vue": 1151
+        "react": 794,
+        "vue": 957
       },
       "popover": {
         "core": 1007,
         "react": 506,
-        "vue": 722
+        "vue": 710
       },
       "router": {
         "core": 957
@@ -200,22 +200,22 @@
       "tabs": {
         "core": 1009,
         "react": 553,
-        "vue": 807
+        "vue": 796
       },
       "tooltip": {
         "core": 1007,
         "react": 359,
-        "vue": 523
+        "vue": 512
       }
     },
     "tests": {
-      "total": 480,
+      "total": 483,
       "a11y": 20,
       "accordion": 34,
       "architecture": 10,
       "collapsible": 25,
       "dialog": 22,
-      "menu": 228,
+      "menu": 231,
       "popover": 31,
       "router": 36,
       "ssr": 9,

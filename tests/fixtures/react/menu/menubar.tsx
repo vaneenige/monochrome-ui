@@ -3,7 +3,9 @@ import { Menubar } from "monochrome/react";
 export default () => (
   <Menubar.Root data-testid="menubar-list">
     <Menubar.Menu>
-      <Menubar.Trigger data-testid="menubar-trigger-1">MenuTrigger 1</Menubar.Trigger>
+      <Menubar.Trigger tabIndex={0} data-testid="menubar-trigger-1">
+        MenuTrigger 1
+      </Menubar.Trigger>
       <Menubar.Popover data-testid="menubar-list-1">
         <Menubar.Item data-testid="menubar-item-1-1">MenuItem 1.1</Menubar.Item>
         <Menubar.Item>MenuItem 1.2</Menubar.Item>

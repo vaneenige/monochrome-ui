@@ -7,5 +7,5 @@ export type BaseProps = HTMLAttributes<HTMLElement> & {
 
 export const buildId = (base: string, id?: string) => (id ? `${base}:${id}` : base);
 
-export type MenuContextValue = { id: string; tabStop: boolean; item: boolean };
+export type MenuContextValue = { id: string; item: boolean };
 export const MenuContext = createContext<MenuContextValue | null>(null);

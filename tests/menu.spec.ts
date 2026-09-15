@@ -2273,31 +2273,45 @@ test.describe("Disabled", () => {
   });
 });
 
-test.describe("Dynamic (menubar)", () => {
-  test("keeps exactly one menubar tab stop across partial re-renders", async ({
-    page,
-    renderer,
-  }) => {
-    test.skip(renderer !== "react", "Exercises React render semantics");
-    await page.goto("/react/menu/menubar-dynamic");
-    await expect(page.getByTestId("trigger-1")).toHaveAttribute("tabindex", "0");
-    await expect(page.getByTestId("trigger-2")).toHaveAttribute("tabindex", "-1");
-    await page.evaluate(() => window.__bumpFirstMenu?.());
-    await expect(page.getByTestId("trigger-1")).toHaveText("File v1");
-    await expect(page.getByTestId("trigger-1")).toHaveAttribute("tabindex", "0");
+test.describe("Focus management (menubar tab stop)", () => {
+  test.beforeEach(({ renderer }) => {
+    test.skip(renderer === "html", "The default is the wrapper's; HTML authors every tabindex");
+  });
+
+  test("an authored `tabIndex` reaches a bare menubar item", async ({ page, renderer }) => {
+    await page.goto(`/${renderer}/menu/menubar-tabstop`);
+    await expect(page.getByTestId("link-1")).toHaveAttribute("tabindex", "0");
+    await expect(page.getByTestId("trigger-1")).toHaveAttribute("tabindex", "-1");
     await expect(page.getByTestId("trigger-2")).toHaveAttribute("tabindex", "-1");
   });
 
-  test("moves the tab stop on unmount and rejects late claimers", async ({ page, renderer }) => {
-    test.skip(renderer !== "vue", "Exercises Vue reactivity semantics");
-    await page.goto("/vue/menu/menubar-dynamic");
-    await expect(page.getByTestId("trigger-1")).toHaveAttribute("tabindex", "0");
-    await page.getByTestId("add-extra").click();
-    await expect(page.getByTestId("trigger-3")).toHaveAttribute("tabindex", "-1");
-    await expect(page.getByTestId("trigger-1")).toHaveAttribute("tabindex", "0");
-    await page.getByTestId("remove-first").click();
-    await expect(page.getByTestId("trigger-2")).toHaveAttribute("tabindex", "0");
-    await expect(page.getByTestId("trigger-3")).toHaveAttribute("tabindex", "-1");
+  test("an authored `tabIndex` reaches a trigger", async ({ page, renderer }) => {
+    await page.goto(`/${renderer}/menu/menubar`);
+    await expect(page.getByTestId("menubar-trigger-1")).toHaveAttribute("tabindex", "0");
+    await expect(page.getByTestId("menubar-trigger-2")).toHaveAttribute("tabindex", "-1");
+  });
+
+  test("an authored attribute never takes the trigger's id or role", async ({ page, renderer }) => {
+    await page.goto(`/${renderer}/menu/menubar-tabstop`);
+    const trigger = page.getByTestId("trigger-2");
+    await expect(trigger).toHaveAttribute("id", /^mct:menu:/);
+    await expect(trigger).toHaveAttribute("role", "menuitem");
+    await expect(trigger).toHaveAttribute("aria-controls", /^mcc:menu:/);
+  });
+
+  test("`Tab` lands on the first item in the bar", async ({ page, renderer }) => {
+    await page.goto(`/${renderer}/menu/menubar-tabstop`);
+    await page.keyboard.press("Tab");
+    await expect(page.getByTestId("link-1")).toBeFocused();
+  });
+
+  test("ArrowRight roves from the bare item into the first menu", async ({ page, renderer }) => {
+    await page.goto(`/${renderer}/menu/menubar-tabstop`);
+    await page.getByTestId("link-1").focus();
+    await page.keyboard.press("ArrowRight");
+    await expect(page.getByTestId("trigger-1")).toBeFocused();
+    await page.keyboard.press("ArrowRight");
+    await expect(page.getByTestId("trigger-2")).toBeFocused();
   });
 });
 

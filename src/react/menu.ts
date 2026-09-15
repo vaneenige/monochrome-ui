@@ -10,12 +10,13 @@ function useMenuContext() {
 
 function Root({ children }: { children: ReactNode }): ReactElement {
   const id = useId();
-  return createElement(MenuContext, { value: { id, tabStop: true, item: false } }, children);
+  return createElement(MenuContext, { value: { id, item: false } }, children);
 }
 
 function Trigger({
   children,
   disabled,
+  tabIndex,
   ...props
 }: BaseProps & { disabled?: boolean }): ReactElement {
   const context = useMenuContext();
@@ -28,7 +29,7 @@ function Trigger({
       "aria-controls": `mcc:menu:${context.id}`,
       "aria-expanded": "false",
       "aria-haspopup": "menu",
-      tabIndex: context.tabStop ? 0 : -1,
+      tabIndex: tabIndex ?? (context.item ? -1 : 0),
       role: context.item ? "menuitem" : "button",
       ...(disabled ? { "aria-disabled": "true" } : {}),
     },
@@ -60,12 +61,13 @@ const menuItem = (role: string, checkable: boolean) =>
     defaultChecked,
     disabled,
     href,
+    tabIndex,
     ...props
   }: ItemProps & CheckedItemProps): ReactElement {
     const shared = {
       ...props,
       role,
-      tabIndex: -1,
+      tabIndex: tabIndex ?? -1,
       ...(checkable ? { "aria-checked": defaultChecked ?? false } : {}),
     };
     const inner = disabled
@@ -92,7 +94,7 @@ function Group({ children, ...props }: BaseProps): ReactElement {
   const id = useId();
   return createElement(
     MenuContext,
-    { value: { id, tabStop: false, item: true } },
+    { value: { id, item: true } },
     createElement("li", { ...props, role: "none" }, children),
   );
 }

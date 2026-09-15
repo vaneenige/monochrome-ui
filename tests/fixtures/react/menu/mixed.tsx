@@ -19,7 +19,9 @@ export default () => (
       </Menu.Root>
       <Menubar.Root>
         <Menubar.Menu>
-          <Menubar.Trigger data-testid="menubar-a-trigger-1">A1</Menubar.Trigger>
+          <Menubar.Trigger tabIndex={0} data-testid="menubar-a-trigger-1">
+            A1
+          </Menubar.Trigger>
           <Menubar.Popover data-testid="menubar-a-list-1">
             <Menubar.Item>A1.1</Menubar.Item>
           </Menubar.Popover>
@@ -33,7 +35,9 @@ export default () => (
       </Menubar.Root>
       <Menubar.Root>
         <Menubar.Menu>
-          <Menubar.Trigger data-testid="menubar-b-trigger-1">B1</Menubar.Trigger>
+          <Menubar.Trigger tabIndex={0} data-testid="menubar-b-trigger-1">
+            B1
+          </Menubar.Trigger>
           <Menubar.Popover data-testid="menubar-b-list-1">
             <Menubar.Item>B1.1</Menubar.Item>
           </Menubar.Popover>

@@ -5,7 +5,10 @@ import { Menubar } from "monochrome/vue"
 <template>
   <Menubar.Root data-testid="menubar-list">
     <Menubar.Menu>
-      <Menubar.Trigger data-testid="menubar-trigger-1">
+      <Menubar.Trigger
+        tabindex="0"
+        data-testid="menubar-trigger-1"
+      >
         MenuTrigger 1
       </Menubar.Trigger>
       <Menubar.Popover data-testid="menubar-list-1">
