@@ -271,10 +271,10 @@ rolldown, emits `.d.ts` via `tsc`, and rewrites `package.json`'s
 core (headline / badge), `gzipSizes` has one entry per export
 (each component plus `index` and `router`), each an object with
 a gzip number per published flavour (`core` / `react` / `vue`;
-`router` is core-only), and `tests` is Playwright counts. The
-numbers are generated, never hand-edited. Dist bytes match a Node
-build of the same tree; `gzipSync` numbers can differ by a few
-bytes from Node's zlib, so the gate always restamps from Bun.
+`router` is core-only). The numbers are generated, never
+hand-edited. Dist bytes match a Node build of the same tree;
+`gzipSync` numbers can differ by a few bytes from Node's zlib,
+so the gate always restamps from Bun.
 
 **Requires Bun >= 1.4.** `build.ts` and the SSR test server
 (`tests/server.ts`) are run directly as TypeScript. CI pins
@@ -290,14 +290,14 @@ than as a workspace member, so `bun install` here owns its own
 **Every commit restamps `versionMeta`.** The pre-commit hook
 runs lint, build, and typecheck, then stages the restamped
 `package.json`. Never `--no-verify`, and never defer the
-rewrite: every commit carries sizes and counts from its
-own tree. Run the gate once per commit. Playwright
-`--list` during build needs no browsers.
+rewrite: every commit carries sizes from its own tree. Run
+the gate once per commit.
 
 `bun run test` is Chromium (`html`, `react`, `vue`).
 `bun run test:all` is the merge gate (WebKit and Firefox
-too) and runs in CI on the pull request. Install Chromium
-with `bun run test:install`; do not postinstall browsers.
+too) and runs in CI on the pull request. Browsers are CI
+and optional local; `bun run test:install` fetches
+Chromium. Do not postinstall browsers.
 
 CI `quality` fails if `package.json` drifts from the
 restamp. The required check is `ci`. Open a pull request

@@ -66,9 +66,10 @@ page loads; `import "monochrome/router"` is a no-op there.
 ## Contributing
 
 Library development uses Bun 1.4.2. Open a pull request
-against `main`; do not push to it. After `bun install`,
-fetch Chromium with `bun run test:install`, then
-`bun run test`. Linux may need
+against `main`; do not push to it. Commits do not need
+browsers: `bun install`, `bun run build`, and the hook
+are enough. To run tests locally: `bun run test:install`
+then `bun run test` (Chromium). Linux may need
 `bunx playwright install --with-deps chromium` (sudo) if
 the browser will not launch. `bun run test:all` is the CI
 matrix (Chromium, WebKit, Firefox).

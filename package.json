@@ -209,20 +209,6 @@
         "react": 359,
         "vue": 512
       }
-    },
-    "tests": {
-      "total": 483,
-      "a11y": 20,
-      "accordion": 34,
-      "architecture": 10,
-      "collapsible": 25,
-      "dialog": 22,
-      "menu": 231,
-      "popover": 31,
-      "router": 36,
-      "ssr": 9,
-      "tabs": 41,
-      "tooltip": 24
     }
   }
 }
