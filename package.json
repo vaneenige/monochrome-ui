@@ -123,7 +123,7 @@
     "format": "oxfmt src tests build.ts",
     "typecheck": "tsc --noEmit",
     "prepare": "sh scripts/git-hooks/install",
-    "prepublishOnly": "bun run build && bun run typecheck"
+    "prepublishOnly": "bun run lint && bun run build && bun run typecheck"
   },
   "peerDependencies": {
     "react": ">=19",

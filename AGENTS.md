@@ -265,7 +265,7 @@ descriptions.
 
 ## Build pipeline
 
-`bun run build` (`bun build.ts`) lints, bundles to `dist/` with
+`bun run build` (`bun build.ts`) bundles to `dist/` with
 rolldown, emits `.d.ts` via `tsc`, and rewrites `package.json`'s
 `versionMeta` from the current source: `gzipSize` is the combined
 core (headline / badge), `gzipSizes` has one entry per export

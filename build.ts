@@ -62,7 +62,6 @@ const builds = [
   },
 ];
 
-execSync("bun run lint", { stdio: "inherit" });
 rmSync("dist", { recursive: true, force: true });
 
 await Promise.all(
