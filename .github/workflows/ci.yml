@@ -43,6 +43,7 @@ jobs:
           retention-days: 1
 
   browsers:
+    name: ${{ matrix.browser }}
     needs: quality
     runs-on: ubuntu-latest
     timeout-minutes: 20
@@ -51,14 +52,11 @@ jobs:
       matrix:
         include:
           - browser: chromium
-            install: chromium
-            project: "--project=html --project=react --project=vue"
+            projects: "--project=html --project=react --project=vue"
           - browser: webkit
-            install: webkit
-            project: "--project=html-webkit"
+            projects: "--project=html-webkit"
           - browser: firefox
-            install: firefox
-            project: "--project=html-firefox"
+            projects: "--project=html-firefox"
     steps:
       - uses: actions/checkout@v7.0.1
 
@@ -75,7 +73,7 @@ jobs:
           restore-keys: |
             playwright-${{ runner.os }}-${{ matrix.browser }}-
 
-      - run: bunx playwright install --with-deps ${{ matrix.install }}
+      - run: bunx playwright install --with-deps ${{ matrix.browser }}
 
       - uses: actions/download-artifact@v4
         with:
@@ -84,7 +82,7 @@ jobs:
 
       - run: test -f dist/index.js
 
-      - run: bun --bun playwright test ${{ matrix.project }}
+      - run: bun --bun playwright test ${{ matrix.projects }}
 
       - if: failure()
         uses: actions/upload-artifact@v4
