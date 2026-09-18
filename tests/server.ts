@@ -225,6 +225,11 @@ const send = (res: ServerResponse, reply: Reply): void => {
   res.end(reply.body);
 };
 
+if (!existsSync(`${distDir}/index.js`)) {
+  console.error("dist/index.js missing. Run bun run build first.");
+  process.exit(1);
+}
+
 createServer((req, res) => {
   const pathname = new URL(req.url ?? "/", "http://localhost").pathname;
   let pending = cache.get(pathname);

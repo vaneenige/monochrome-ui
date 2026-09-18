@@ -1,0 +1,5 @@
+#!/bin/sh
+# No-op outside a git work tree so `bun install` on a file: copy
+# or unpacked tarball does not fail.
+git rev-parse --is-inside-work-tree >/dev/null 2>&1 || exit 0
+git config core.hooksPath scripts/git-hooks

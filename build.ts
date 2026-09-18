@@ -62,7 +62,6 @@ const builds = [
   },
 ];
 
-execSync("bun run lint", { stdio: "inherit" });
 rmSync("dist", { recursive: true, force: true });
 
 await Promise.all(
@@ -137,25 +136,14 @@ const gzipSizes: Record<string, Record<string, number>> = Object.fromEntries(
   ).sort(([a], [b]) => a.localeCompare(b)),
 );
 
-const listing = execSync("bun --bun playwright test --list --project=html --reporter=line", {
-  encoding: "utf8",
-});
-const testCounts: Record<string, number> = {};
-for (const line of listing.split("\n")) {
-  const name = line.match(/\[html\] › (\w+)\.spec\.ts:/)?.[1];
-  if (name) testCounts[name] = (testCounts[name] ?? 0) + 1;
-}
-const totalTests = Object.values(testCounts).reduce((a, b) => a + b, 0);
-
 const pkg = JSON.parse(readFileSync("package.json", "utf8"));
 pkg.versionMeta = {
   gzipSize: coreGz,
   gzipSizes,
-  tests: { total: totalTests, ...testCounts },
 };
 writeFileSync("package.json", `${JSON.stringify(pkg, null, 2)}\n`);
 
 const listed = cores.map((name) => `${name} ${fmt(gzipSizes[name]?.core ?? 0)}`).join(", ");
 console.log(
-  `Build complete. Core: ${fmt(coreGz)} gzipped, router: ${fmt(gzipSizes.router?.core ?? 0)} gzipped, standalone: ${listed}, ${totalTests} tests.`,
+  `Build complete. Core: ${fmt(coreGz)} gzipped, router: ${fmt(gzipSizes.router?.core ?? 0)} gzipped, standalone: ${listed}.`,
 );

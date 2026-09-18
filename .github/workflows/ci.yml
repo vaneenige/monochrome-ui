@@ -5,10 +5,19 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  workflow_call:
+
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
 
 jobs:
-  check:
+  quality:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v7.0.1
 
@@ -24,6 +33,77 @@ jobs:
 
       - run: bun run typecheck
 
-      - run: bunx playwright install chromium webkit firefox
+      - run: git diff --exit-code package.json
 
-      - run: bun run test
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+          if-no-files-found: error
+          retention-days: 1
+
+  browsers:
+    needs: quality
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - browser: chromium
+            install: chromium
+            project: "--project=html --project=react --project=vue"
+          - browser: webkit
+            install: webkit
+            project: "--project=html-webkit"
+          - browser: firefox
+            install: firefox
+            project: "--project=html-firefox"
+    steps:
+      - uses: actions/checkout@v7.0.1
+
+      - uses: oven-sh/setup-bun@v2.2.0
+        with:
+          bun-version-file: .bun-version
+
+      - run: bun install --frozen-lockfile
+
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ matrix.browser }}-${{ hashFiles('bun.lock') }}
+          restore-keys: |
+            playwright-${{ runner.os }}-${{ matrix.browser }}-
+
+      - run: bunx playwright install --with-deps ${{ matrix.install }}
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist
+
+      - run: test -f dist/index.js
+
+      - run: bun --bun playwright test ${{ matrix.project }}
+
+      - if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-${{ matrix.browser }}
+          path: |
+            playwright-report/
+            test-results/
+          if-no-files-found: ignore
+          retention-days: 7
+
+  ci:
+    name: ci
+    if: ${{ always() && !cancelled() }}
+    needs: [quality, browsers]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: All gates passed
+        run: |
+          test "${{ needs.quality.result }}" = "success"
+          test "${{ needs.browsers.result }}" = "success"
