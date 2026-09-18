@@ -13,7 +13,7 @@ on:
           - major
 
 permissions:
-  contents: write
+  contents: read
   id-token: write
 
 concurrency:
@@ -28,7 +28,11 @@ jobs:
     needs: check
     runs-on: ubuntu-latest
     steps:
+      # A write deploy key is the only bypass actor the main ruleset
+      # allows on a user-owned repo; GITHUB_TOKEN cannot push to main.
       - uses: actions/checkout@v7.0.1
+        with:
+          ssh-key: ${{ secrets.RELEASE_DEPLOY_KEY }}
 
       - uses: oven-sh/setup-bun@v2.2.0
         with:

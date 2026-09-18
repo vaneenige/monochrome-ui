@@ -302,10 +302,13 @@ CI `quality` fails if `package.json` drifts from the
 restamp and uploads `dist` for the browser jobs. The
 required check is `ci`. Open a pull request against
 `main`; the pre-push hook blocks direct pushes unless
-`CI` is set. Only GitHub Actions may push to `main`
-(the release workflow). Ruleset: block force pushes and
-deletions, require a pull request (0 approvals), require
-`ci` and an up-to-date branch, bypass GitHub Actions only.
+`CI` is set. Only the release workflow pushes to `main`,
+through the `RELEASE_DEPLOY_KEY` write deploy key. Ruleset
+on `main`: block force pushes and deletions, require a
+pull request (0 approvals), require `ci` and an up-to-date
+branch. Deploy keys are the only bypass; GitHub does not
+allow the Actions app as a bypass actor on a user-owned
+repo.
 
 ## Test naming
 
