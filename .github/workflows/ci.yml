@@ -43,7 +43,7 @@ jobs:
           retention-days: 1
 
   browsers:
-    name: ${{ matrix.browser }}
+    name: browsers / ${{ matrix.browser }}
     needs: quality
     runs-on: ubuntu-latest
     timeout-minutes: 20
