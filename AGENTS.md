@@ -265,16 +265,16 @@ descriptions.
 
 ## Build pipeline
 
-`bun run build` (`bun build.ts`) lints, bundles to `dist/` with
+`bun run build` (`bun build.ts`) bundles to `dist/` with
 rolldown, emits `.d.ts` via `tsc`, and rewrites `package.json`'s
 `versionMeta` from the current source: `gzipSize` is the combined
 core (headline / badge), `gzipSizes` has one entry per export
 (each component plus `index` and `router`), each an object with
 a gzip number per published flavour (`core` / `react` / `vue`;
-`router` is core-only), and `tests` is Playwright counts. The
-numbers are generated, never hand-edited. Dist bytes match a Node
-build of the same tree; `gzipSync` numbers can differ by a few
-bytes from Node's zlib, so the gate always restamps from Bun.
+`router` is core-only). The numbers are generated, never
+hand-edited. Dist bytes match a Node build of the same tree;
+`gzipSync` numbers can differ by a few bytes from Node's zlib,
+so the gate always restamps from Bun.
 
 **Requires Bun >= 1.4.** `build.ts` and the SSR test server
 (`tests/server.ts`) are run directly as TypeScript. CI pins
@@ -287,14 +287,28 @@ a docs-site submodule, the parent links it via `file:` rather
 than as a workspace member, so `bun install` here owns its own
 `node_modules` and lockfile.
 
-**Every commit runs the full gate.** The pre-commit hook runs
-lint, typecheck, build, and the complete test suite, then stages
-the restamped `package.json`. Never bypass it with `--no-verify`,
-and never defer the `versionMeta` rewrite to a later commit: every
-commit must carry the sizes and test counts produced by its own
-tree, so any checkout of any commit reports honest numbers. This
-applies to multi-commit series too; run the gate once per commit,
-not once at the end.
+**Every commit restamps `versionMeta`.** The pre-commit hook
+runs lint, build, and typecheck, then stages the restamped
+`package.json`. Never `--no-verify` locally; the release
+workflow is the exception after CI. Never defer the rewrite.
+
+`bun run test` is Chromium (`html`, `react`, `vue`).
+`bun run test:all` is the five-project matrix CI runs on
+the PR. `bun run test:install` fetches Chromium;
+`test:install:all` fetches all three. Do not postinstall
+browsers. `prepare` sets hooks only in a git work tree.
+
+CI `quality` fails if `package.json` drifts from the
+restamp and uploads `dist` for the browser jobs. The
+required check is `ci`. Open a pull request against
+`main`; the pre-push hook blocks direct pushes unless
+`CI` is set. Only the release workflow pushes to `main`,
+through the `RELEASE_DEPLOY_KEY` write deploy key. Ruleset
+on `main`: block force pushes and deletions, require a
+pull request (0 approvals), require `ci` and an up-to-date
+branch. Deploy keys are the only bypass; GitHub does not
+allow the Actions app as a bypass actor on a user-owned
+repo.
 
 ## Test naming
 

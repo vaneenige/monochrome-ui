@@ -114,13 +114,16 @@
   ],
   "scripts": {
     "build": "NODE_ENV=production bun build.ts",
-    "test": "bun --bun playwright test",
+    "test": "bun --bun playwright test --project=html --project=react --project=vue",
+    "test:all": "bun --bun playwright test",
+    "test:install": "bunx playwright install chromium",
+    "test:install:all": "bunx playwright install chromium webkit firefox",
     "lint": "oxlint src tests build.ts && oxfmt --check src tests build.ts",
     "lint:fix": "oxlint --fix src tests build.ts && oxfmt src tests build.ts",
     "format": "oxfmt src tests build.ts",
     "typecheck": "tsc --noEmit",
-    "prepare": "git config core.hooksPath scripts/git-hooks",
-    "prepublishOnly": "bun run build && bun run typecheck && bun run test"
+    "prepare": "sh scripts/git-hooks/install",
+    "prepublishOnly": "bun run lint && bun run build && bun run typecheck"
   },
   "peerDependencies": {
     "react": ">=19",
@@ -207,20 +210,6 @@
         "react": 359,
         "vue": 512
       }
-    },
-    "tests": {
-      "total": 483,
-      "a11y": 20,
-      "accordion": 34,
-      "architecture": 10,
-      "collapsible": 25,
-      "dialog": 22,
-      "menu": 231,
-      "popover": 31,
-      "router": 36,
-      "ssr": 9,
-      "tabs": 41,
-      "tooltip": 24
     }
   }
 }
