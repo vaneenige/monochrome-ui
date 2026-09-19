@@ -478,6 +478,21 @@ test.describe("Router", () => {
       expect(fetched.filter((u) => u.endsWith("/html/router/about")).length).toBe(before);
     });
 
+    test("shares an in-flight document prefetch on click", async ({ page }) => {
+      const fetched: string[] = [];
+      await page.route("**/html/router/about", async (route) => {
+        fetched.push(route.request().url());
+        await new Promise((resolve) => setTimeout(resolve, 200));
+        await route.continue();
+      });
+      await page.goto("/html/router/prefetch");
+      await expect.poll(() => fetched.length).toBe(1);
+      await page.getByTestId("nav-about").click();
+      await expect(page).toHaveURL("/html/router/about");
+      await expect(page.getByTestId("page-title")).toHaveText("About");
+      expect(fetched.length).toBe(1);
+    });
+
     test("keeps hover prefetch when `data-prefetch` is absent", async ({ page }) => {
       await page.goto("/html/router/index");
       const fetched: string[] = [];
