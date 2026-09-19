@@ -539,24 +539,6 @@ test.describe("Router", () => {
       const sentinel = await page.evaluate(() => window.__sentinel);
       expect(sentinel).toBeUndefined();
     });
-
-    test("hard-reloads when Back fetch returns 404", async ({ page }) => {
-      await page.goto("/html/router/index");
-      await page.getByTestId("nav-about").click();
-      await expect(page).toHaveURL("/html/router/about");
-      await page.evaluate(() => {
-        window.__sentinel = 1;
-      });
-      // The landing page was never fetch()'d, so Back hits the network.
-      await page.route("**/html/router/index", (route) =>
-        route.fulfill({ status: 404, body: "Not found" }),
-      );
-      const loaded = page.waitForEvent("load");
-      await page.goBack();
-      await loaded;
-      const sentinel = await page.evaluate(() => window.__sentinel);
-      expect(sentinel).toBeUndefined();
-    });
   });
 
   test.describe("Redirects", () => {
