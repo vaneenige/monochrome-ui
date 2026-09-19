@@ -1,6 +1,35 @@
 import type { Page } from "@playwright/test";
 import { expect, test } from "./fixtures";
 
+const historyState = (page: Page) =>
+  page.evaluate(() => {
+    const nav = window.navigation;
+    const href = nav?.currentEntry?.url ?? location.href;
+    return {
+      canGoForward: Boolean(nav?.canGoForward),
+      path: new URL(href).pathname,
+      search: new URL(href).search,
+      paths: [...(nav?.entries() ?? [])].map((entry) => new URL(entry.url ?? href).pathname),
+    };
+  });
+
+const listenNavigate = (page: Page) =>
+  page.evaluate(() => {
+    window.__navCount = 0;
+    addEventListener("mc:navigate", () => {
+      window.__navCount = (window.__navCount ?? 0) + 1;
+    });
+  });
+
+const recordFetches = async (page: Page) => {
+  const urls: string[] = [];
+  await page.route("**/*", (route) => {
+    urls.push(route.request().url());
+    void route.continue();
+  });
+  return urls;
+};
+
 test.describe("Router", () => {
   test.beforeEach(async ({ renderer }) => {
     test.skip(
@@ -131,6 +160,29 @@ test.describe("Router", () => {
       await expect(page).toHaveURL("/html/router/reference");
       await expect(page.getByTestId("page-title")).toHaveText("Reference");
       expect(await page.locator("[data-area='sidebar']").getAttribute("data-preserved")).toBeNull();
+    });
+
+    test("preserves matching `data-key` areas across Back and Forward", async ({ page }) => {
+      await page.goto("/html/router/docs");
+      await page.evaluate(() => {
+        document.querySelector("[data-area='sidebar']")?.setAttribute("data-preserved", "yes");
+      });
+      await page.getByTestId("nav-docs-guide").click();
+      await expect(page).toHaveURL("/html/router/docs-guide");
+      await expect(page.getByTestId("page-title")).toHaveText("Docs Guide");
+      await page.goBack();
+      await expect(page).toHaveURL("/html/router/docs");
+      await expect(page.getByTestId("page-title")).toHaveText("Docs");
+      expect(await page.locator("[data-area='sidebar']").getAttribute("data-preserved")).toBe(
+        "yes",
+      );
+      expect((await historyState(page)).canGoForward).toBe(true);
+      await page.goForward();
+      await expect(page).toHaveURL("/html/router/docs-guide");
+      await expect(page.getByTestId("page-title")).toHaveText("Docs Guide");
+      expect(await page.locator("[data-area='sidebar']").getAttribute("data-preserved")).toBe(
+        "yes",
+      );
     });
   });
 
@@ -265,6 +317,114 @@ test.describe("Router", () => {
       expect(sentinel).toBe(99);
     });
 
+    test("Back leaves a Forward entry in the Navigation API", async ({ page }) => {
+      await page.goto("/html/router/index");
+      await page.getByTestId("nav-about").click();
+      await expect(page).toHaveURL("/html/router/about");
+      expect((await historyState(page)).canGoForward).toBe(false);
+      await page.goBack();
+      await expect(page).toHaveURL("/html/router/index");
+      await expect(page.getByTestId("page-title")).toHaveText("Home");
+      const state = await historyState(page);
+      expect(state.canGoForward).toBe(true);
+      expect(state.path).toBe("/html/router/index");
+    });
+
+    test("Forward after Back restores the page without reloading", async ({ page }) => {
+      await page.goto("/html/router/index");
+      await page.getByTestId("nav-about").click();
+      await expect(page).toHaveURL("/html/router/about");
+      await page.evaluate(() => {
+        window.__sentinel = 99;
+      });
+      await page.goBack();
+      await expect(page).toHaveURL("/html/router/index");
+      expect((await historyState(page)).canGoForward).toBe(true);
+      await page.goForward();
+      await expect(page).toHaveURL("/html/router/about");
+      await expect(page).toHaveTitle("About");
+      await expect(page.getByTestId("page-title")).toHaveText("About");
+      expect(await page.evaluate(() => window.__sentinel)).toBe(99);
+      expect((await historyState(page)).canGoForward).toBe(false);
+    });
+
+    test("Back twice and Forward twice restore a three-page stack", async ({ page }) => {
+      await page.goto("/html/router/index");
+      await page.getByTestId("nav-about").click();
+      await expect(page.getByTestId("page-title")).toHaveText("About");
+      await page.getByTestId("nav-docs").click();
+      await expect(page.getByTestId("page-title")).toHaveText("Docs");
+      await page.evaluate(() => {
+        window.__sentinel = 7;
+      });
+      await page.goBack();
+      await expect(page).toHaveURL("/html/router/about");
+      await expect(page.getByTestId("page-title")).toHaveText("About");
+      expect((await historyState(page)).canGoForward).toBe(true);
+      await page.goBack();
+      await expect(page).toHaveURL("/html/router/index");
+      await expect(page.getByTestId("page-title")).toHaveText("Home");
+      await page.goForward();
+      await expect(page).toHaveURL("/html/router/about");
+      await expect(page.getByTestId("page-title")).toHaveText("About");
+      await page.goForward();
+      await expect(page).toHaveURL("/html/router/docs");
+      await expect(page.getByTestId("page-title")).toHaveText("Docs");
+      expect(await page.evaluate(() => window.__sentinel)).toBe(7);
+    });
+
+    test("a click from the middle of the stack drops Forward entries", async ({ page }) => {
+      await page.goto("/html/router/index");
+      await page.getByTestId("nav-about").click();
+      await expect(page).toHaveURL("/html/router/about");
+      await page.getByTestId("nav-docs").click();
+      await expect(page).toHaveURL("/html/router/docs");
+      await page.goBack();
+      await expect(page).toHaveURL("/html/router/about");
+      expect((await historyState(page)).canGoForward).toBe(true);
+      await page.getByTestId("nav-home").click();
+      await expect(page).toHaveURL("/html/router/index");
+      await expect(page.getByTestId("page-title")).toHaveText("Home");
+      expect((await historyState(page)).canGoForward).toBe(false);
+      await page.goForward();
+      await expect(page).toHaveURL("/html/router/index");
+      await expect(page.getByTestId("page-title")).toHaveText("Home");
+    });
+
+    test("moves focus to the swapped area on Back", async ({ page }) => {
+      await page.goto("/html/router/index");
+      await page.getByTestId("nav-about").click();
+      await expect(page.getByTestId("page-title")).toHaveText("About");
+      await page.goBack();
+      await expect(page.getByTestId("page-title")).toHaveText("Home");
+      await expect(page.locator("[data-area='root']")).toBeFocused();
+    });
+
+    test("restores head-meta on Back and Forward", async ({ page }) => {
+      await page.goto("/html/router/index");
+      await expect(page.locator("meta[data-area='head-meta']")).toHaveAttribute("content", "index");
+      await page.getByTestId("nav-about").click();
+      await expect(page.locator("meta[data-area='head-meta']")).toHaveAttribute("content", "about");
+      await page.goBack();
+      await expect(page.locator("meta[data-area='head-meta']")).toHaveAttribute("content", "index");
+      await page.goForward();
+      await expect(page.locator("meta[data-area='head-meta']")).toHaveAttribute("content", "about");
+    });
+
+    test("treats a query string as a distinct history entry", async ({ page }) => {
+      await page.goto("/html/router/index");
+      await page.getByTestId("nav-about-query").click();
+      await expect(page).toHaveURL("/html/router/about?from=nav");
+      await expect(page.getByTestId("page-title")).toHaveText("About");
+      expect((await historyState(page)).search).toBe("?from=nav");
+      await page.goBack();
+      await expect(page).toHaveURL("/html/router/index");
+      expect((await historyState(page)).canGoForward).toBe(true);
+      await page.goForward();
+      await expect(page).toHaveURL("/html/router/about?from=nav");
+      await expect(page.getByTestId("page-title")).toHaveText("About");
+    });
+
     test("restores scroll across native hash navigations", async ({ page }) => {
       await page.goto("/html/router/hash");
       await page.evaluate(() => window.scrollTo(0, 400));
@@ -320,6 +480,50 @@ test.describe("Router", () => {
       await page.reload();
       await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(600);
     });
+
+    test("restores scroll position on Forward navigation", async ({ page }) => {
+      await page.goto("/html/router/scroll");
+      await page.evaluate(() => window.scrollTo(0, 600));
+      await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(600);
+      await page.evaluate(() => {
+        document.querySelector<HTMLAnchorElement>("[data-testid='link-next']")?.click();
+      });
+      await expect(page).toHaveURL("/html/router/scroll-other");
+      await page.evaluate(() => window.scrollTo(0, 400));
+      await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(400);
+      await page.goBack();
+      await expect(page).toHaveURL("/html/router/scroll");
+      await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(600);
+      await page.goForward();
+      await expect(page).toHaveURL("/html/router/scroll-other");
+      await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(400);
+    });
+
+    test("`scrollRestoration` stays `auto` after Back and Forward", async ({ page }) => {
+      await page.goto("/html/router/index");
+      await page.getByTestId("nav-about").click();
+      await expect(page).toHaveURL("/html/router/about");
+      await page.goBack();
+      await expect(page).toHaveURL("/html/router/index");
+      await page.goForward();
+      await expect(page).toHaveURL("/html/router/about");
+      const mode = await page.evaluate(() => history.scrollRestoration);
+      expect(mode).toBe("auto");
+    });
+
+    test("Back after hash-clear restores the hash entry", async ({ page }) => {
+      await page.goto("/html/router/ignored");
+      await page.getByTestId("hash-link").click();
+      await expect(page).toHaveURL("/html/router/ignored#anchor");
+      await page.evaluate(() => {
+        window.__sentinel = 1;
+      });
+      await page.getByTestId("self-link").click();
+      await expect(page).toHaveURL("/html/router/ignored");
+      await page.goBack();
+      await expect(page).toHaveURL("/html/router/ignored#anchor");
+      expect(await page.evaluate(() => window.__sentinel)).toBe(1);
+    });
   });
 
   test.describe("Fallback", () => {
@@ -332,6 +536,24 @@ test.describe("Router", () => {
       await page.getByTestId("nav-missing").click();
       await loaded;
       await expect(page).toHaveURL(/does-not-exist/);
+      const sentinel = await page.evaluate(() => window.__sentinel);
+      expect(sentinel).toBeUndefined();
+    });
+
+    test("hard-reloads when Back fetch returns 404", async ({ page }) => {
+      await page.goto("/html/router/index");
+      await page.getByTestId("nav-about").click();
+      await expect(page).toHaveURL("/html/router/about");
+      await page.evaluate(() => {
+        window.__sentinel = 1;
+      });
+      // The landing page was never fetch()'d, so Back hits the network.
+      await page.route("**/html/router/index", (route) =>
+        route.fulfill({ status: 404, body: "Not found" }),
+      );
+      const loaded = page.waitForEvent("load");
+      await page.goBack();
+      await loaded;
       const sentinel = await page.evaluate(() => window.__sentinel);
       expect(sentinel).toBeUndefined();
     });
@@ -356,18 +578,53 @@ test.describe("Router", () => {
       const url = page.url();
       expect(url).not.toContain("/html/router/about");
     });
+
+    test("Back after a redirect skips the redirect URL", async ({ page }) => {
+      await page.goto("/html/router/index");
+      await page.evaluate(() => {
+        window.__sentinel = 3;
+      });
+      await page.getByTestId("nav-redirect").click();
+      await expect(page).toHaveURL("/html/router/about");
+      await expect(page.getByTestId("page-title")).toHaveText("About");
+      await page.goBack();
+      await expect(page).toHaveURL("/html/router/index");
+      await expect(page.getByTestId("page-title")).toHaveText("Home");
+      expect(page.url()).not.toContain("/html/router/redirect");
+      expect(await page.evaluate(() => window.__sentinel)).toBe(3);
+      expect((await historyState(page)).canGoForward).toBe(true);
+    });
+
+    test("Forward after redirect Back restores the final URL", async ({ page }) => {
+      await page.goto("/html/router/index");
+      await page.getByTestId("nav-redirect").click();
+      await expect(page).toHaveURL("/html/router/about");
+      await page.goBack();
+      await expect(page).toHaveURL("/html/router/index");
+      await page.goForward();
+      await expect(page).toHaveURL("/html/router/about");
+      await expect(page.getByTestId("page-title")).toHaveText("About");
+      expect(page.url()).not.toContain("/html/router/redirect");
+      const state = await historyState(page);
+      expect(state.path).toBe("/html/router/about");
+      expect(state.paths).not.toContain("/html/router/redirect");
+    });
+
+    test("a second visit to the redirected URL is a same-URL no-op", async ({ page }) => {
+      await page.goto("/html/router/index");
+      await page.getByTestId("nav-redirect").click();
+      await expect(page).toHaveURL("/html/router/about");
+      await page.evaluate(() => {
+        document.querySelector("[data-area='root']")?.setAttribute("data-preserved", "yes");
+      });
+      await page.getByTestId("nav-about").click();
+      await page.waitForTimeout(80);
+      await expect(page).toHaveURL("/html/router/about");
+      expect(await page.locator("[data-area='root']").getAttribute("data-preserved")).toBe("yes");
+    });
   });
 
   test.describe("Prefetching", () => {
-    const recordFetches = async (page: Page) => {
-      const urls: string[] = [];
-      await page.route("**/*", (route) => {
-        urls.push(route.request().url());
-        void route.continue();
-      });
-      return urls;
-    };
-
     test("does not prefetch before any user interaction", async ({ page }) => {
       await page.goto("/html/router/index");
       await page.waitForLoadState("networkidle");
@@ -399,6 +656,23 @@ test.describe("Router", () => {
       await page.getByTestId("nav-about").click();
       await expect(page).toHaveURL("/html/router/about");
       expect(fetched).toHaveLength(before);
+    });
+
+    test("Back and Forward reuse cached HTML", async ({ page }) => {
+      await page.goto("/html/router/index");
+      await page.getByTestId("nav-about").click();
+      await expect(page).toHaveURL("/html/router/about");
+      await page.getByTestId("nav-docs").click();
+      await expect(page).toHaveURL("/html/router/docs");
+      const fetched = await recordFetches(page);
+      await page.goBack();
+      await expect(page).toHaveURL("/html/router/about");
+      await expect(page.getByTestId("page-title")).toHaveText("About");
+      await page.goForward();
+      await expect(page).toHaveURL("/html/router/docs");
+      await expect(page.getByTestId("page-title")).toHaveText("Docs");
+      expect(fetched.some((u) => u.includes("/html/router/about"))).toBe(false);
+      expect(fetched.some((u) => u.includes("/html/router/docs"))).toBe(false);
     });
   });
 
@@ -440,22 +714,65 @@ test.describe("Router", () => {
       const count = await page.evaluate(() => window.__navCount);
       expect(count).toBe(1);
     });
+
+    test("click then immediate Back lands on the previous page", async ({ page }) => {
+      await page.route("**/html/router/about", async (route) => {
+        await new Promise((r) => setTimeout(r, 400));
+        await route.continue();
+      });
+      await page.goto("/html/router/index");
+      await page.evaluate(() => {
+        window.__sentinel = 1;
+      });
+      await page.getByTestId("nav-about").click();
+      await expect(page).toHaveURL("/html/router/about");
+      await page.goBack();
+      await expect(page).toHaveURL("/html/router/index");
+      await expect(page.getByTestId("page-title")).toHaveText("Home");
+      await page.waitForTimeout(500);
+      await expect(page).toHaveURL("/html/router/index");
+      await expect(page.getByTestId("page-title")).toHaveText("Home");
+      expect(await page.evaluate(() => window.__sentinel)).toBe(1);
+    });
   });
 
   test.describe("Navigate event", () => {
     test("fires after a successful forward navigation", async ({ page }) => {
       await page.goto("/html/router/index");
-      await page.evaluate(() => {
-        window.__navCount = 0;
-        addEventListener("mc:navigate", () => {
-          window.__navCount = (window.__navCount ?? 0) + 1;
-        });
-      });
+      await listenNavigate(page);
       await page.getByTestId("nav-about").click();
       await expect(page).toHaveURL("/html/router/about");
       await expect(page.getByTestId("page-title")).toHaveText("About");
       const count = await page.evaluate(() => window.__navCount);
       expect(count).toBe(1);
+    });
+
+    test("fires on path Back and Forward", async ({ page }) => {
+      await page.goto("/html/router/index");
+      await listenNavigate(page);
+      await page.getByTestId("nav-about").click();
+      await expect(page.getByTestId("page-title")).toHaveText("About");
+      await page.goBack();
+      await expect(page.getByTestId("page-title")).toHaveText("Home");
+      await page.goForward();
+      await expect(page.getByTestId("page-title")).toHaveText("About");
+      const count = await page.evaluate(() => window.__navCount);
+      expect(count).toBe(3);
+    });
+
+    test("hash Back and Forward do not fire", async ({ page }) => {
+      await page.goto("/html/router/hash");
+      await listenNavigate(page);
+      await page.evaluate(() => {
+        document.querySelector<HTMLAnchorElement>("[data-testid='hash-link']")?.click();
+      });
+      await expect(page).toHaveURL("/html/router/hash#section");
+      await page.goBack();
+      await expect(page).toHaveURL("/html/router/hash");
+      await page.goForward();
+      await expect(page).toHaveURL("/html/router/hash#section");
+      const count = await page.evaluate(() => window.__navCount);
+      expect(count).toBe(0);
     });
   });
 });
