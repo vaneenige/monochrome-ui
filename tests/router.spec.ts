@@ -90,6 +90,14 @@ test.describe("Router", () => {
       await expect(page.locator("[data-area='sidebar']")).toBeVisible();
     });
 
+    test("removes an area the new page does not declare", async ({ page }) => {
+      await page.goto("/html/router/index");
+      await expect(page.locator("meta[data-area='head-meta']")).toHaveCount(1);
+      await page.getByTestId("nav-docs").click();
+      await expect(page.getByTestId("page-title")).toHaveText("Docs");
+      await expect(page.locator("meta[data-area='head-meta']")).toHaveCount(0);
+    });
+
     test("hard-reloads when falling back without a root area", async ({ page }) => {
       await page.goto("/html/router/no-root");
       await page.evaluate(() => {
@@ -194,6 +202,19 @@ test.describe("Router", () => {
       expect(sentinel).toBeUndefined();
     });
 
+    test("ignores form submissions", async ({ page }) => {
+      await page.goto("/html/router/ignored");
+      await page.evaluate(() => {
+        window.__sentinel = 1;
+      });
+      const loaded = page.waitForEvent("load");
+      await page.getByRole("button", { name: "Go" }).click();
+      await loaded;
+      await expect(page).toHaveURL(/\/html\/router\/about/);
+      const sentinel = await page.evaluate(() => window.__sentinel);
+      expect(sentinel).toBeUndefined();
+    });
+
     test("ignores same-page hash links", async ({ page }) => {
       await page.goto("/html/router/ignored");
       await page.evaluate(() => {
@@ -263,6 +284,21 @@ test.describe("Router", () => {
       await expect(page.getByTestId("page-title")).toHaveText("Home");
       const sentinel = await page.evaluate(() => window.__sentinel);
       expect(sentinel).toBe(99);
+    });
+
+    test("Forward after Back restores the page without reloading", async ({ page }) => {
+      await page.goto("/html/router/index");
+      await page.getByTestId("nav-about").click();
+      await expect(page.getByTestId("page-title")).toHaveText("About");
+      await page.evaluate(() => {
+        window.__sentinel = 3;
+      });
+      await page.goBack();
+      await expect(page.getByTestId("page-title")).toHaveText("Home");
+      await page.goForward();
+      await expect(page).toHaveURL("/html/router/about");
+      await expect(page.getByTestId("page-title")).toHaveText("About");
+      expect(await page.evaluate(() => window.__sentinel)).toBe(3);
     });
 
     test("restores scroll across native hash navigations", async ({ page }) => {
@@ -401,6 +437,27 @@ test.describe("Router", () => {
       expect(fetched).toHaveLength(before);
     });
 
+    test("retries after a failed prefetch", async ({ page }) => {
+      let attempts = 0;
+      await page.route("**/html/router/about", async (route) => {
+        if (route.request().resourceType() === "fetch") {
+          attempts++;
+          if (attempts === 1) {
+            await route.fulfill({ status: 500, body: "no" });
+            return;
+          }
+        }
+        await route.continue();
+      });
+      await page.goto("/html/router/index");
+      await page.getByTestId("nav-about").hover();
+      await expect.poll(() => attempts).toBe(1);
+      await page.getByTestId("nav-about").click();
+      await expect(page).toHaveURL("/html/router/about");
+      await expect(page.getByTestId("page-title")).toHaveText("About");
+      expect(attempts).toBe(2);
+    });
+
     test("does not prefetch the current path", async ({ page }) => {
       await page.goto("/html/router/index");
       const fetched = await recordFetches(page);
@@ -461,6 +518,7 @@ test.describe("Router", () => {
       expect(fetched.some((u) => u.includes("example.com"))).toBe(false);
       expect(fetched.some((u) => u.endsWith("/html/router/scroll"))).toBe(false);
       expect(fetched.some((u) => u.endsWith("/html/router/scroll-other"))).toBe(false);
+      expect(fetched.some((u) => u.endsWith("/html/router/frag-source"))).toBe(false);
     });
 
     test("uses the cached document on click without a second fetch", async ({ page }) => {
@@ -634,6 +692,23 @@ test.describe("Router", () => {
       await page.getByTestId("nav-about").click();
       await expect(page).toHaveURL("/html/router/about");
       await expect(page.getByTestId("page-title")).toHaveText("About");
+      const count = await page.evaluate(() => window.__navCount);
+      expect(count).toBe(1);
+    });
+
+    test("fires on path Back", async ({ page }) => {
+      await page.goto("/html/router/index");
+      await page.getByTestId("nav-about").click();
+      await expect(page.getByTestId("page-title")).toHaveText("About");
+      await page.evaluate(() => {
+        window.__navCount = 0;
+        addEventListener("mc:navigate", () => {
+          window.__navCount = (window.__navCount ?? 0) + 1;
+        });
+      });
+      await page.goBack();
+      await expect(page).toHaveURL("/html/router/index");
+      await expect(page.getByTestId("page-title")).toHaveText("Home");
       const count = await page.evaluate(() => window.__navCount);
       expect(count).toBe(1);
     });

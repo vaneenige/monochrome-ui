@@ -21,13 +21,18 @@ if (navigation) {
         }
         const result: Fetched = [await response.text(), response.url];
         const pending = cache.get(key);
-        if (pending && response.url !== key) cache.set(response.url, pending);
+        if (pending && response.url !== key && !cache.has(response.url)) {
+          cache.set(response.url, pending);
+        }
         return result;
       } catch {
         return null;
       }
     })();
     cache.set(key, promise);
+    void promise.then((result) => {
+      if (!result) cache.delete(key);
+    });
     return promise;
   };
 
@@ -62,27 +67,28 @@ if (navigation) {
     }
   };
 
-  const queuePrefetch = (key: string) => {
-    if (key !== lastKey && !cache.has(key) && !prefetchQueue.includes(key)) {
-      prefetchQueue.push(key);
-      pumpPrefetch();
-    }
-  };
-
   const prefetchDocument = () => {
-    if (document.documentElement.dataset.prefetch === "document") {
-      const connection = "connection" in navigator ? navigator.connection : null;
-      const saveData =
-        connection &&
-        typeof connection === "object" &&
-        "saveData" in connection &&
-        connection.saveData === true;
-      if (!saveData && document.querySelector("[data-area=root]")) {
-        for (const el of document.links) {
-          if (canPrefetch(el)) queuePrefetch(stripHash(el.href));
+    const connection = "connection" in navigator ? navigator.connection : null;
+    const saveData =
+      connection &&
+      typeof connection === "object" &&
+      "saveData" in connection &&
+      connection.saveData;
+    if (
+      document.documentElement.dataset.prefetch === "document" &&
+      !saveData &&
+      document.querySelector("[data-area=root]")
+    ) {
+      for (const el of document.links) {
+        if (canPrefetch(el)) {
+          const key = stripHash(el.href);
+          if (key !== lastKey && !cache.has(key) && !prefetchQueue.includes(key)) {
+            prefetchQueue.push(key);
+          }
         }
       }
-    }
+      pumpPrefetch();
+    } else prefetchQueue.length = 0;
   };
 
   const swap = (newDoc: Document) => {
@@ -101,10 +107,12 @@ if (navigation) {
     for (const [name, el] of current) {
       if (el.isConnected) {
         const next = incoming.get(name);
-        if (next && (!el.dataset.key || el.dataset.key !== next.dataset.key)) {
-          el.replaceWith(next);
-          area ||= next;
-        }
+        if (next) {
+          if (!el.dataset.key || el.dataset.key !== next.dataset.key) {
+            el.replaceWith(next);
+            if (!document.head.contains(next)) area ||= next;
+          }
+        } else el.remove();
       }
     }
     area ||= curRoot;
@@ -114,10 +122,12 @@ if (navigation) {
   };
 
   const hint = (event: Event) => {
-    if (event.target instanceof Element) {
-      const anchor = event.target.closest("a");
-      if (canPrefetch(anchor)) {
-        const key = stripHash(anchor.href);
+    if (event.target instanceof Node) {
+      let el: Element | null =
+        event.target instanceof Element ? event.target : event.target.parentElement;
+      while (el && !(el instanceof HTMLAnchorElement)) el = el.parentElement;
+      if (canPrefetch(el)) {
+        const key = stripHash(el.href);
         if (key !== lastKey) void fetchPage(key);
       }
     }
@@ -157,8 +167,8 @@ if (navigation) {
           if (result) {
             const [html, url] = result;
             const newDoc = parser.parseFromString(html, "text/html");
-            document.title = newDoc.title;
             if (swap(newDoc)) {
+              document.title = newDoc.title;
               lastKey = stripHash(url);
               if (lastKey !== key) {
                 const hash = href.slice(key.length + 1);

@@ -66,6 +66,10 @@ test.describe("Architecture invariants", () => {
     expect(router.split("querySelectorAll").length - 1).toBe(1);
   });
 
+  test("router contains no `closest`", () => {
+    expect(router).not.toContain(".closest(");
+  });
+
   test("core and router contain no `as` casts or non-null assertions", () => {
     for (const source of [...cores, router]) {
       // Prose mentions "as" too; only code lines count.

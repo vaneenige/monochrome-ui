@@ -6,18 +6,40 @@ whose `data-key` differs, set the title, focus the swapped
 area, fire `mc:navigate`. No `window.navigation`: full page
 loads.
 
-Needs `data-area="root"`. Matching area names and root keys
-keep the current root. Prefetch on hover and focus, only for
-same-origin links that would intercept, not the current path.
-Pages stay cached for the session. Stale work skips the swap.
-Failure reloads.
+**`data-area` and `data-key`.** A page needs
+`data-area="root"`. On swap, the router collects named areas
+from the current and incoming documents. It keeps the current
+root when both sides list the same names and the root
+`data-key` values match. Otherwise it replaces the root.
+Connected areas whose `data-key` is missing or differs are
+replaced. An area the new page does not declare is removed.
+Focus moves to the first replaced body area, or the root if
+none was replaced. Stale aborted work skips the swap. A
+failed fetch or swap reloads.
+
+**Hover and focus prefetch.** `mouseover` and `focusin` on a
+same-origin link that would intercept (not `download`, not
+`target="_blank"`, not `rel="external"`) fetch that URL when
+it is not the current path. Priority stays `"auto"`. This
+path runs whether or not `data-prefetch` is set, and
+Save-Data does not stop it.
+
+**In-memory page cache.** Fetched HTML is stored in a `Map`
+keyed by URL, and by the final URL after a same-origin
+redirect. In-flight promises are shared, so a click during
+prefetch reuses the same request. A failed fetch is dropped
+so the next attempt can retry. The map lives for the life of
+the page; a full load clears it. Entries hold raw HTML only.
 
 **Document prefetch.** `data-prefetch="document"` on `<html>`
-also fetches those links after `load` and after each swap,
-two at a time, at low fetch priority. Save-Data skips that
-walk. Parse still happens on navigate. Incoming `<html>`
-copies or drops the attribute so the next walk follows the
-new page.
+also walks `document.links` after `load` and after each
+successful swap, queueing URLs that pass the same prefetch
+filters as hover. At most two fetches run at a time, each
+with fetch priority `"low"`. Save-Data skips that walk and
+clears the queue. Parse still happens on navigate. After a
+swap, incoming `<html>` copies `data-prefetch="document"`
+onto the live document or removes the attribute, so the next
+walk follows the new page.
 
 ## Handles
 
