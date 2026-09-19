@@ -12,6 +12,13 @@ same-origin links that would intercept, not the current path.
 Pages stay cached for the session. Stale work skips the swap.
 Failure reloads.
 
+**Document prefetch.** `data-prefetch="document"` on `<html>`
+also fetches those links after `load` and after each swap,
+two at a time, at low fetch priority. Save-Data skips that
+walk. Parse still happens on navigate. Incoming `<html>`
+copies or drops the attribute so the next walk follows the
+new page.
+
 ## Handles
 
 Clicks and Back/Forward to another path. Hash-clear on the

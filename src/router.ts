@@ -4,15 +4,18 @@ const navigation = typeof document !== "undefined" && window.navigation;
 if (navigation) {
   const cache = new Map<string, Promise<Fetched | null>>();
   const parser = new DOMParser();
+  const prefetchLimit = 2;
+  const prefetchQueue: string[] = [];
   const stripHash = (url: string) => url.replace(/#.*/, "");
   let lastKey = stripHash(location.href);
+  let prefetching = 0;
 
-  const fetchPage = (key: string): Promise<Fetched | null> => {
+  const fetchPage = (key: string, low?: boolean): Promise<Fetched | null> => {
     const hit = cache.get(key);
     if (hit) return hit;
     const promise = (async () => {
       try {
-        const response = await fetch(key);
+        const response = await fetch(key, { priority: low ? "low" : "auto" });
         if (!response.ok || new URL(response.url).origin !== location.origin) {
           return null;
         }
@@ -33,6 +36,9 @@ if (navigation) {
     el.origin === location.origin &&
     !el.relList.contains("external");
 
+  const canPrefetch = (el: EventTarget | null): el is HTMLAnchorElement =>
+    canHandle(el) && !el.hasAttribute("download") && el.target !== "_blank";
+
   const collectAreas = (root: Document | ParentNode) => {
     const map = new Map<string, HTMLElement>();
     root.querySelectorAll<HTMLElement>("[data-area]").forEach((el) => {
@@ -40,6 +46,43 @@ if (navigation) {
       if (name && !map.has(name)) map.set(name, el);
     });
     return map;
+  };
+
+  const pumpPrefetch = () => {
+    while (prefetching < prefetchLimit) {
+      const key = prefetchQueue[0];
+      if (!key) break;
+      prefetchQueue.shift();
+      if (key === lastKey || cache.has(key)) continue;
+      prefetching++;
+      void fetchPage(key, true).then(() => {
+        prefetching--;
+        pumpPrefetch();
+      });
+    }
+  };
+
+  const queuePrefetch = (key: string) => {
+    if (key !== lastKey && !cache.has(key) && !prefetchQueue.includes(key)) {
+      prefetchQueue.push(key);
+      pumpPrefetch();
+    }
+  };
+
+  const prefetchDocument = () => {
+    if (document.documentElement.dataset.prefetch === "document") {
+      const connection = "connection" in navigator ? navigator.connection : null;
+      const saveData =
+        connection &&
+        typeof connection === "object" &&
+        "saveData" in connection &&
+        connection.saveData === true;
+      if (!saveData && document.querySelector("[data-area=root]")) {
+        for (const el of document.links) {
+          if (canPrefetch(el)) queuePrefetch(stripHash(el.href));
+        }
+      }
+    }
   };
 
   const swap = (newDoc: Document) => {
@@ -73,7 +116,7 @@ if (navigation) {
   const hint = (event: Event) => {
     if (event.target instanceof Element) {
       const anchor = event.target.closest("a");
-      if (canHandle(anchor) && !anchor.hasAttribute("download") && anchor.target !== "_blank") {
+      if (canPrefetch(anchor)) {
         const key = stripHash(anchor.href);
         if (key !== lastKey) void fetchPage(key);
       }
@@ -81,6 +124,8 @@ if (navigation) {
   };
   addEventListener("mouseover", hint);
   addEventListener("focusin", hint);
+  if (document.readyState === "complete") prefetchDocument();
+  else addEventListener("load", prefetchDocument);
 
   navigation.addEventListener("navigate", (event) => {
     const type = event.navigationType;
@@ -119,7 +164,11 @@ if (navigation) {
                 const hash = href.slice(key.length + 1);
                 history.replaceState(history.state, "", hash ? lastKey + "#" + hash : url);
               }
+              if (newDoc.documentElement.dataset.prefetch === "document") {
+                document.documentElement.dataset.prefetch = "document";
+              } else document.documentElement.removeAttribute("data-prefetch");
               dispatchEvent(new Event("mc:navigate"));
+              prefetchDocument();
               return;
             }
           }

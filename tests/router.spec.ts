@@ -434,6 +434,139 @@ test.describe("Router", () => {
     });
   });
 
+  test.describe("Prefetching (document)", () => {
+    test("fetches interceptable links after `load`", async ({ page }) => {
+      const fetched: string[] = [];
+      await page.route("**/*", (route) => {
+        fetched.push(route.request().url());
+        void route.continue();
+      });
+      await page.goto("/html/router/prefetch");
+      await expect.poll(() => fetched.some((u) => u.endsWith("/html/router/about"))).toBe(true);
+      await expect.poll(() => fetched.some((u) => u.endsWith("/html/router/docs"))).toBe(true);
+    });
+
+    test("does not fetch the current path, downloads, or cross-origin", async ({ page }) => {
+      const fetched: string[] = [];
+      await page.route("**/*", (route) => {
+        fetched.push(route.request().url());
+        void route.continue();
+      });
+      await page.goto("/html/router/prefetch");
+      await expect
+        .poll(() => fetched.some((u) => u.endsWith("/html/router/prefetch-off")))
+        .toBe(true);
+      await page.waitForLoadState("networkidle");
+      expect(fetched.filter((u) => u.endsWith("/html/router/prefetch")).length).toBe(1);
+      expect(fetched.some((u) => u.includes("example.com"))).toBe(false);
+      expect(fetched.some((u) => u.endsWith("/html/router/scroll"))).toBe(false);
+      expect(fetched.some((u) => u.endsWith("/html/router/scroll-other"))).toBe(false);
+    });
+
+    test("uses the cached document on click without a second fetch", async ({ page }) => {
+      const fetched: string[] = [];
+      await page.route("**/*", (route) => {
+        fetched.push(route.request().url());
+        void route.continue();
+      });
+      await page.goto("/html/router/prefetch");
+      await expect.poll(() => fetched.some((u) => u.endsWith("/html/router/about"))).toBe(true);
+      const before = fetched.filter((u) => u.endsWith("/html/router/about")).length;
+      await page.getByTestId("nav-about").click();
+      await expect(page).toHaveURL("/html/router/about");
+      await expect(page.getByTestId("page-title")).toHaveText("About");
+      expect(fetched.filter((u) => u.endsWith("/html/router/about")).length).toBe(before);
+    });
+
+    test("keeps hover prefetch when `data-prefetch` is absent", async ({ page }) => {
+      await page.goto("/html/router/index");
+      const fetched: string[] = [];
+      await page.route("**/*", (route) => {
+        fetched.push(route.request().url());
+        void route.continue();
+      });
+      await page.getByTestId("nav-about").hover();
+      await expect.poll(() => fetched.some((u) => u.endsWith("/html/router/about"))).toBe(true);
+    });
+
+    test("skips the document walk when Save-Data is on", async ({ page }) => {
+      await page.addInitScript(() => {
+        Object.defineProperty(navigator, "connection", {
+          configurable: true,
+          value: { saveData: true },
+        });
+      });
+      const fetched: string[] = [];
+      await page.route("**/*", (route) => {
+        fetched.push(route.request().url());
+        void route.continue();
+      });
+      await page.goto("/html/router/prefetch");
+      await page.waitForLoadState("networkidle");
+      await page.waitForTimeout(120);
+      expect(fetched.some((u) => u.endsWith("/html/router/about"))).toBe(false);
+      await page.getByTestId("nav-about").hover();
+      await expect.poll(() => fetched.some((u) => u.endsWith("/html/router/about"))).toBe(true);
+    });
+
+    test("prefetches new links after a swap that keeps the opt-in", async ({ page }) => {
+      const fetched: string[] = [];
+      await page.route("**/*", (route) => {
+        fetched.push(route.request().url());
+        void route.continue();
+      });
+      await page.goto("/html/router/prefetch");
+      await expect
+        .poll(() => fetched.some((u) => u.endsWith("/html/router/prefetch-more")))
+        .toBe(true);
+      await page.getByTestId("nav-more").click();
+      await expect(page.getByTestId("page-title")).toHaveText("Prefetch More");
+      await expect.poll(() => fetched.some((u) => u.endsWith("/html/router/reference"))).toBe(true);
+    });
+
+    test("stops the document walk after a swap that drops the opt-in", async ({ page }) => {
+      const fetched: string[] = [];
+      await page.route("**/*", (route) => {
+        fetched.push(route.request().url());
+        void route.continue();
+      });
+      await page.goto("/html/router/prefetch");
+      await expect
+        .poll(() => fetched.some((u) => u.endsWith("/html/router/prefetch-off")))
+        .toBe(true);
+      await page.getByTestId("nav-off").click();
+      await expect(page.getByTestId("page-title")).toHaveText("Prefetch Off");
+      const before = fetched.filter((u) => u.endsWith("/html/router/hash")).length;
+      await page.waitForTimeout(150);
+      expect(fetched.filter((u) => u.endsWith("/html/router/hash")).length).toBe(before);
+      await page.getByTestId("nav-hash").hover();
+      await expect.poll(() => fetched.some((u) => u.endsWith("/html/router/hash"))).toBe(true);
+    });
+
+    test("caps concurrent document prefetches at two", async ({ page }) => {
+      let inFlight = 0;
+      let maxInFlight = 0;
+      const fetched: string[] = [];
+      await page.route("**/html/router/**", async (route) => {
+        if (route.request().resourceType() !== "fetch") {
+          await route.continue();
+          return;
+        }
+        fetched.push(route.request().url());
+        inFlight++;
+        maxInFlight = Math.max(maxInFlight, inFlight);
+        await new Promise((resolve) => setTimeout(resolve, 80));
+        inFlight--;
+        await route.continue();
+      });
+      await page.goto("/html/router/prefetch");
+      await expect.poll(() => fetched.some((u) => u.endsWith("/html/router/about"))).toBe(true);
+      await expect.poll(() => fetched.some((u) => u.endsWith("/html/router/docs"))).toBe(true);
+      expect(maxInFlight).toBeGreaterThan(0);
+      expect(maxInFlight).toBeLessThanOrEqual(2);
+    });
+  });
+
   test.describe("Concurrent navigation", () => {
     test("no-ops a click on the current URL", async ({ page }) => {
       await page.goto("/html/router/index");
