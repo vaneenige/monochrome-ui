@@ -65,10 +65,10 @@ test.describe("Router", () => {
         document.querySelector("[data-area='content']")?.setAttribute("data-preserved", "yes");
         const link = document.createElement("a");
         link.href = "/html/router/docs-same";
-        link.dataset.testid = "nav-docs-same";
+        link.textContent = "Same";
         document.querySelector("nav")?.append(link);
+        link.click();
       });
-      await page.getByTestId("nav-docs-same").click();
       await expect(page).toHaveURL("/html/router/docs-same");
       await expect(page).toHaveTitle("Docs Same");
       expect(await page.locator("[data-area='sidebar']").getAttribute("data-preserved")).toBe(
@@ -247,13 +247,14 @@ test.describe("Router", () => {
       await page.goto("/html/router/index");
       await page.evaluate(() => {
         window.__sentinel = 1;
-        const link = document.createElement("a");
-        link.href = "/html/router/no-root";
-        link.dataset.testid = "nav-no-root";
-        document.body.append(link);
       });
       const loaded = page.waitForEvent("load");
-      await page.getByTestId("nav-no-root").click();
+      await page.evaluate(() => {
+        const link = document.createElement("a");
+        link.href = "/html/router/no-root";
+        document.body.append(link);
+        link.click();
+      });
       await loaded;
       await expect(page).toHaveURL(/\/html\/router\/no-root/);
       await expect(page.getByTestId("page-marker")).toHaveText("no-root");
