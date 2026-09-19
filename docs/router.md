@@ -2,9 +2,9 @@
 
 `import "monochrome/router"`. Same-origin Navigation API
 intercept: fetch the next page, swap `data-area` regions
-whose `data-key` differs, set the title, focus the swapped
-area, fire `mc:navigate`. No `window.navigation`: full page
-loads.
+whose `data-key` differs, replace document identity in
+`head`, focus the swapped area, fire `mc:navigate`. No
+`window.navigation`: full page loads.
 
 **`data-area` and `data-key`.** A page needs
 `data-area="root"`. On swap, the router collects named areas
@@ -16,6 +16,13 @@ replaced. An area the new page does not declare is removed.
 Focus moves to the first replaced body area, or the root if
 none was replaced. Stale aborted work skips the swap. A
 failed fetch or swap reloads.
+
+**Head identity.** After the area swap, live `title`, `meta`,
+canonical `link`, and JSON-LD scripts are removed from
+`document.head`, then those nodes move in from the incoming
+document. Stylesheets, module scripts, icons, and preloads
+stay. `title` is the incoming element, not a
+`document.title` write.
 
 **Hover and focus prefetch.** `mouseover` and `focusin` on a
 same-origin link that would intercept (not `download`, not

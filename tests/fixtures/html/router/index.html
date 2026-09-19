@@ -3,9 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <title>Home</title>
+  <meta name="description" content="Home description">
+  <link rel="canonical" href="/html/router/index">
+  <link rel="icon" href="/favicon.ico">
+  <link rel="preload" as="image" href="/test.css" data-testid="home-preload">
   <link rel="stylesheet" href="/test.css">
   <script type="module" src="/router.js"></script>
   <meta name="page-id" content="index" data-area="head-meta" data-key="index">
+  <script type="application/ld+json">{"page":"home"}</script>
 </head>
 <body>
   <nav>
@@ -16,6 +21,7 @@
     <a href="/html/router/redirect" data-testid="nav-redirect">Redirect</a>
     <a href="/html/router/redirect-loop" data-testid="nav-redirect-ext">Redirect external</a>
   </nav>
+  <div data-area="banner" data-testid="home-banner">Promo</div>
   <div data-area="root">
     <main>
       <h1 data-testid="page-title">Home</h1>

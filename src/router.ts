@@ -44,13 +44,37 @@ if (navigation) {
   const canPrefetch = (el: EventTarget | null): el is HTMLAnchorElement =>
     canHandle(el) && !el.hasAttribute("download") && el.target !== "_blank";
 
+  const isHeadIdentity = (el: Element) =>
+    el instanceof HTMLTitleElement ||
+    el instanceof HTMLMetaElement ||
+    (el instanceof HTMLLinkElement && el.relList.contains("canonical")) ||
+    (el instanceof HTMLScriptElement && el.type === "application/ld+json");
+
   const collectAreas = (root: Document | ParentNode) => {
     const map = new Map<string, HTMLElement>();
     root.querySelectorAll<HTMLElement>("[data-area]").forEach((el) => {
       const name = el.dataset.area;
-      if (name && !map.has(name)) map.set(name, el);
+      if (name && !map.has(name) && !isHeadIdentity(el)) map.set(name, el);
     });
     return map;
+  };
+
+  const syncHead = (from: Document) => {
+    const nextHead = from.head;
+    if (nextHead) {
+      let el = document.head.firstElementChild;
+      while (el) {
+        const next = el.nextElementSibling;
+        if (isHeadIdentity(el)) el.remove();
+        el = next;
+      }
+      el = nextHead.firstElementChild;
+      while (el) {
+        const next = el.nextElementSibling;
+        if (isHeadIdentity(el)) document.head.append(el);
+        el = next;
+      }
+    }
   };
 
   const pumpPrefetch = () => {
@@ -115,6 +139,7 @@ if (navigation) {
         } else el.remove();
       }
     }
+    syncHead(newDoc);
     area ||= curRoot;
     area.tabIndex = -1;
     area.focus({ preventScroll: true });
@@ -168,7 +193,6 @@ if (navigation) {
             const [html, url] = result;
             const newDoc = parser.parseFromString(html, "text/html");
             if (swap(newDoc)) {
-              document.title = newDoc.title;
               lastKey = stripHash(url);
               if (lastKey !== key) {
                 const hash = href.slice(key.length + 1);

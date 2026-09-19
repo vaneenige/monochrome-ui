@@ -81,6 +81,93 @@ test.describe("Router", () => {
     });
   });
 
+  test.describe("Head", () => {
+    test("replaces the title element", async ({ page }) => {
+      await page.goto("/html/router/index");
+      await expect(page.locator("head title")).toHaveJSProperty("textContent", "Home");
+      await page.getByTestId("nav-about").click();
+      await expect(page.locator("head title")).toHaveCount(1);
+      await expect(page.locator("head title")).toHaveJSProperty("textContent", "About");
+      await expect(page).toHaveTitle("About");
+    });
+
+    test("replaces description meta without `data-area`", async ({ page }) => {
+      await page.goto("/html/router/index");
+      await expect(page.locator('meta[name="description"]')).toHaveAttribute(
+        "content",
+        "Home description",
+      );
+      await page.getByTestId("nav-about").click();
+      await expect(page.locator('meta[name="description"]')).toHaveCount(1);
+      await expect(page.locator('meta[name="description"]')).toHaveAttribute(
+        "content",
+        "About description",
+      );
+    });
+
+    test("replaces the canonical link", async ({ page }) => {
+      await page.goto("/html/router/index");
+      await expect(page.locator('link[rel="canonical"]')).toHaveAttribute(
+        "href",
+        /\/html\/router\/index$/,
+      );
+      await page.getByTestId("nav-about").click();
+      await expect(page.locator('link[rel="canonical"]')).toHaveCount(1);
+      await expect(page.locator('link[rel="canonical"]')).toHaveAttribute(
+        "href",
+        /\/html\/router\/about$/,
+      );
+    });
+
+    test("replaces JSON-LD scripts", async ({ page }) => {
+      await page.goto("/html/router/index");
+      await expect(page.locator('script[type="application/ld+json"]')).toHaveJSProperty(
+        "textContent",
+        '{"page":"home"}',
+      );
+      await page.getByTestId("nav-about").click();
+      await expect(page.locator('script[type="application/ld+json"]')).toHaveCount(1);
+      await expect(page.locator('script[type="application/ld+json"]')).toHaveJSProperty(
+        "textContent",
+        '{"page":"about"}',
+      );
+    });
+
+    test("drops a meta the new page omits", async ({ page }) => {
+      await page.goto("/html/router/index");
+      await expect(page.locator("meta[data-area='head-meta']")).toHaveCount(1);
+      await page.getByTestId("nav-docs").click();
+      await expect(page.getByTestId("page-title")).toHaveText("Docs");
+      await expect(page.locator("meta[data-area='head-meta']")).toHaveCount(0);
+    });
+
+    test("keeps stylesheets and the router script", async ({ page }) => {
+      await page.goto("/html/router/index");
+      await expect(page.locator('head link[rel="stylesheet"]')).toHaveAttribute(
+        "href",
+        "/test.css",
+      );
+      await expect(page.locator('head script[src="/router.js"]')).toHaveCount(1);
+      await page.getByTestId("nav-about").click();
+      await expect(page).toHaveTitle("About");
+      await expect(page.locator('head link[rel="stylesheet"]')).toHaveAttribute(
+        "href",
+        "/test.css",
+      );
+      await expect(page.locator('head script[src="/router.js"]')).toHaveCount(1);
+    });
+
+    test("keeps icons and preloads", async ({ page }) => {
+      await page.goto("/html/router/index");
+      await expect(page.locator('head link[rel="icon"]')).toHaveAttribute("href", "/favicon.ico");
+      await expect(page.getByTestId("home-preload")).toHaveCount(1);
+      await page.getByTestId("nav-about").click();
+      await expect(page).toHaveTitle("About");
+      await expect(page.locator('head link[rel="icon"]')).toHaveCount(1);
+      await expect(page.getByTestId("home-preload")).toHaveCount(1);
+    });
+  });
+
   test.describe("Structural mismatch", () => {
     test("falls back to a root swap when the new page introduces new areas", async ({ page }) => {
       await page.goto("/html/router/index");
@@ -92,10 +179,10 @@ test.describe("Router", () => {
 
     test("removes an area the new page does not declare", async ({ page }) => {
       await page.goto("/html/router/index");
-      await expect(page.locator("meta[data-area='head-meta']")).toHaveCount(1);
+      await expect(page.getByTestId("home-banner")).toHaveCount(1);
       await page.getByTestId("nav-docs").click();
       await expect(page.getByTestId("page-title")).toHaveText("Docs");
-      await expect(page.locator("meta[data-area='head-meta']")).toHaveCount(0);
+      await expect(page.getByTestId("home-banner")).toHaveCount(0);
     });
 
     test("hard-reloads when falling back without a root area", async ({ page }) => {
