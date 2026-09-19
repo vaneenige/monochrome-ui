@@ -400,6 +400,38 @@ test.describe("Router", () => {
       await expect(page).toHaveURL("/html/router/about");
       expect(fetched).toHaveLength(before);
     });
+
+    test("does not prefetch the current path", async ({ page }) => {
+      await page.goto("/html/router/index");
+      const fetched = await recordFetches(page);
+      await page.getByTestId("nav-home").hover();
+      await page.waitForTimeout(80);
+      expect(fetched.some((u) => u.includes("/html/router/index"))).toBe(false);
+    });
+
+    test("does not prefetch a cross-origin link", async ({ page }) => {
+      await page.goto("/html/router/ignored");
+      const fetched = await recordFetches(page);
+      await page.getByTestId("external-link").hover();
+      await page.waitForTimeout(80);
+      expect(fetched.some((u) => u.includes("example.com"))).toBe(false);
+    });
+
+    test("does not prefetch a `download` link", async ({ page }) => {
+      await page.goto("/html/router/ignored");
+      const fetched = await recordFetches(page);
+      await page.getByTestId("download-link").hover();
+      await page.waitForTimeout(80);
+      expect(fetched.some((u) => u.includes("/html/router/about"))).toBe(false);
+    });
+
+    test("does not prefetch a `target=_blank` link", async ({ page }) => {
+      await page.goto("/html/router/ignored");
+      const fetched = await recordFetches(page);
+      await page.getByTestId("blank-link").hover();
+      await page.waitForTimeout(80);
+      expect(fetched.some((u) => u.includes("/html/router/about"))).toBe(false);
+    });
   });
 
   test.describe("Concurrent navigation", () => {

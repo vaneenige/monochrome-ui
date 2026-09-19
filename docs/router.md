@@ -7,8 +7,9 @@ area, fire `mc:navigate`. No `window.navigation`: full page
 loads.
 
 Needs `data-area="root"`. Matching area names and root keys
-keep the current root. Prefetch on hover and focus. Pages
-stay cached for the session. Stale work skips the swap.
+keep the current root. Prefetch on hover and focus, only for
+same-origin links that would intercept, not the current path.
+Pages stay cached for the session. Stale work skips the swap.
 Failure reloads.
 
 ## Handles

@@ -29,7 +29,9 @@ if (navigation) {
   };
 
   const canHandle = (el: EventTarget | null): el is HTMLAnchorElement =>
-    el instanceof HTMLAnchorElement && !el.relList.contains("external");
+    el instanceof HTMLAnchorElement &&
+    el.origin === location.origin &&
+    !el.relList.contains("external");
 
   const collectAreas = (root: Document | ParentNode) => {
     const map = new Map<string, HTMLElement>();
@@ -71,7 +73,10 @@ if (navigation) {
   const hint = (event: Event) => {
     if (event.target instanceof Element) {
       const anchor = event.target.closest("a");
-      if (canHandle(anchor)) void fetchPage(stripHash(anchor.href));
+      if (canHandle(anchor) && !anchor.hasAttribute("download") && anchor.target !== "_blank") {
+        const key = stripHash(anchor.href);
+        if (key !== lastKey) void fetchPage(key);
+      }
     }
   };
   addEventListener("mouseover", hint);
@@ -80,18 +85,18 @@ if (navigation) {
   navigation.addEventListener("navigate", (event) => {
     const type = event.navigationType;
     const href = event.destination.url;
+    const key = stripHash(href);
     if (
       !event.canIntercept ||
       type === "reload" ||
-      (event.hashChange && (type === "traverse" || href !== stripHash(href))) ||
+      (event.hashChange && (type === "traverse" || href !== key)) ||
       event.downloadRequest !== null ||
       event.formData ||
-      !collectAreas(document).has("root") ||
-      !(canHandle(event.sourceElement) || type === "traverse")
+      !(canHandle(event.sourceElement) || type === "traverse") ||
+      !document.querySelector("[data-area=root]")
     ) {
       return;
     }
-    const key = stripHash(href);
     const same = key === lastKey;
     const intercept: {
       focusReset: "manual";
