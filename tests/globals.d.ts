@@ -5,6 +5,7 @@
 interface Window {
   __sentinel?: number;
   __navCount?: number;
+  __fetchPriority?: [url: string, priority: RequestInit["priority"]][];
 }
 
 declare module "*.vue" {
