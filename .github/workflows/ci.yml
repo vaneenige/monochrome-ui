@@ -35,7 +35,7 @@ jobs:
 
       - run: git diff --exit-code package.json
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7.0.1
         with:
           name: dist
           path: dist/
@@ -66,7 +66,7 @@ jobs:
 
       - run: bun install --frozen-lockfile
 
-      - uses: actions/cache@v4
+      - uses: actions/cache@v6.1.0
         with:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ matrix.browser }}-${{ hashFiles('bun.lock') }}
@@ -75,7 +75,7 @@ jobs:
 
       - run: bunx playwright install --with-deps ${{ matrix.browser }}
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8.0.1
         with:
           name: dist
           path: dist
@@ -85,7 +85,7 @@ jobs:
       - run: bun --bun playwright test ${{ matrix.projects }}
 
       - if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7.0.1
         with:
           name: playwright-${{ matrix.browser }}
           path: |
