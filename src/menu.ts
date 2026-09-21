@@ -47,7 +47,7 @@ if (hasDocument) {
       menuHighlighted = item;
       item?.setAttribute("data-highlighted", "");
     }
-    item?.focus();
+    item?.focus({ preventScroll: true });
   };
 
   const menuRoving: RovingFocusCallback = (node, fallback) => {
@@ -111,7 +111,7 @@ if (hasDocument) {
               menuHighlight(trigger);
             } else {
               if (mode !== Focus.None || content.contains(document.activeElement)) {
-                trigger.focus({ preventScroll: mode === Focus.None });
+                trigger.focus({ preventScroll: true });
               }
               if (content.contains(menuHighlighted)) menuHighlight(null);
             }
@@ -131,8 +131,15 @@ if (hasDocument) {
               menuRoving(content.firstElementChild, menuNext);
             } else if (mode === Focus.Last) {
               menuRoving(content.lastElementChild, menuPrevious);
-            } else {
-              trigger.focus();
+            } else if (mode === Focus.Trigger) {
+              if (trigger.role?.startsWith("menuitem")) menuHighlight(trigger);
+              else trigger.focus({ preventScroll: true });
+            } else if (menuHighlighted === trigger && document.activeElement !== trigger) {
+              trigger.focus({ preventScroll: true });
+            } else if (menuHighlighted && menuHighlighted !== trigger) {
+              menuHighlighted.removeAttribute("data-highlighted");
+              menuHighlighted = trigger;
+              trigger.setAttribute("data-highlighted", "");
             }
           }
         }
@@ -190,7 +197,7 @@ if (hasDocument) {
     const el = getTarget(event);
     if (!el) return;
     const trigger = findAncestor(el, Prefix.TriggerMenu);
-    if (trigger) menuOpen(trigger, Focus.None);
+    if (trigger) menuOpen(trigger, event.pointerType === "touch" ? Focus.Trigger : Focus.None);
     else if (menuStack[0] && !findAncestor(el, Prefix.ContentMenu)) menuCloseAll();
   });
 
@@ -307,7 +314,7 @@ if (hasDocument) {
       isElement(target) &&
       (target.id.startsWith(Prefix.ContentMenu) || target === document.body)
     ) {
-      (target = menuHighlighted || menuStack.at(-1) || target).focus();
+      (target = menuHighlighted || menuStack.at(-1) || target).focus({ preventScroll: true });
     }
     const el = isElement(target) ? target : null;
     const trigger = isTrigger(el, Prefix.TriggerMenu) ? el : null;
@@ -339,7 +346,7 @@ if (hasDocument) {
         break;
       case "Tab":
         if (menuStack[0]) {
-          menuStack[0].focus();
+          menuStack[0].focus({ preventScroll: true });
           menuCloseAll();
         }
         break;

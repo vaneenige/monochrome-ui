@@ -1,0 +1,28 @@
+<!-- scroll-padding-top is the common companion of a sticky header (anchor jumps
+     land below it). A trigger inside that band counts as out of view, so a bare
+     focus() on it scrolls the document; that scroll is what dismisses the menu. -->
+<style>:root { scroll-padding-top: 184px }</style>
+<header data-testid="header" style="position:sticky;top:0;background:#fff">
+  <ul data-testid="menubar" role="menubar">
+    <li role="none">
+      <button data-testid="sticky-trigger-1" type="button" id="mct:menu:1" aria-controls="mcc:menu:1" aria-expanded="false" aria-haspopup="menu" tabindex="0" role="menuitem">Products</button>
+      <ul data-testid="sticky-list-1" role="menu" id="mcc:menu:1" aria-labelledby="mct:menu:1" popover="manual">
+        <li role="none">
+          <a data-testid="sticky-item-1-1" href="#chat" role="menuitem" tabindex="-1">Chat</a>
+        </li>
+        <li role="none">
+          <a data-testid="sticky-item-1-2" href="#video" role="menuitem" tabindex="-1">Video</a>
+        </li>
+      </ul>
+    </li>
+    <li role="none">
+      <button data-testid="sticky-trigger-2" type="button" id="mct:menu:2" aria-controls="mcc:menu:2" aria-expanded="false" aria-haspopup="menu" tabindex="-1" role="menuitem">Solutions</button>
+      <ul data-testid="sticky-list-2" role="menu" id="mcc:menu:2" aria-labelledby="mct:menu:2" popover="manual">
+        <li role="none">
+          <a data-testid="sticky-item-2-1" href="#gaming" role="menuitem" tabindex="-1">Gaming</a>
+        </li>
+      </ul>
+    </li>
+  </ul>
+</header>
+<main style="height:4000px">Tall page</main>
