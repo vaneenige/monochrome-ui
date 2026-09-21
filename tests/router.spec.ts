@@ -9,6 +9,33 @@ test.describe("Router", () => {
     );
   });
 
+  const recordFetches = async (page: Page) => {
+    const urls: string[] = [];
+    await page.route("**/*", (route) => {
+      urls.push(route.request().url());
+      void route.continue();
+    });
+    return urls;
+  };
+
+  // Stubs IntersectionObserver so the viewport walk never fires and hover and focus are
+  // the only prefetch path under test.
+  const hoverOnly = (page: Page) =>
+    page.addInitScript(() => {
+      window.IntersectionObserver = class {
+        observe() {}
+        unobserve() {}
+        disconnect() {}
+        takeRecords() {
+          return [];
+        }
+        root = null;
+        rootMargin = "";
+        scrollMargin = "";
+        thresholds = [];
+      };
+    });
+
   test.describe("Root swap", () => {
     test("swaps the root area on anchor click", async ({ page }) => {
       await page.goto("/html/router/index");
@@ -356,27 +383,24 @@ test.describe("Router", () => {
       const url = page.url();
       expect(url).not.toContain("/html/router/about");
     });
+
+    test("caches the redirected page under the final URL", async ({ page }) => {
+      await page.goto("/html/router/index");
+      await page.getByTestId("nav-redirect").click();
+      await expect(page).toHaveURL("/html/router/about");
+      await page.goBack();
+      await expect(page).toHaveURL("/html/router/index");
+      const fetched = await recordFetches(page);
+      await page.getByTestId("nav-about").click();
+      await expect(page).toHaveURL("/html/router/about");
+      await expect(page.getByTestId("page-title")).toHaveText("About");
+      expect(fetched.some((u) => u.endsWith("/html/router/about"))).toBe(false);
+    });
   });
 
   test.describe("Prefetching", () => {
-    const recordFetches = async (page: Page) => {
-      const urls: string[] = [];
-      await page.route("**/*", (route) => {
-        urls.push(route.request().url());
-        void route.continue();
-      });
-      return urls;
-    };
-
-    test("does not prefetch before any user interaction", async ({ page }) => {
-      await page.goto("/html/router/index");
-      await page.waitForLoadState("networkidle");
-      const fetched = await recordFetches(page);
-      await page.waitForTimeout(100);
-      expect(fetched).toHaveLength(0);
-    });
-
     test("prefetches a link on hover", async ({ page }) => {
+      await hoverOnly(page);
       await page.goto("/html/router/index");
       const fetched = await recordFetches(page);
       await page.getByTestId("nav-about").hover();
@@ -384,6 +408,7 @@ test.describe("Router", () => {
     });
 
     test("prefetches a link on keyboard focus", async ({ page }) => {
+      await hoverOnly(page);
       await page.goto("/html/router/index");
       const fetched = await recordFetches(page);
       await page.getByTestId("nav-about").focus();
@@ -391,6 +416,7 @@ test.describe("Router", () => {
     });
 
     test("uses cached HTML on navigation after hover", async ({ page }) => {
+      await hoverOnly(page);
       await page.goto("/html/router/index");
       const fetched = await recordFetches(page);
       await page.getByTestId("nav-about").hover();
@@ -399,6 +425,255 @@ test.describe("Router", () => {
       await page.getByTestId("nav-about").click();
       await expect(page).toHaveURL("/html/router/about");
       expect(fetched).toHaveLength(before);
+    });
+
+    test("retries after a failed prefetch", async ({ page }) => {
+      await hoverOnly(page);
+      let attempts = 0;
+      await page.route("**/html/router/about", async (route) => {
+        if (route.request().resourceType() === "fetch") {
+          attempts++;
+          if (attempts === 1) {
+            await route.fulfill({ status: 500, body: "no" });
+            return;
+          }
+        }
+        await route.continue();
+      });
+      await page.goto("/html/router/index");
+      await expect
+        .poll(async () => {
+          await page.getByTestId("nav-home").hover();
+          await page.getByTestId("nav-about").hover();
+          return attempts;
+        })
+        .toBe(2);
+      await page.getByTestId("nav-about").click();
+      await expect(page).toHaveURL("/html/router/about");
+      await expect(page.getByTestId("page-title")).toHaveText("About");
+      expect(attempts).toBe(2);
+    });
+
+    test("does not prefetch the current path", async ({ page }) => {
+      await page.goto("/html/router/index");
+      const fetched = await recordFetches(page);
+      await page.getByTestId("nav-home").hover();
+      await page.waitForTimeout(80);
+      expect(fetched.some((u) => u.includes("/html/router/index"))).toBe(false);
+    });
+
+    test("does not prefetch a cross-origin link", async ({ page }) => {
+      await page.goto("/html/router/ignored");
+      const fetched = await recordFetches(page);
+      await page.getByTestId("external-link").hover();
+      await page.waitForTimeout(80);
+      expect(fetched.some((u) => u.includes("example.com"))).toBe(false);
+    });
+
+    test("does not prefetch a `download` link", async ({ page }) => {
+      await page.goto("/html/router/ignored");
+      const fetched = await recordFetches(page);
+      await page.getByTestId("download-link").hover();
+      await page.waitForTimeout(80);
+      expect(fetched.some((u) => u.includes("/html/router/about"))).toBe(false);
+    });
+
+    test("does not prefetch a `target=_blank` link", async ({ page }) => {
+      await page.goto("/html/router/ignored");
+      const fetched = await recordFetches(page);
+      await page.getByTestId("blank-link").hover();
+      await page.waitForTimeout(80);
+      expect(fetched.some((u) => u.includes("/html/router/about"))).toBe(false);
+    });
+
+    test("does not prefetch a `rel=external` link", async ({ page }) => {
+      await page.goto("/html/router/ignored");
+      const fetched = await recordFetches(page);
+      await page.getByTestId("rel-external-link").hover();
+      await page.waitForTimeout(80);
+      expect(fetched.some((u) => u.includes("/html/router/no-root"))).toBe(false);
+    });
+
+    test("a full load drops cached pages", async ({ page }) => {
+      await hoverOnly(page);
+      await page.goto("/html/router/index");
+      const fetched = await recordFetches(page);
+      await page.getByTestId("nav-about").hover();
+      await expect.poll(() => fetched.some((u) => u.endsWith("/html/router/about"))).toBe(true);
+      const before = fetched.filter((u) => u.endsWith("/html/router/about")).length;
+      // Firefox re-dispatches mouseover on the fresh document if the pointer is still
+      // over the link, which would prefetch before the click and hide what we measure.
+      await page.mouse.move(0, 0);
+      await page.reload();
+      await expect(page.getByTestId("page-title")).toHaveText("Home");
+      await page.getByTestId("nav-about").click();
+      await expect(page).toHaveURL("/html/router/about");
+      await expect(page.getByTestId("page-title")).toHaveText("About");
+      expect(fetched.filter((u) => u.endsWith("/html/router/about")).length).toBeGreaterThan(
+        before,
+      );
+    });
+
+    test("hover prefetch keeps the default priority", async ({ page }) => {
+      await hoverOnly(page);
+      await page.addInitScript(() => {
+        const original = fetch.bind(window);
+        window.fetch = (input, init) => {
+          const url = input instanceof Request ? input.url : String(input);
+          (window.__fetchPriority ??= []).push([url, init?.priority]);
+          return original(input, init);
+        };
+      });
+      await page.goto("/html/router/index");
+      await page.getByTestId("nav-about").hover();
+      await expect
+        .poll(() =>
+          page.evaluate(() =>
+            (window.__fetchPriority ?? []).some(
+              ([url, priority]) => url.endsWith("/html/router/about") && priority !== "low",
+            ),
+          ),
+        )
+        .toBe(true);
+    });
+  });
+
+  test.describe("Prefetching (viewport)", () => {
+    test("fetches visible links after `load` by default", async ({ page }) => {
+      const fetched = await recordFetches(page);
+      await page.goto("/html/router/prefetch");
+      await expect.poll(() => fetched.some((u) => u.endsWith("/html/router/about"))).toBe(true);
+      await expect.poll(() => fetched.some((u) => u.endsWith("/html/router/docs"))).toBe(true);
+    });
+
+    test("does not fetch the current path, downloads, or cross-origin", async ({ page }) => {
+      const fetched = await recordFetches(page);
+      await page.goto("/html/router/prefetch");
+      await expect
+        .poll(() => fetched.some((u) => u.endsWith("/html/router/prefetch-off")))
+        .toBe(true);
+      await page.waitForLoadState("networkidle");
+      expect(fetched.filter((u) => u.endsWith("/html/router/prefetch")).length).toBe(1);
+      expect(fetched.some((u) => u.includes("example.com"))).toBe(false);
+      expect(fetched.some((u) => u.endsWith("/html/router/scroll"))).toBe(false);
+      expect(fetched.some((u) => u.endsWith("/html/router/scroll-other"))).toBe(false);
+      expect(fetched.some((u) => u.endsWith("/html/router/frag-source"))).toBe(false);
+    });
+
+    test("skips links below the viewport until they scroll into view", async ({ page }) => {
+      const fetched = await recordFetches(page);
+      await page.goto("/html/router/prefetch");
+      await expect.poll(() => fetched.some((u) => u.endsWith("/html/router/about"))).toBe(true);
+      await page.waitForLoadState("networkidle");
+      expect(fetched.some((u) => u.endsWith("/html/router/frag-target"))).toBe(false);
+      await page.getByTestId("far-link").scrollIntoViewIfNeeded();
+      await expect
+        .poll(() => fetched.some((u) => u.endsWith("/html/router/frag-target")))
+        .toBe(true);
+    });
+
+    test("drops a non-HTML response unread", async ({ page }) => {
+      let requests = 0;
+      await page.route("**/html/router/asset", async (route) => {
+        if (route.request().resourceType() === "fetch") requests++;
+        await route.fulfill({ contentType: "text/plain", body: "bytes" });
+      });
+      await page.goto("/html/router/prefetch");
+      await expect.poll(() => requests).toBe(1);
+      await page.waitForLoadState("networkidle");
+      const loaded = page.waitForEvent("load");
+      await page.getByTestId("asset-link").click();
+      await loaded;
+      await expect(page).toHaveURL(/\/html\/router\/asset$/);
+      expect(requests).toBeGreaterThan(1);
+    });
+
+    test("skips hidden links", async ({ page }) => {
+      const fetched = await recordFetches(page);
+      await page.goto("/html/router/prefetch");
+      await expect.poll(() => fetched.some((u) => u.endsWith("/html/router/about"))).toBe(true);
+      await page.waitForLoadState("networkidle");
+      expect(fetched.some((u) => u.endsWith("/html/router/docs-guide"))).toBe(false);
+    });
+
+    test("uses the cached document on click without a second fetch", async ({ page }) => {
+      const fetched = await recordFetches(page);
+      await page.goto("/html/router/prefetch");
+      await expect.poll(() => fetched.some((u) => u.endsWith("/html/router/about"))).toBe(true);
+      const before = fetched.filter((u) => u.endsWith("/html/router/about")).length;
+      await page.getByTestId("nav-about").click();
+      await expect(page).toHaveURL("/html/router/about");
+      await expect(page.getByTestId("page-title")).toHaveText("About");
+      expect(fetched.filter((u) => u.endsWith("/html/router/about")).length).toBe(before);
+    });
+
+    test("shares an in-flight document prefetch on click", async ({ page }) => {
+      const fetched: string[] = [];
+      await page.route("**/html/router/about", async (route) => {
+        fetched.push(route.request().url());
+        await new Promise((resolve) => setTimeout(resolve, 200));
+        await route.continue();
+      });
+      await page.goto("/html/router/prefetch");
+      await expect.poll(() => fetched.length).toBe(1);
+      await page.getByTestId("nav-about").click();
+      await expect(page).toHaveURL("/html/router/about");
+      await expect(page.getByTestId("page-title")).toHaveText("About");
+      expect(fetched.length).toBe(1);
+    });
+
+    test("prefetches new links after a swap", async ({ page }) => {
+      const fetched = await recordFetches(page);
+      await page.goto("/html/router/prefetch");
+      await expect
+        .poll(() => fetched.some((u) => u.endsWith("/html/router/prefetch-more")))
+        .toBe(true);
+      await page.getByTestId("nav-more").click();
+      await expect(page.getByTestId("page-title")).toHaveText("Prefetch More");
+      await expect.poll(() => fetched.some((u) => u.endsWith("/html/router/reference"))).toBe(true);
+    });
+
+    test("document prefetch uses `low` priority", async ({ page }) => {
+      await page.addInitScript(() => {
+        const original = fetch.bind(window);
+        window.fetch = (input, init) => {
+          const url = input instanceof Request ? input.url : String(input);
+          (window.__fetchPriority ??= []).push([url, init?.priority]);
+          return original(input, init);
+        };
+      });
+      await page.goto("/html/router/prefetch");
+      await expect
+        .poll(() =>
+          page.evaluate(() =>
+            (window.__fetchPriority ?? []).some(
+              ([url, priority]) => url.endsWith("/html/router/about") && priority === "low",
+            ),
+          ),
+        )
+        .toBe(true);
+    });
+
+    test("fetches documents one at a time", async ({ page }) => {
+      let inFlight = 0;
+      let maxInFlight = 0;
+      const fetched: string[] = [];
+      await page.route("**/html/router/**", async (route) => {
+        if (route.request().resourceType() !== "fetch") {
+          await route.continue();
+          return;
+        }
+        fetched.push(route.request().url());
+        inFlight++;
+        maxInFlight = Math.max(maxInFlight, inFlight);
+        await new Promise((resolve) => setTimeout(resolve, 80));
+        inFlight--;
+        await route.continue();
+      });
+      await page.goto("/html/router/prefetch");
+      await expect.poll(() => fetched.some((u) => u.endsWith("/html/router/about"))).toBe(true);
+      await expect.poll(() => fetched.some((u) => u.endsWith("/html/router/docs"))).toBe(true);
+      expect(maxInFlight).toBe(1);
     });
   });
 

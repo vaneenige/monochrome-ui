@@ -6,23 +6,28 @@ if (navigation) {
   const parser = new DOMParser();
   const stripHash = (url: string) => url.replace(/#.*/, "");
   let lastKey = stripHash(location.href);
+  let prefetching: Promise<unknown> = Promise.resolve();
 
-  const fetchPage = (key: string): Promise<Fetched | null> => {
+  const fetchPage = (key: string, init?: RequestInit): Promise<Fetched | null> => {
     const hit = cache.get(key);
     if (hit) return hit;
     const promise = (async () => {
       try {
-        const response = await fetch(key);
-        if (!response.ok || new URL(response.url).origin !== location.origin) {
-          return null;
+        const response = await fetch(key, init);
+        if (
+          response.ok &&
+          new URL(response.url).origin === location.origin &&
+          response.headers.get("content-type")?.startsWith("text/html")
+        ) {
+          const result: Fetched = [await response.text(), response.url];
+          const pending = cache.get(key);
+          if (pending && response.url !== key) cache.set(response.url, pending);
+          return result;
         }
-        const result: Fetched = [await response.text(), response.url];
-        const pending = cache.get(key);
-        if (pending && response.url !== key) cache.set(response.url, pending);
-        return result;
-      } catch {
-        return null;
-      }
+        void response.body?.cancel();
+      } catch {}
+      cache.delete(key);
+      return null;
     })();
     cache.set(key, promise);
     return promise;
@@ -38,6 +43,32 @@ if (navigation) {
       if (name && !map.has(name)) map.set(name, el);
     });
     return map;
+  };
+
+  const prefetch = (el: EventTarget | null, init?: RequestInit) => {
+    if (
+      canHandle(el) &&
+      el.origin === location.origin &&
+      !el.hasAttribute("download") &&
+      el.target !== "_blank"
+    ) {
+      const key = stripHash(el.href);
+      if (key !== lastKey) return fetchPage(key, init);
+    }
+  };
+
+  const observer = new IntersectionObserver((entries) => {
+    for (const entry of entries) {
+      if (entry.isIntersecting) {
+        observer.unobserve(entry.target);
+        prefetching = prefetching.then(() => prefetch(entry.target, { priority: "low" }));
+      }
+    }
+  });
+
+  const prefetchDocument = () => {
+    observer.disconnect();
+    for (const el of document.links) observer.observe(el);
   };
 
   const swap = (newDoc: Document) => {
@@ -69,13 +100,11 @@ if (navigation) {
   };
 
   const hint = (event: Event) => {
-    if (event.target instanceof Element) {
-      const anchor = event.target.closest("a");
-      if (canHandle(anchor)) void fetchPage(stripHash(anchor.href));
-    }
+    if (event.target instanceof Element) void prefetch(event.target.closest("a"));
   };
   addEventListener("mouseover", hint);
   addEventListener("focusin", hint);
+  addEventListener("load", prefetchDocument);
 
   navigation.addEventListener("navigate", (event) => {
     const type = event.navigationType;
@@ -115,6 +144,7 @@ if (navigation) {
                 history.replaceState(history.state, "", hash ? lastKey + "#" + hash : url);
               }
               dispatchEvent(new Event("mc:navigate"));
+              prefetchDocument();
               return;
             }
           }
