@@ -16,7 +16,7 @@ if (hasDocument) {
     dialogContent = null;
     dialogTrigger = null;
     content.close();
-    trigger.focus();
+    if (document.activeElement !== trigger) trigger.focus();
   };
 
   const dialogOpen = (trigger: HTMLElement) => {

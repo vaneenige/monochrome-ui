@@ -10,6 +10,12 @@ that needs `dialogClose`. Native close (Escape, form
 rather than on the ref being set, so a natively closed dialog
 reopens cleanly.
 
+**Close button focus.** `dialogClose` calls `close()`, which
+restores the element focused when the dialog opened. It focuses
+the trigger only when that restore landed elsewhere, so a pointer
+close does not replace a mouse focus with a script focus. A
+script focus there would match `:focus-visible` in Chromium.
+
 **Open and close dispatch on `click`.** Both triggers are plain
 `findAncestor` prefix matches from the event target, close
 checked first. Menu calls `click()` on the item after keyboard
