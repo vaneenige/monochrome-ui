@@ -13,7 +13,7 @@ HTMLElement | null` variable, no wrapper type. One array doubles
 as flag, stack, and cursor.
 
 **`menu(trigger, mode: Focus)` is the one open/close primitive.**
-`Focus.Trigger` closes and focuses the trigger, `Focus.First` /
+`Focus.Trigger` focuses the trigger, `Focus.First` /
 `Focus.Last` open and rove in (or, on an already-open menu, only
 rove in), `Focus.None` opens or closes without moving focus into
 the surface. `menuOpen` is the pointer and root-button primitive:
@@ -37,6 +37,21 @@ Playwright's `.click()` still works: it fires `pointerdown`. A
 menu opening outside a popover closes it in the same event (see
 `docs/popover.md`).
 
+**Mouse open leaves focus alone.** A mouse `pointerdown` passes
+`Focus.None` and does not call `focus()` on the trigger. The
+browser's mousedown focus is a mouse focus, so the trigger does
+not match `:focus-visible`. A script focus there would paint the
+ring on the trigger and on every item the hover then focuses
+(Chromium inherits the ring from a script focus) and would scroll
+under a sticky header. With the usual `scroll-padding-top`, a
+trigger inside that band counts as out of view, and the scroll
+listener reads the scroll as a dismissal. A touch open passes
+`Focus.Trigger` instead: a touch does not focus the trigger, so
+the open focuses it with `preventScroll` and paints it when it
+is a menuitem. A mouse open that leaves focus on `body` is
+retargeted on the next key (see "Retarget from the surface or
+`body`").
+
 **Walks break on `mct:menu:` before activation.** The `click`
 walk stops at `mct:menu:` (and `mcc:menu:`) before it tests for
 a menuitem. The `pointerup` walk stops at `mcc:menu:` and skips
@@ -46,8 +61,12 @@ trigger that is also a link never activates as an item.
 **Hover focuses and paints.** `pointermove` focuses the enabled
 item under the pointer (React Aria / Base UI) so Arrow keys
 continue from there; `data-highlighted` follows that item through
-`menuHighlight`. Only an enabled item is painted. Leaving the
-menu, or hovering a disabled item, label, or separator, leaves
+`menuHighlight`, whose focus is `preventScroll`: the pointer is
+already on the item, so there is nothing to bring into view, and
+a scroll would dismiss the menu it just highlighted. Keyboard
+roving focuses the item itself before it highlights, so an item
+outside a scrollable list still scrolls into view. Leaving
+the menu, or hovering a disabled item, label, or separator, leaves
 `data-highlighted` on the last item so keyboard still has a
 visible current item. Hovering a submenu trigger opens its
 submenu with `Focus.None`; hovering any other item closes an open
@@ -125,12 +144,20 @@ open.
 `click` listener closes the menu. Enter on an `aria-disabled` href
 does `preventDefault`, so the browser does not navigate. Pointer
 clicks on a disabled `<a>` still navigate natively; that is the
-consumer's `href` to remove. `pointerup` on an href calls
-`click()` on it instead of activating, so a sticky drag navigates
-(the browser does not synthesize `click` across elements) and the
-`click` listener closes the menu once; a same-element press fires
-a real click too, and hash navigation is idempotent. Before the
-menu hides, focus moves off the link (see "Focus ownership").
+consumer's `href` to remove. Before the menu hides, focus moves
+off the link (see "Focus ownership").
+
+**Pointer activation of an href.** `pointerup` does not activate
+an href menuitem. The navigation is the link's own click. A press
+that started on that link (`menuPressed` holds the `pointerdown`
+target, including a descendant) is left alone, so one
+user-initiated navigation follows. A script `click()` on that
+same press would navigate a second time with `userInitiated`
+false, and the real click's same-URL replace would abort the
+first handler mid-fetch. Chromium's Back button can skip that
+entry. A drag that started outside the link gets no real `click`
+across elements, so `pointerup` calls `click()` on the link.
+Either way the `click` listener closes the menu once.
 
 **Arrows, Home, End, Tab.** Root ArrowDown / ArrowUp open and
 focus the first / last item. ArrowRight on a submenu trigger opens
@@ -179,12 +206,18 @@ non-null.
 
 ## Focus and nesting
 
-**Focus ownership.** `Focus.None` open focuses the trigger, so a
-hover-opened submenu never leaves focus on the surface. A
-`Focus.None` close focuses the trigger first when the active
-element is inside the content, with `preventScroll` so a document
-scroll that dismissed the menu is not undone, and `hidePopover`
-never drops a focused node that lives in the menu.
+**Focus ownership.** A `Focus.None` open re-focuses the trigger
+when it is the painted item and focus has left it, so a
+hover-opened submenu never leaves focus on the surface. When
+another item is painted, the paint moves to the trigger and
+focus stays with the browser's mousedown. With no highlight, a
+mouse open leaves focus to the browser. A `Focus.None` close
+focuses the trigger when the active element is inside the
+content, so `hidePopover` never drops a focused node that lives
+in the menu. Every focus this file moves uses `preventScroll`,
+except keyboard roving (see "Hover focuses and paints"): a
+sticky-header trigger inside `scroll-padding-top` cannot scroll
+the document, and a scroll that dismissed a menu is not undone.
 `menuHighlight` focuses even when the painted item did not
 change, so a later move on the same trigger repairs stolen focus.
 

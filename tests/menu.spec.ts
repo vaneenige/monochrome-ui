@@ -829,6 +829,71 @@ test.describe("Menu", () => {
       await expect(page.getByTestId("root-item-1")).not.toHaveAttribute("data-highlighted");
     });
 
+    test("hover focus after a pointer open does not match `:focus-visible`", async ({
+      page,
+      browserName,
+    }) => {
+      test.skip(
+        browserName !== "chromium",
+        "The :focus-visible heuristic under test is Chromium's",
+      );
+      const trigger = page.getByTestId("root-trigger");
+      const box = await trigger.boundingBox();
+      if (!box) throw new Error("missing bounding box");
+      await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+      await page.mouse.down();
+      await page.mouse.up();
+      await expect(page.getByTestId("root-list")).toBeVisible();
+      expect(await trigger.evaluate((el) => el.matches(":focus-visible"))).toBe(false);
+      await page.getByTestId("root-item-2").hover();
+      await expect(page.getByTestId("root-item-2")).toBeFocused();
+      expect(
+        await page.getByTestId("root-item-2").evaluate((el) => el.matches(":focus-visible")),
+      ).toBe(false);
+    });
+
+    test("a stationary click on a submenu trigger focuses that trigger", async ({
+      page,
+      browserName,
+    }) => {
+      // Hover paints the trigger, then ArrowDown paints item 1 and closes the
+      // submenu. The pointer never moves, so the click has no pointermove.
+      await openRootViaKeyboard(page);
+      await page.getByTestId("root-submenu-trigger").hover();
+      await expect(page.getByTestId("root-submenu-list")).toBeVisible();
+      await page.keyboard.press("ArrowDown");
+      await expect(page.getByTestId("root-item-1")).toBeFocused();
+      await expect(page.getByTestId("root-submenu-list")).not.toBeVisible();
+      await page.mouse.down();
+      await page.mouse.up();
+      await expect(page.getByTestId("root-submenu-list")).toBeVisible();
+      await expect(page.getByTestId("root-submenu-trigger")).toBeFocused();
+      await expect(page.getByTestId("root-submenu-trigger")).toHaveAttribute(
+        "data-highlighted",
+        "",
+      );
+      await expect(page.getByTestId("root-item-1")).not.toHaveAttribute("data-highlighted");
+      if (browserName === "chromium") {
+        expect(
+          await page
+            .getByTestId("root-submenu-trigger")
+            .evaluate((el) => el.matches(":focus-visible")),
+        ).toBe(false);
+      }
+    });
+
+    test("touch on a submenu trigger focuses it when another item is painted", async ({ page }) => {
+      await openRootViaKeyboard(page);
+      await pointerDown(page.getByTestId("root-submenu-trigger"), { pointerType: "touch" });
+      await expect(page.getByTestId("root-submenu-list")).toBeVisible();
+      await expect(page.getByTestId("root-submenu-trigger")).toBeFocused();
+      await expect(page.getByTestId("root-submenu-trigger")).toHaveAttribute(
+        "data-highlighted",
+        "",
+      );
+      await expect(page.getByTestId("root-item-1")).not.toHaveAttribute("data-highlighted");
+    });
+
     test("hold from the trigger still highlights the item under the pointer", async ({ page }) => {
       const trigger = page.getByTestId("root-trigger");
       const item = page.getByTestId("root-item-2");
@@ -947,6 +1012,90 @@ test.describe("Menu", () => {
       await page.keyboard.press("ArrowLeft");
       expect(await page.evaluate(() => window.scrollX)).toBe(before);
       await expect(page.getByTestId("root-list")).toBeVisible();
+    });
+  });
+
+  test.describe("Scroll prevention (sticky header)", () => {
+    // Raw mouse moves: `locator.hover()` scrolls its target into view first, and
+    // under `scroll-padding-top` that scroll is itself a dismissal.
+    const moveTo = async (page: Page, testId: string) => {
+      const box = await page.getByTestId(testId).boundingBox();
+      if (!box) throw new Error("missing bounding box");
+      await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+    };
+
+    const scrolledOpen = async (page: Page) => {
+      await page.goto("/html/menu/sticky");
+      await scrollAndSettle(page, 0, 1500);
+      await moveTo(page, "sticky-trigger-1");
+      await page.mouse.down();
+      await page.mouse.up();
+      await expect(page.getByTestId("sticky-list-1")).toBeVisible();
+    };
+
+    test.beforeEach(({ renderer }) => {
+      test.skip(renderer !== "html", "Core-only focus path; fixture is plain HTML");
+    });
+
+    test("pointerdown on a trigger in a sticky header does not scroll the page", async ({
+      page,
+    }) => {
+      await scrolledOpen(page);
+      expect(await page.evaluate(() => window.scrollY)).toBe(1500);
+      await expect(page.getByTestId("sticky-trigger-1")).toHaveAttribute("aria-expanded", "true");
+    });
+
+    test("hovering an item does not scroll the page or close the menu", async ({ page }) => {
+      await scrolledOpen(page);
+      await moveTo(page, "sticky-item-1-2");
+      await expect(page.getByTestId("sticky-item-1-2")).toBeFocused();
+      expect(await page.evaluate(() => window.scrollY)).toBe(1500);
+      await expect(page.getByTestId("sticky-list-1")).toBeVisible();
+    });
+
+    test("hovering a sibling trigger switches menus without scrolling", async ({ page }) => {
+      await scrolledOpen(page);
+      await moveTo(page, "sticky-trigger-2");
+      await expect(page.getByTestId("sticky-list-2")).toBeVisible();
+      await expect(page.getByTestId("sticky-list-1")).not.toBeVisible();
+      expect(await page.evaluate(() => window.scrollY)).toBe(1500);
+    });
+
+    test("Escape does not scroll the page", async ({ page }) => {
+      await scrolledOpen(page);
+      await moveTo(page, "sticky-item-1-1");
+      await page.keyboard.press("Escape");
+      await expect(page.getByTestId("sticky-list-1")).not.toBeVisible();
+      await expect(page.getByTestId("sticky-trigger-1")).toBeFocused();
+      expect(await page.evaluate(() => window.scrollY)).toBe(1500);
+    });
+
+    test("`Tab` after hover does not scroll the page", async ({ page }) => {
+      await scrolledOpen(page);
+      await moveTo(page, "sticky-item-1-1");
+      await page.keyboard.press("Tab");
+      await expect(page.getByTestId("sticky-list-1")).not.toBeVisible();
+      expect(await page.evaluate(() => window.scrollY)).toBe(1500);
+    });
+
+    test("ArrowDown with focus on `body` does not scroll the page", async ({ page }) => {
+      await scrolledOpen(page);
+      await page.evaluate(() => {
+        if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
+      });
+      await page.keyboard.press("ArrowDown");
+      expect(await page.evaluate(() => window.scrollY)).toBe(1500);
+      await expect(page.getByTestId("sticky-list-1")).toBeVisible();
+      await expect(page.getByTestId("sticky-item-1-1")).toBeFocused();
+    });
+
+    test("touch on a trigger does not scroll the page", async ({ page }) => {
+      await page.goto("/html/menu/sticky");
+      await scrollAndSettle(page, 0, 1500);
+      await pointerDown(page.getByTestId("sticky-trigger-1"), { pointerType: "touch" });
+      await expect(page.getByTestId("sticky-list-1")).toBeVisible();
+      await expect(page.getByTestId("sticky-trigger-1")).toBeFocused();
+      expect(await page.evaluate(() => window.scrollY)).toBe(1500);
     });
   });
 });
@@ -2075,6 +2224,21 @@ test.describe("Activation (href)", () => {
     await expect(page.getByTestId("list")).not.toBeVisible();
     await expect(page.getByTestId("item-link")).not.toBeFocused();
     await expect(page.getByTestId("trigger")).toBeFocused();
+  });
+
+  test("a press on an href menuitem navigates once, by the user's own click", async ({ page }) => {
+    test.skip(
+      !(await page.evaluate(() => "navigation" in window)),
+      "Navigation API is what reports user initiation",
+    );
+    await page.evaluate(() => {
+      const seen: boolean[] = (window.__navigations = []);
+      navigation.addEventListener("navigate", (e) => seen.push(e.userInitiated));
+    });
+    await page.getByTestId("item-link").click();
+    await expect(page).toHaveURL(/#menu-link-nav/);
+    await expect(page.getByTestId("list")).not.toBeVisible();
+    expect(await page.evaluate(() => window.__navigations)).toEqual([true]);
   });
 
   test("pointerdown on trigger, drag to an href, pointerup navigates", async ({

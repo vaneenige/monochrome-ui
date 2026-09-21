@@ -169,6 +169,39 @@ test.describe("Dialog", () => {
       await page.keyboard.press("Escape");
       await expect(page.getByTestId("primary-trigger")).toBeFocused();
     });
+
+    test("Close button returns focus to the trigger", async ({ page }) => {
+      await page.getByTestId("primary-trigger").click();
+      await page.getByTestId("primary-close").click();
+      await expect(page.getByTestId("primary-content")).not.toBeVisible();
+      await expect(page.getByTestId("primary-trigger")).toBeFocused();
+    });
+
+    test("a pointer close does not match `:focus-visible` on the trigger", async ({
+      page,
+      browserName,
+    }) => {
+      test.skip(
+        browserName !== "chromium",
+        "The :focus-visible heuristic under test is Chromium's",
+      );
+      const trigger = page.getByTestId("primary-trigger");
+      const openBox = await trigger.boundingBox();
+      if (!openBox) throw new Error("missing bounding box");
+      await page.mouse.move(openBox.x + openBox.width / 2, openBox.y + openBox.height / 2);
+      await page.mouse.down();
+      await page.mouse.up();
+      await expect(page.getByTestId("primary-content")).toBeVisible();
+      const close = page.getByTestId("primary-close");
+      const closeBox = await close.boundingBox();
+      if (!closeBox) throw new Error("missing bounding box");
+      await page.mouse.move(closeBox.x + closeBox.width / 2, closeBox.y + closeBox.height / 2);
+      await page.mouse.down();
+      await page.mouse.up();
+      await expect(page.getByTestId("primary-content")).not.toBeVisible();
+      await expect(trigger).toBeFocused();
+      expect(await trigger.evaluate((el) => el.matches(":focus-visible"))).toBe(false);
+    });
   });
 
   test.describe("Composition (tabs)", () => {
