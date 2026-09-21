@@ -34,6 +34,7 @@ if (hasDocument) {
   let rovingBoundary: Element | null = null;
 
   let menuHighlighted: HTMLElement | null = null;
+  let menuPressed: HTMLElement | null = null;
   const menuStack: HTMLElement[] = [];
   let safeX: number | null = null;
   let safeY = 0;
@@ -196,6 +197,7 @@ if (hasDocument) {
     if (event.button !== 0) return;
     const el = getTarget(event);
     if (!el) return;
+    menuPressed = el;
     const trigger = findAncestor(el, Prefix.TriggerMenu);
     if (trigger) menuOpen(trigger, event.pointerType === "touch" ? Focus.Trigger : Focus.None);
     else if (menuStack[0] && !findAncestor(el, Prefix.ContentMenu)) menuCloseAll();
@@ -208,7 +210,7 @@ if (hasDocument) {
     while (el && !el.id.startsWith(Prefix.ContentMenu)) {
       if (isMenuItem(el) && !el.id.startsWith(Prefix.TriggerMenu)) {
         if (el.tagName === "A") {
-          el.click();
+          if (!el.contains(menuPressed)) el.click();
         } else {
           menuActivate(el);
         }

@@ -144,12 +144,20 @@ open.
 `click` listener closes the menu. Enter on an `aria-disabled` href
 does `preventDefault`, so the browser does not navigate. Pointer
 clicks on a disabled `<a>` still navigate natively; that is the
-consumer's `href` to remove. `pointerup` on an href calls
-`click()` on it instead of activating, so a sticky drag navigates
-(the browser does not synthesize `click` across elements) and the
-`click` listener closes the menu once; a same-element press fires
-a real click too, and hash navigation is idempotent. Before the
-menu hides, focus moves off the link (see "Focus ownership").
+consumer's `href` to remove. Before the menu hides, focus moves
+off the link (see "Focus ownership").
+
+**Pointer activation of an href.** `pointerup` does not activate
+an href menuitem. The navigation is the link's own click. A press
+that started on that link (`menuPressed` holds the `pointerdown`
+target, including a descendant) is left alone, so one
+user-initiated navigation follows. A script `click()` on that
+same press would navigate a second time with `userInitiated`
+false, and the real click's same-URL replace would abort the
+first handler mid-fetch. Chromium's Back button can skip that
+entry. A drag that started outside the link gets no real `click`
+across elements, so `pointerup` calls `click()` on the link.
+Either way the `click` listener closes the menu once.
 
 **Arrows, Home, End, Tab.** Root ArrowDown / ArrowUp open and
 focus the first / last item. ArrowRight on a submenu trigger opens

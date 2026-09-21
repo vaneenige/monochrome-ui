@@ -2226,6 +2226,21 @@ test.describe("Activation (href)", () => {
     await expect(page.getByTestId("trigger")).toBeFocused();
   });
 
+  test("a press on an href menuitem navigates once, by the user's own click", async ({ page }) => {
+    test.skip(
+      !(await page.evaluate(() => "navigation" in window)),
+      "Navigation API is what reports user initiation",
+    );
+    await page.evaluate(() => {
+      const seen: boolean[] = (window.__navigations = []);
+      navigation.addEventListener("navigate", (e) => seen.push(e.userInitiated));
+    });
+    await page.getByTestId("item-link").click();
+    await expect(page).toHaveURL(/#menu-link-nav/);
+    await expect(page.getByTestId("list")).not.toBeVisible();
+    expect(await page.evaluate(() => window.__navigations)).toEqual([true]);
+  });
+
   test("pointerdown on trigger, drag to an href, pointerup navigates", async ({
     page,
     renderer,
