@@ -31,8 +31,15 @@ or surprise users.
    (`monochrome/vue`) share one DOM contract. A wrapper
    prop rename and the matching HTML attribute rename
    are the same change; apply both if the consumer uses
-   both.
-6. Do not restyle from `docs/`. Those files are present
+   both. In Vue templates the same props are kebab-case
+   (`default-open`, `default-selected`) and the tab
+   stop is `tabindex="0"`, not `tabIndex={0}`.
+6. Do not paste every import sample in
+   [Current contract](#current-contract-0160) into one
+   file. Pick exactly one recipe. Do not delete a
+   wrapper part because it is missing from a table
+   (keep `Tabs.List`, `Menubar.Menu`, `Dialog.Content`).
+7. Do not restyle from `docs/`. Those files are present
    tense and will not mention removed APIs.
 
 ## Grep index
@@ -46,11 +53,11 @@ when that token last worked (or first appeared).
 | `"use client"` inside `monochrome/react` | 0.2 | 0.3 dropped it; add it in the app on Next.js |
 | `react` peer `>=18` | 0.11 | 0.12 requires React 19 |
 | `import "monochrome"` plus `monochrome/react` or `/vue` | 0.11 | 0.12: pick one style of import |
-| `Accordion.Root type=` / `data-mode` | 0.12 | 0.13 exclusive only |
+| `Accordion.Root type=` / `data-mode` / `[data-mode]` | 0.12 | 0.13 exclusive only |
 | `Accordion.Item open` / `Collapsible.Root open` | 0.12 | 0.13 `defaultOpen` |
 | `Tabs.Tab selected` / `Tabs.Panel selected` | 0.12 | 0.13 `defaultSelected` |
 | `CheckboxItem checked` / `RadioItem checked` | 0.12 | 0.13 `defaultChecked` |
-| `Accordion.Header as="h1"` | 0.12 | 0.13 `h2`–`h6` only |
+| `Accordion.Header as="h1"` | 0.12 | 0.13 `h2` to `h6` only |
 | `role="region"` on accordion panels | 0.12 | 0.13 dropped |
 | `aria-hidden` written by monochrome | 0.12 | 0.13 dropped |
 | `hidden="until-found"` | 0.7 | 0.8 boolean `hidden` |
@@ -61,7 +68,9 @@ when that token last worked (or first appeared).
 | `[data-safe]` clip-path CSS | 0.11 | 0.12 JS triangle; delete the CSS |
 | `--center` | 0.4 | 0.5 `--x` / `--y` (gone in 0.12) |
 | `data-placement` | 0.5 | 0.6 removed |
-| ids `mct:a:`, `mct:c:`, `mct:m:`, `mct:t:`, `mct:ta:`, `mct:to:`, `mct:p:`, `mct:dialog-o:`, `mcc:d:` | 0.11 | 0.12 full names required |
+| ids `mct:t:` (tabs) | 0.6 | 0.7 `mct:ta:` then 0.12 `mct:tabs:` |
+| ids `mct:a:`, `mct:c:`, `mct:m:`, `mct:ta:`, `mct:to:`, `mct:p:`, `mct:dialog-o:`, `mct:dialog-c:`, `mcc:d:`, `mcc:m:`, `mcc:p:`, `mcc:to:`, `mcr:a:` | 0.11 | 0.12 full names required |
+| `history.scrollRestoration = "manual"` | 0.12 | 0.13 leaves `"auto"` |
 | `history.pushState` assumptions in router tests | 0.12 | 0.13 Navigation API |
 | Menubar first trigger without `tabIndex={0}` | 0.12 | 0.13 author the tab stop |
 
@@ -72,95 +81,139 @@ plain HTML must match it for the core to attach.
 
 ### Imports
 
+Pick exactly one recipe. Do not combine the HTML barrel
+or a granular core import with React or Vue wrappers
+(that component's listeners register twice).
+
+HTML, every component:
+
 ```ts
-// HTML-only page. Do not also import wrappers or
-// monochrome/menu (duplicate window listeners).
 import "monochrome"
-
-import "monochrome/menu"      // one component
-import "monochrome/menubar"   // same module as /menu
-import "monochrome/router"
-
-import { Accordion, Menu } from "monochrome/react"
-import { Accordion, Menu } from "monochrome/vue"
+import "monochrome/router" // optional
 ```
 
-Wrapper imports side-effect their own core. Do not also
-`import "monochrome"`.
+HTML, one overlay (and optionally the router). Do not
+also import `"monochrome"`. `monochrome/menubar` is the
+same module as `monochrome/menu`; import one of them.
+
+```ts
+import "monochrome/menu"
+```
+
+React or Vue. Each named export side-effects its core.
+Do not also import `"monochrome"` or `monochrome/menu`.
+
+```ts
+import { Accordion, Menu, Menubar } from "monochrome/react"
+import { Accordion, Menu, Menubar } from "monochrome/vue"
+```
 
 Peers: `react` / `react-dom` `>=19` (optional), `vue`
 `>=3.5` (optional). The published package is ESM only.
-Load the CDN build with `type="module"`.
+Load the CDN build with `type="module"`. Next.js App
+Router files that import the React wrappers need
+`"use client"` in the app (the wrappers do not ship it).
 
 ### HTML id prefixes
 
-The core matches `id.startsWith` these strings (trailing
-colon included). Custom ids must keep the prefix and add
-a unique suffix.
+Custom ids must keep the prefix and add a unique
+suffix. Wrappers already emit these.
+
+The core dispatches with `id.startsWith` on triggers,
+accordion root, and overlay content (menu, popover,
+tooltip). Panels and dialog content are paired through
+`aria-controls` / `aria-labelledby` /
+`aria-describedby`, not prefix dispatch.
+
+Dispatch prefixes:
 
 | Role | Prefix |
 | --- | --- |
 | Accordion root | `mcr:accordion:` |
 | Accordion trigger | `mct:accordion:` |
-| Accordion panel | `mcc:accordion:` |
 | Collapsible trigger | `mct:collapsible:` |
-| Collapsible panel | `mcc:collapsible:` |
 | Dialog open | `mct:dialog-open:` |
 | Dialog close | `mct:dialog-close:` |
-| Dialog element | `mcc:dialog:` |
-| Dialog title / description | `mcc:dialog-title:` / `mcc:dialog-description:` |
 | Menu trigger | `mct:menu:` |
 | Menu popover | `mcc:menu:` |
 | Popover trigger | `mct:popover:` |
 | Popover content | `mcc:popover:` |
-| Popover title / description | `mcc:popover-title:` / `mcc:popover-description:` |
 | Tabs trigger | `mct:tabs:` |
-| Tabs panel | `mcc:tabs:` |
 | Tooltip trigger | `mct:tooltip:` |
 | Tooltip content | `mcc:tooltip:` |
 
-Pair a trigger to its surface with `aria-controls` /
-`aria-labelledby` (and `aria-describedby` for tooltip).
-Menu popovers also use `aria-labelledby` on the `role="menu"`
-element. Do not invent a `mcr:menu:` root; Menu.Root
-renders no DOM node.
+Pairing ids (wrappers emit these; core looks them up
+from ARIA, not by prefix). Any unique id works as long
+as `aria-controls` / `aria-labelledby` match. The
+prefixes below are the wrapper convention:
+
+| Role | Prefix |
+| --- | --- |
+| Accordion panel | `mcc:accordion:` |
+| Collapsible panel | `mcc:collapsible:` |
+| Dialog element | `mcc:dialog:` |
+| Dialog title / description | `mcc:dialog-title:` / `mcc:dialog-description:` |
+| Popover title / description | `mcc:popover-title:` / `mcc:popover-description:` |
+| Tabs panel | `mcc:tabs:` |
+
+Popover content defaults to `aria-labelledby` on the
+trigger (`mct:popover:`), not the title id. Tooltip
+trigger uses `aria-describedby`. Menu popovers use
+`aria-labelledby` on the `role="menu"` element. Do not
+invent a `mcr:menu:` root; `Menu.Root` renders no DOM
+node. Wrappers also set `mcr:tabs:` on `Tabs.Root`;
+the core does not read it.
 
 Closed disclosure uses the `hidden` attribute (boolean),
 not `hidden="until-found"` and not `aria-hidden`. Overlay
 surfaces use `popover="manual"` (menu, popover, tooltip)
-or a native `<dialog>`.
+or a native `<dialog>`. A menu opens on `pointerdown`,
+not a synthetic `HTMLElement.click()`.
 
 ### Wrapper props (React and Vue)
 
-Same names in both wrappers. These are initial DOM writes;
-the core then owns the ARIA. They are not controlled-state
-props.
+JSX / `createElement` names below. Vue templates use
+kebab-case (`default-open`, `default-selected`,
+`default-checked`) and `tabindex` instead of `tabIndex`.
+These are initial DOM writes; the core then owns the
+ARIA. They are not controlled-state props. A part
+missing from this table is not a deletion (keep
+`Collapsible.Trigger`, `Tooltip.Content`, and so on).
 
 | Component | Prop | Notes |
 | --- | --- | --- |
 | `Accordion.Root` | (none besides HTML) | Always exclusive. No `type`. |
 | `Accordion.Item` | `defaultOpen?`, `disabled?` | |
-| `Accordion.Header` | `as?`: `h2`–`h6` | Default `h3`. Not `h1`. |
+| `Accordion.Header` | `as?`: `h2` to `h6` | Default `h3`. Not `h1` (React type). |
+| `Accordion.Trigger` / `Panel` | (HTML) | |
 | `Collapsible.Root` | `defaultOpen?`, `disabled?` | |
 | `Tabs.Root` | `defaultValue` (required), `orientation?` | |
+| `Tabs.List` | (HTML) | Writes `aria-orientation`. Keep it. |
 | `Tabs.Tab` | `value`, `defaultSelected?`, `disabled?` | |
 | `Tabs.Panel` | `value`, `defaultSelected?`, `focusable?` | |
 | `Menu.Root` | children only | No element, no `menubar`. |
 | `Menu.Trigger` | `disabled?`, `tabIndex?` | Standalone default tab stop is 0. |
+| `Menu.Popover` | (HTML) | `role="menu"`, `popover="manual"`. |
 | `Menu.Item` | `disabled?`, `href?` | |
 | `Menu.CheckboxItem` / `RadioItem` | `defaultChecked?`, `disabled?` | |
+| `Menu.Label` / `Separator` | (HTML) | |
 | `Menu.Group` | submenu slot | Trigger + Popover inside. |
 | `Menubar.Root` | HTML on the `role="menubar"` `<ul>` | |
-| `Menubar.Trigger` | `disabled?`, `tabIndex?` | Default `-1`. Set `tabIndex={0}` on exactly one stop. |
+| `Menubar.Menu` | (HTML on the `li`) | Required. Provides the menu context. |
+| `Menubar.Trigger` | `disabled?`, `tabIndex?` | Default `-1`. Set `tabIndex={0}` (Vue `tabindex="0"`) on exactly one stop. |
+| `Menubar.Popover` | (HTML) | Same as `Menu.Popover`. |
 | `Popover.Trigger` / `Dialog.Trigger` | `disabled?` | |
-| `Popover.Title` / `Dialog.Title` | `as?`: `h1`–`h6` | Default `h2`. |
+| `Popover.Content` / `Dialog.Content` | (HTML) | Dialog is a `<dialog>`. |
+| `Popover.Title` / `Dialog.Title` | `as?`: `h1` to `h6` | Default `h2`. |
+| `Popover.Description` / `Dialog.Description` | (HTML) | |
 | `Dialog.Close` | (none) | `mct:dialog-close:` |
+| `Tooltip.Root` / `Trigger` / `Content` | (HTML) | |
 
 Namespaces: `Accordion`, `Collapsible`, `Dialog`, `Menu`,
-`Menubar`, `Popover`, `Tabs`, `Tooltip`. Each has
-`.Root`, plus the parts in the table. Menu and Menubar
+`Menubar`, `Popover`, `Tabs`, `Tooltip`. Menu and Menubar
 share Item / CheckboxItem / RadioItem / Label /
-Separator / Group / Trigger / Popover.
+Separator / Group / Trigger / Popover. `Menubar.Menu`
+is not optional.
 
 ### CSS hooks the core sets
 
@@ -188,10 +241,13 @@ the import is a no-op and clicks are full page loads.
 
 Markup: a `data-area="root"` ancestor, optional named
 `data-area` regions, optional `data-key` on each area
-(same key keeps the node). Same-origin `<a>` clicks
-swap areas and dispatch `mc:navigate` on `window`.
-Links are prefetched on hover, focus, and when they
-enter the viewport.
+(same key keeps the node; a missing key always swaps).
+Same-origin `<a>` clicks swap areas and dispatch
+`mc:navigate` on `window`. Not intercepted: `download`,
+`target="_blank"`, `rel="external"`, cross-origin,
+forms. Only `text/html` responses are kept. Links are
+prefetched on hover, focus, and when they enter the
+viewport.
 
 ### Browsers
 
@@ -216,7 +272,7 @@ Hidden content: `hidden="until-found"` plus
 `aria-hidden`. Accordion `type="single" | "multiple"`
 writes `data-mode` on the root. `Accordion.Item` and
 `Collapsible.Root` take `open`. `Accordion.Header as`
-allows `h1`–`h6` (default `h3`). Panels have
+allows `h1` to `h6` (default `h3`). Panels have
 `role="region"`. Tabs may omit `defaultValue` (first
 tab is selected). Tabs write `data-orientation`.
 `Menu.Root` renders a wrapper `div` (`mcr:menu:…`) and
@@ -265,10 +321,11 @@ Omitting `defaultValue` no longer selects the first tab.
 ## 0.4.0
 
 **Added.** `import "monochrome/router"`. Same-origin
-clicks swap `[data-area]` regions when `data-key`
-differs. Requires `data-area="root"`. Dispatches
-`mc:navigate`. Implemented with `history.pushState` and
-`popstate` (works without the Navigation API).
+clicks swap `[data-area]` regions whose `data-key`
+differs, or that have no key. Requires
+`data-area="root"`. Dispatches `mc:navigate`.
+Implemented with `history.pushState` and `popstate`
+(works without the Navigation API).
 
 No component markup changes.
 
@@ -319,8 +376,9 @@ tabs prefix changes from `mct:t` to `mct:ta` so
 **Breaking (HTML / CSS / a11y).**
 `hidden="until-found"` is gone. Closed panels use
 boolean `hidden`. Find-in-page does not reveal collapsed
-content. Drop any `HiddenUntilFound` helper copy, and
-stop depending on `beforematch`.
+content. Wrappers no longer inject the inline script
+that upgraded `hidden` to `hidden="until-found"`.
+Stop depending on `beforematch`.
 
 `aria-hidden` is still written (`true` when closed).
 
@@ -353,9 +411,15 @@ No removals.
 
 ## 0.11.0
 
-**Added.** `Menubar` namespace (`Menubar.Root`,
-`.Menu`, `.Trigger`, `.Popover`, plus shared Menu item
-parts).
+**Added.** `Menubar` namespace. Import it next to Menu:
+
+```ts
+import { Menubar } from "monochrome/react"
+import { Menubar } from "monochrome/vue"
+```
+
+Parts: `Menubar.Root`, `.Menu`, `.Trigger`, `.Popover`,
+plus shared Menu item parts.
 
 **Breaking (Menu / Menubar markup).**
 
@@ -417,10 +481,12 @@ import "monochrome"
 import { Menu } from "monochrome/react"
 ```
 
-That registers every listener twice (toggles fire twice,
-focus fights itself). HTML-only: `import "monochrome"`
-or one `import "monochrome/menu"`. Wrappers: import from
-`monochrome/react` or `monochrome/vue` only.
+That registers that component's listeners twice
+(toggles fire twice, focus fights itself). The barrel
+still registers the other components once. HTML-only:
+`import "monochrome"` or one `import "monochrome/menu"`.
+Wrappers: import from `monochrome/react` or
+`monochrome/vue` only.
 
 **Breaking (React).** Peer `react` / `react-dom` `>=19`.
 React 18 will not satisfy the peer and is not supported.
@@ -431,19 +497,20 @@ names with a trailing colon (`mct:accordion:`,
 only matched because of `startsWith("mct:a")` stop
 working. Rename:
 
-| Old (matches ≤0.11) | New |
+| Old (last matched) | New |
 | --- | --- |
-| `mct:a:…` | `mct:accordion:…` |
-| `mct:c:…` | `mct:collapsible:…` |
-| `mct:m:…` | `mct:menu:…` |
-| `mct:t:…` / `mct:ta:…` | `mct:tabs:…` |
-| `mct:to:…` | `mct:tooltip:…` |
-| `mct:p:…` | `mct:popover:…` |
-| `mct:dialog-o:…` | `mct:dialog-open:…` |
-| `mct:dialog-c:…` | `mct:dialog-close:…` |
-| `mcc:d:…` | `mcc:dialog:…` |
-| `mcc:m:…` / `mcc:p:…` / `mcc:to:…` | `mcc:menu:…` / `mcc:popover:…` / `mcc:tooltip:…` |
-| `mcr:a:…` | `mcr:accordion:…` |
+| `mct:a:…` (to 0.11) | `mct:accordion:…` |
+| `mct:c:…` (to 0.11) | `mct:collapsible:…` |
+| `mct:m:…` (to 0.11) | `mct:menu:…` |
+| `mct:t:…` (to 0.6) | `mct:tabs:…` |
+| `mct:ta:…` (0.7 to 0.11) | `mct:tabs:…` |
+| `mct:to:…` (0.7 to 0.11) | `mct:tooltip:…` |
+| `mct:p:…` (0.6 to 0.11) | `mct:popover:…` |
+| `mct:dialog-o:…` (0.10 to 0.11) | `mct:dialog-open:…` |
+| `mct:dialog-c:…` (0.10 to 0.11) | `mct:dialog-close:…` |
+| `mcc:d:…` (0.10 to 0.11) | `mcc:dialog:…` |
+| `mcc:m:…` / `mcc:p:…` / `mcc:to:…` (to 0.11) | `mcc:menu:…` / `mcc:popover:…` / `mcc:tooltip:…` |
+| `mcr:a:…` (to 0.11) | `mcr:accordion:…` |
 
 Wrapper output was already the new form; only hand-written
 abbreviated ids need edits.
@@ -463,6 +530,11 @@ open it; a real pointer or Playwright `.click()` (which
 sends `pointerdown`) does. Hover paints `data-highlighted`
 and focuses the item under the pointer.
 
+**Behaviour (router).** Importing `monochrome/router`
+sets `history.scrollRestoration = "manual"` for the
+whole page (including navigations the router does not
+intercept). 0.13 stops doing that.
+
 ## 0.13.0
 
 **Breaking (Accordion).** Exclusive only. `type` and
@@ -473,11 +545,13 @@ others on the same `mcr:accordion:` root. Remove
 
 **Breaking (Accordion header).** `Accordion.Header as`
 is `h2` | `h3` | `h4` | `h5` | `h6` (still default
-`h3`). `as="h1"` is a type error. In HTML, put the
-trigger on the first-child chain of each item (typically
-inside the heading). Extra wrappers on that chain are
-fine; a heading that is not an ancestor-via-first-child
-of the trigger is not.
+`h3`). `as="h1"` is a TypeScript error in React. Vue
+still accepts any string at runtime. Wrapper markup
+`Item > Header > Trigger` is already valid. In
+hand-authored HTML, the trigger must sit on the
+first-child chain of each item (typically inside the
+heading). Extra wrappers on that chain now work; they
+did not in 0.12.
 
 **Breaking (Accordion panel).** Wrappers no longer set
 `role="region"` or `aria-hidden` on `Accordion.Panel`.
@@ -494,10 +568,15 @@ are `default*` so they read as "write this ARIA once":
 | `selected` | `defaultSelected` | `Tabs.Tab`, `Tabs.Panel` |
 | `checked` | `defaultChecked` | `Menu.CheckboxItem`, `Menu.RadioItem` |
 
-Leaving the old name: React forwards it as a DOM
-attribute and the panel stays closed / unchecked /
-unselected. Vue drops it as a non-prop. Rewrite every
-call site. `Tabs.Root defaultValue` is unchanged.
+Leaving the old name: React forwards it onto the DOM
+node, so the panel stays closed / unchecked /
+unselected. Vue `Accordion.Item` / `Collapsible.Root`
+fall `open` through onto the wrapper `div`; menu items
+set `inheritAttrs: false`, so `checked` does not become
+`aria-checked`. Rewrite every call site. Vue templates
+use `default-open`, `default-selected`,
+`default-checked`. `Tabs.Root defaultValue` is
+unchanged.
 
 **Added (Collapsible).** `disabled` on `Collapsible.Root`
 (`aria-disabled` on the trigger), matching Accordion.
@@ -511,8 +590,9 @@ used to flip it on open; after 0.13 a leftover
 `aria-hidden="true"` stays true on an open surface.
 Replace CSS and tests that look for
 `[aria-hidden="true"]` with `[hidden]`,
-`:popover-open`, or `dialog[open]`. You may still set
-`aria-hidden` yourself; the library will not.
+`:popover-open`, or `dialog[open]`. Do not add
+`aria-hidden` back onto library surfaces; the core
+will not flip it.
 
 **Breaking (Menubar tab stop).** Wrappers no longer pick
 the first `Menubar.Menu` for `tabIndex={0}`.
@@ -520,8 +600,12 @@ the first `Menubar.Menu` for `tabIndex={0}`.
 A standalone `Menu.Trigger` still defaults to `0`.
 Pass `tabIndex={0}` (Vue: `tabindex="0"`) on exactly
 one menubar stop. A bar that leaves every item at `-1`
-is skipped by Tab. `tabIndex` you pass wins over the
-default.
+is skipped by Tab. `tabIndex` you pass wins. Keep
+`Menubar.Menu` around each trigger and popover; dropping
+it throws (no menu context) and every trigger defaults
+to tab stop 0.
+
+React:
 
 ```tsx
 <Menubar.Root>
@@ -536,19 +620,34 @@ default.
 </Menubar.Root>
 ```
 
-**Breaking (React internals you might have typed).**
-Wrappers use React 19 `use()` and pass the Context
-object as the element type (`createElement(Context,
-{ value })`), not `Context.Provider`. Peer was already
-`>=19` in 0.12.
+Vue (same structure; `tabindex` not `tabIndex`):
+
+```vue
+<Menubar.Root>
+  <Menubar.Menu>
+    <Menubar.Trigger tabindex="0">File</Menubar.Trigger>
+    <Menubar.Popover>…</Menubar.Popover>
+  </Menubar.Menu>
+  <Menubar.Menu>
+    <Menubar.Trigger>Edit</Menubar.Trigger>
+    <Menubar.Popover>…</Menubar.Popover>
+  </Menubar.Menu>
+</Menubar.Root>
+```
+
+**Note (React 19 internals).** Wrappers use `use()` and
+pass the Context object as the element type, not
+`Context.Provider`. Those contexts are not exported.
+No consumer import change if the peer is already 19.
 
 **Breaking (router).** The router uses the Navigation
 API only. No `history.pushState` / `popstate` path.
 Without `window.navigation` the module is a no-op:
 full page loads, no `mc:navigate`, no region swap.
-That is Chrome 135, Safari 26.2, Firefox 147 (see
-`package.json` `browserslist.router`). `data-area` /
-`data-key` markup is unchanged.
+That is Chrome 135, Safari 26.2, Firefox 147 (named
+in `docs/router.md` in this release; recorded in
+`package.json` `browserslist.router` from 0.16).
+`data-area` / `data-key` markup is unchanged.
 
 Scroll and fragments are the browser's.
 `history.scrollRestoration` stays `"auto"`. Tests that
@@ -561,9 +660,9 @@ rewritten or dropped.
 prefetched when they enter the viewport
 (`IntersectionObserver`, fetch priority `"low"`), in
 addition to hover and focus. More requests on pages
-with many in-view links. Markup and the `mc:navigate`
-event are unchanged. Older browsers still no-op the
-router.
+with many in-view links. Only `text/html` responses
+are cached. Markup and the `mc:navigate` event are
+unchanged. Older browsers still no-op the router.
 
 No component API changes.
 
@@ -571,9 +670,9 @@ No component API changes.
 
 No breaking changes and no syntax changes.
 
-**Behaviour (fixes).** Menu pointer-open does not
-`focus({ preventScroll })` on mouse, so a sticky header
-does not steal the scroll and dismiss the menu. `href`
+**Behaviour (fixes).** A mouse open no longer focuses
+the trigger (`Focus.None`), so a sticky header does
+not steal the scroll and dismiss the menu. `href`
 menuitems navigate once (the `click` walk does not also
 activate). Dialog close does not refocus when focus is
 already on the trigger.
@@ -583,14 +682,15 @@ already on the trigger.
 No breaking changes and no syntax changes.
 
 **Behaviour (router).** Navigate, hover, and focus
-resolve the nearest `<a>` ancestor of `event.target`,
-so a click on an icon or span inside a link still
-intercepts on Safari versions that name the inner node.
-`browserslist` in `package.json` records the floors
-(core Chrome 114 / Safari 17 / Firefox 125; router
-Chrome 135 / Safari 26.2 / Firefox 147). The floors
-were already the practical requirement from 0.13; this
-release names them.
+resolve the `<a>` itself or the nearest `<a>` ancestor
+of `event.target`, so a click on an icon or span inside
+a link still intercepts on Safari versions that name
+the inner node. `package.json` `browserslist` records
+the floors (core Chrome 114 / Safari 17 / Firefox 125;
+router Chrome 135 / Safari 26.2 / Firefox 147).
+`docs/router.md` already named those versions in 0.13;
+this release puts them in `package.json` and the
+README.
 
 ## Checklist (0.12 → 0.16, the usual jump)
 
@@ -605,11 +705,15 @@ Most consumers in the wild are on 0.12 or 0.13. From
 4. `Accordion.Header as="h1"` → `h2` (or drop `as`).
 5. Delete `aria-hidden` assertions and CSS; use
    `hidden` / `:popover-open`.
-6. Put `tabIndex={0}` on one `Menubar.Trigger`.
+6. Put `tabIndex={0}` on one `Menubar.Trigger` (Vue:
+   `tabindex="0"`). Keep `Menubar.Menu`.
 7. Router needs the Navigation API; otherwise accept
-   full page loads.
+   full page loads. Native scroll restoration is back
+   (`"auto"`). Viewport prefetch starts in 0.14.
 8. Confirm CSS uses `--width` / `--height`, not
    `--pw` / `--ph`, and has no `[data-safe]` triangle.
+9. Confirm menus are tested with pointer events, not
+   only `HTMLElement.click()`.
 
 From 0.11 or earlier, also apply 0.12 (imports, full
 id prefixes, React 19, CSS var rename) and 0.11
