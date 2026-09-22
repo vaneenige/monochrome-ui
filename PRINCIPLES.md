@@ -26,8 +26,14 @@ any more:
    wrappers import only their framework (as peer deps) plus one
    side-effect import of their own core file, so a single wrapper
    import ships both markup and behavior.
-5. **Baseline 2024 browsers.** We rely on the Popover API. No
-   polyfills shipped.
+5. **Baseline 2024 browsers.** The core relies on the Popover
+   API, the router on the Navigation API (Baseline 2026). Those
+   set the floors `package.json` `browserslist` declares, and
+   nothing may reach past them: an API newer than the floor is
+   not used, however much simpler it would read, and the answer
+   is to do without it rather than to raise the floor. Raising
+   one is a release decision, not a convenience. No polyfills
+   shipped, and `scripts/support.ts` fails the build on a reach.
 6. **One file per component.** Shared helpers live in
    `src/dom.ts`. Each component is `src/{name}.ts` and registers
    its own window listeners. `src/index.ts` only imports every

@@ -292,11 +292,24 @@ runs lint, build, and typecheck, then stages the restamped
 `package.json`. Never `--no-verify` locally; the release
 workflow is the exception after CI. Never defer the rewrite.
 
-`bun run test` is Chromium (`html`, `react`, `vue`).
+**Browser floors live in `browserslist`.** One list per target
+(`core`, `router`), each entry `<browser> >= <version>`, Chrome
+then Safari then Firefox. `bun run support` (also part of every
+build) resolves the web APIs the source touches against MDN's
+browser-compat-data and fails when a target reaches past its
+floor, naming the API. Raising a floor is a deliberate
+`browserslist` edit. Release dates for those versions are in
+the README and `docs/router.md`. The gate knows whether an API
+exists, never how it behaves, and the suite runs current
+browsers rather than old ones: a support claim is checked by
+reading the code, a regression by running what people are on.
+
+`bun run test` is Chrome (`html`, `react`, `vue`).
 `bun run test:all` is the five-project matrix CI runs on
-the PR. `bun run test:install` fetches Chromium;
-`test:install:all` fetches all three. Do not postinstall
-browsers. `prepare` sets hooks only in a git work tree.
+the PR: Chrome, Safari, and Firefox. `bun run test:install`
+fetches Chrome; `test:install:all` fetches all three. Do not
+postinstall browsers. `prepare` sets hooks only in a git
+work tree.
 
 CI `quality` fails if `package.json` drifts from the
 restamp and uploads `dist` for the browser jobs. The

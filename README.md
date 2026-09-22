@@ -57,11 +57,14 @@ The React and Vue wrappers generate the same HTML and ARIA; all interactivity co
 
 ## Browser support
 
-Core: Baseline 2024. Uses the Popover API and the native `<dialog>`
-element. No polyfills shipped.
+Core: Baseline 2024. Chrome 114 (2023-05-30), Safari 17
+(2023-09-18), and Firefox 125 (2024-04-16). Uses the Popover
+API and the native `<dialog>` element. No polyfills shipped.
 
-Router: Navigation API (Baseline 2026). Links are
-prefetched as they enter the viewport and on hover; see
+Router: Navigation API (Baseline 2026). Chrome 135
+(2025-04-01), Safari 26.2 (2025-12-12), and Firefox 147
+(2026-01-13). Links are prefetched as they enter the
+viewport and on hover; see
 [`docs/router.md`](./docs/router.md). Older browsers keep
 full page loads; `import "monochrome/router"` is a no-op
 there.
