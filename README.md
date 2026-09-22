@@ -131,14 +131,22 @@ The dialog animates on every close: the Close button,
 Escape, a backdrop click with `closedby="any"`,
 `requestClose()`, and `<form method="dialog">`. A `cancel`
 listener that calls `preventDefault()` still keeps it open.
-Calling `close()` yourself skips the transition.
+Calling `close()` yourself skips the transition, and
+`requestClose(value)` keeps the previous `returnValue`.
 
-Things the browser decides:
+What to expect:
 
-- Input on a running transition is dropped, so keep
-  animations short (150 to 250 ms). Keys are never lost: the
-  next key or click applies a pending change before anything
-  handles it.
+- The change lands when the browser takes its snapshot, a
+  frame after the event. Read state in a later event, or
+  listen for the popover's `toggle` or the dialog's `close`
+  event. The next key or click
+  always applies a pending change before anything handles it,
+  so fast input is never lost.
+- A press on a running transition is dropped and finishes the
+  transition, so the next press lands. Keep animations short
+  (150 to 250 ms).
+- A change made while the pointer is down, such as a popover
+  closing on an outside press, is instant.
 - A duplicate `view-transition-name` skips the transition;
   the change still happens.
 - With `prefers-reduced-motion: reduce`, no transition

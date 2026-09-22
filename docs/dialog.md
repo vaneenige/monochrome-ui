@@ -22,15 +22,19 @@ has a host and the event is `cancelable`, that listener adds
 own `cancel` listeners, and only when none of them called
 `preventDefault()` does it cancel the native close and call
 `dialogClose`. A cancel that is not cancelable (the browser
-grants one per user activation) closes natively.
+grants one per user activation) closes natively. `cancel` does
+not carry the value passed to `requestClose(value)`, so a
+transitioning dialog keeps its previous `returnValue` there.
 
 **Forms with `method="dialog"`.** A `submit` from a form whose
 nearest `mcc:dialog:` is the open, transitioning dialog is
 cancelled once no author listener cancelled it, and
 `dialogClose` closes the dialog instead. The submitter's
 `formmethod` wins over the form's `method`, as it does
-natively, and its `value` attribute becomes `returnValue`.
-Validation has already passed by the time `submit` fires.
+natively, and its `value` attribute becomes `returnValue`. An
+image submitter is left to the browser, which sets
+`returnValue` to the click coordinates. Validation has already
+passed by the time `submit` fires.
 Calling `close()` from author code never animates.
 
 **Close button focus.** `dialogClose` calls `close()`, which

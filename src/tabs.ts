@@ -8,6 +8,7 @@ import {
   type RovingFocusCallback,
   roving,
   spatialKey,
+  viewListen,
   viewTransition,
 } from "./dom.js";
 
@@ -57,6 +58,7 @@ if (hasDocument) {
     }
   };
 
+  viewListen();
   addEventListener("click", (event: MouseEvent) => {
     const trigger = findAncestor(getTarget(event), Prefix.TriggerTabs);
     if (trigger) tabs(trigger);

@@ -139,26 +139,44 @@ un-opted component is never delayed by another one's
 transition. Each update in a batch runs on its own: a throw is
 passed to `reportError` and the rest still run.
 
-**Input applies a pending batch first.** `src/dom.ts` registers
+**Input applies a pending batch first.** `viewListen` registers
 `viewGuard` in capture on `window` for `pointerdown`,
-`pointerup`, `click`, `pointermove`, and `keydown`, ahead of
-every component listener. When a batch is still waiting,
-`pointerdown`, `pointerup`, `click`, and `keydown` run it at
-once and call `skipTransition` on its transition, so no
-handler ever reads the state from before the last event: Enter
-then Escape closes a popover, and Tab after opening a dialog
-moves inside it. `pointermove` does not apply the batch, so a
-moving pointer never cancels a transition.
+`pointerup`, `click`, `pointermove`, and `keydown`. Each
+participating component calls it before its own listeners, and
+the browser drops the duplicate registrations. When a batch is
+still waiting, `pointerdown`, `pointerup`, `click`, and
+`keydown` run it at once and call `skipTransition` on its
+transition, so no library handler for pointer or key input
+reads the state from before the last event: Enter then Escape
+closes a popover, and Tab after opening a dialog moves inside
+it. `pointermove` does not apply the batch, so a moving pointer
+never cancels a transition. Code that reads the DOM right after
+the event sees the old state until the browser takes its
+snapshot.
+
+**No transition while a pointer is down.** `viewPressed` is set
+by `pointerdown` and cleared by the next `pointerup`, `click`,
+or `keydown`, and `viewStart` returns no host while it is set.
+A change made during a press, such as a popover closing on an
+outside `pointerdown`, runs at once. A transition started there
+would still be animating at the release, so the release and its
+`click` would land on the transition instead of the button
+pressed.
 
 **Input on a running transition is dropped.** While a
-transition animates, the browser hit-tests its snapshots, not
-the page, and Chromium reports pointer events on the
-`<html>` element. `viewGuard` stops those at the capture
-listener and cancels `pointerdown`, so they never reach a
-component: the press does not read as outside a popover, and
-focus does not leave a modal dialog. `viewActive` counts the
-transitions between start and `finished`. Keyboard input is
-never dropped.
+transition animates, Chromium and WebKit hit-test its snapshots,
+not the page: pointer events inside the transition target the
+nearest ancestor of its root (`<html>` for a `viewport`
+transition). `viewActive` maps each transition to its root until
+`finished`. `viewGuard` stops and cancels an event whose target
+contains a root, so it never reads as a press outside a popover
+and focus does not leave a modal dialog. A press on the bare
+part of an ancestor outside an `element` root is caught too;
+it hit nothing anyway, and the check stays a single
+`contains`. A
+`pointerdown` there also calls `skipTransition`, so the press is
+lost but the next one lands. Firefox hit-tests the page, and
+keys are never dropped.
 
 **Transitions never fail loudly.** A `startViewTransition` that
 throws runs the batch at once. `ready` rejects when the browser
@@ -171,6 +189,8 @@ start at the content they show or hide. Tabs starts at the
 tab, so the attribute belongs on the tabs root, and an
 `element` transition there covers the list and every panel.
 Menu, Menubar, Tooltip, and the router never call
-`viewTransition`: they act on hover and on the press itself,
-where dropped input would break them. Dialog's own close
-requests are in `docs/dialog.md`.
+`viewTransition` or `viewListen`: they act on hover and on the
+press itself, where dropped input would break them, and a
+bundle without a participating component tree-shakes every
+`view*` helper away. Dialog's own close requests are in
+`docs/dialog.md`.

@@ -12,13 +12,14 @@ type Engine = (typeof engines)[number];
 
 // Progressive enhancements (PRINCIPLES.md, north star 5): allowed
 // above the floor only in the one file that feature-detects them,
-// where every caller still works when they are missing.
-const enhancements = new Map([
-  ["Document.startViewTransition", "src/dom.ts"],
-  ["ViewTransition", "src/dom.ts"],
-  ["ViewTransition.finished", "src/dom.ts"],
-  ["ViewTransition.ready", "src/dom.ts"],
-  ["ViewTransition.skipTransition", "src/dom.ts"],
+// and only at the number of sites listed, so any new use fails
+// until someone checks that it is guarded and bumps the count.
+const enhancements = new Map<string, [file: string, sites: number]>([
+  ["Document.startViewTransition", ["src/dom.ts", 1]],
+  ["ViewTransition", ["src/dom.ts", 3]],
+  ["ViewTransition.finished", ["src/dom.ts", 1]],
+  ["ViewTransition.ready", ["src/dom.ts", 1]],
+  ["ViewTransition.skipTransition", ["src/dom.ts", 2]],
 ]);
 type Target = "core" | "router";
 type Peak = { version: string; key: string } | null;
@@ -87,8 +88,16 @@ export const support = () => {
   };
 
   let current = "";
+  let site = -1;
+  const sites = new Map<string, Set<number>>();
   const record = (target: Target, key: string, node: Identifier) => {
-    if (enhancements.get(key) === current) return;
+    const allowed = enhancements.get(key);
+    if (allowed?.[0] === current) {
+      const seen = sites.get(key) ?? new Set<number>();
+      seen.add(site);
+      sites.set(key, seen);
+      if (seen.size <= allowed[1]) return;
+    }
     for (const engine of engines) {
       const needs = version(node, engine);
       const peak = peaks[target][engine];
@@ -139,6 +148,7 @@ export const support = () => {
     if (!files.includes(current)) continue;
     const target: Target = file.fileName.endsWith("src/router.ts") ? "router" : "core";
     const visit = (node: ts.Node) => {
+      site = node.getStart(file);
       if (ts.isPropertyAccessExpression(node)) {
         const symbol = checker.getSymbolAtLocation(node.name);
         if (

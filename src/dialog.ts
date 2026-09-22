@@ -3,6 +3,7 @@ import {
   getLinked,
   getTarget,
   hasDocument,
+  viewListen,
   viewStart,
   viewTransition,
 } from "./dom.js";
@@ -50,6 +51,7 @@ if (hasDocument) {
     }
   };
 
+  viewListen();
   addEventListener("click", (event: MouseEvent) => {
     const target = getTarget(event);
     if (findAncestor(target, Prefix.TriggerDialogClose)) dialogClose(null);
@@ -78,15 +80,16 @@ if (hasDocument) {
   addEventListener("submit", (event: SubmitEvent) => {
     const form = event.target;
     const submitter = event.submitter;
+    const isButton =
+      submitter instanceof HTMLButtonElement || submitter instanceof HTMLInputElement;
     if (
       form instanceof HTMLFormElement &&
       dialogContent &&
       !event.defaultPrevented &&
+      !(isButton && submitter.type === "image") &&
       findAncestor(form, Prefix.ContentDialog) === dialogContent &&
       viewStart(dialogContent)
     ) {
-      const isButton =
-        submitter instanceof HTMLButtonElement || submitter instanceof HTMLInputElement;
       if (((isButton && submitter.formMethod) || form.method) === "dialog") {
         event.preventDefault();
         dialogClose(isButton ? submitter.getAttribute("value") : null);

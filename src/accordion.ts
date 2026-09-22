@@ -8,6 +8,7 @@ import {
   type RovingFocusCallback,
   roving,
   toggleDisclosure,
+  viewListen,
   viewTransition,
 } from "./dom.js";
 
@@ -74,6 +75,7 @@ if (hasDocument) {
     }
   };
 
+  viewListen();
   addEventListener("click", (event: MouseEvent) => {
     const trigger = findAncestor(getTarget(event), Prefix.TriggerAccordion);
     if (trigger) accordion(trigger);

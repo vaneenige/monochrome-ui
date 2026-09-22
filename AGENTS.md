@@ -189,7 +189,8 @@ PropType<...>` where Vue's prop typing requires it.)
   component name verbatim, plural included (`tabsNext`, never
   `tabNext`).
 - `should*` for driver flags, `safe*` for safety-triangle state,
-  `tooltip*` for tooltip state, `menu*` for menu state.
+  `tooltip*` for tooltip state, `menu*` for menu state, `view*`
+  for view-transition state and helpers.
 - Boolean flags are plain `boolean` reset to `false`;
   value-carrying flags are `T | null` with null meaning "off".
 - Local booleans read as predicates or adjectives (`isOpen`,

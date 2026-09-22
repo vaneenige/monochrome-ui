@@ -7,6 +7,8 @@ export type RovingFocusCallback = (
 
 export type Roving = (focus: RovingFocusCallback) => [RovingNavigator, RovingNavigator];
 
+type ViewStart = [start: (update: () => void) => unknown, root: Element];
+
 enum Transition {
   Element = "element",
   Viewport = "viewport",
@@ -14,9 +16,9 @@ enum Transition {
 
 export const hasDocument = typeof document !== "undefined";
 
-let viewActive = 0;
-let viewGuarded = false;
+const viewActive = new Map<ViewTransition, Element>();
 let viewPending: ViewTransition | null = null;
+let viewPressed = false;
 let viewQueue: (() => void)[] | null = null;
 let viewRunning = false;
 
@@ -85,17 +87,32 @@ export const toggleDisclosure = (trigger: HTMLElement) => {
   }
 };
 
-const viewDone = () => {
-  viewActive--;
-};
-
 const viewGuard = (event: Event) => {
-  if (event.type !== "keydown" && viewActive && event.target === document.documentElement) {
+  const target = event.target;
+  let isHit = false;
+  if (event instanceof MouseEvent && target instanceof Element) {
+    for (const [transition, root] of viewActive) {
+      if (target.contains(root)) {
+        isHit = true;
+        if (event.type === "pointerdown") transition.skipTransition();
+      }
+    }
+  }
+  if (isHit) {
     event.preventDefault();
     event.stopImmediatePropagation();
-  } else if (viewQueue && event.type !== "pointermove") {
-    viewPending?.skipTransition();
-    viewRun(viewQueue);
+  } else if (event.type !== "pointermove") {
+    viewPressed = event.type === "pointerdown";
+    if (viewQueue) {
+      viewPending?.skipTransition();
+      viewRun(viewQueue);
+    }
+  }
+};
+
+export const viewListen = () => {
+  for (const type of ["pointerdown", "pointerup", "click", "pointermove", "keydown"]) {
+    addEventListener(type, viewGuard, true);
   }
 };
 
@@ -112,38 +129,38 @@ const viewRun = (queue: (() => void)[]) => {
   viewRunning = false;
 };
 
-export const viewStart = (origin: HTMLElement | null) => {
+export const viewStart = (origin: HTMLElement | null): ViewStart | null => {
   let el = origin;
   while (el && !el.hasAttribute("data-view-transition")) el = el.parentElement;
   const mode = el?.getAttribute("data-view-transition");
   const host = mode === Transition.Viewport ? document : mode === Transition.Element ? el : null;
   const start = host && "startViewTransition" in host ? host.startViewTransition : null;
-  return typeof start === "function" && !matchMedia("(prefers-reduced-motion: reduce)").matches
-    ? (update: () => void): unknown => start.call(host, update)
+  return host &&
+    typeof start === "function" &&
+    !viewPressed &&
+    !matchMedia("(prefers-reduced-motion: reduce)").matches
+    ? [(update) => start.call(host, update), host instanceof Document ? host.documentElement : host]
     : null;
 };
 
 export const viewTransition = (origin: HTMLElement | null, update: () => void) => {
-  const start = viewRunning ? null : viewStart(origin);
-  if (!start) update();
+  const view = viewRunning ? null : viewStart(origin);
+  if (!view) update();
   else if (viewQueue) viewQueue.push(update);
   else {
     const queue = [update];
-    if (!viewGuarded) {
-      viewGuarded = true;
-      for (const type of ["pointerdown", "pointerup", "click", "pointermove", "keydown"]) {
-        addEventListener(type, viewGuard, true);
-      }
-    }
     viewPending = null;
     viewQueue = queue;
     try {
-      const transition = start(() => viewRun(queue));
+      const transition = view[0](() => viewRun(queue));
       if (transition instanceof ViewTransition) {
-        viewActive++;
+        const done = () => {
+          viewActive.delete(transition);
+        };
+        viewActive.set(transition, view[1]);
         viewPending = transition;
         void transition.ready.catch(() => {});
-        void transition.finished.then(viewDone, viewDone);
+        void transition.finished.then(done, done);
       }
     } catch {
       viewRun(queue);

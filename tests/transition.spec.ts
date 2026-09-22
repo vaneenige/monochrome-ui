@@ -91,12 +91,16 @@ const trackTransitions = (page: Page) =>
   page.evaluate(() => {
     const finished: Promise<void>[] = [];
     window.__vtFinished = finished;
-    const start = Document.prototype.startViewTransition;
-    Document.prototype.startViewTransition = function (update) {
-      const transition = start.call(this, update);
-      finished.push(transition.finished);
-      return transition;
-    };
+    for (const proto of [Document.prototype, Element.prototype]) {
+      const start: unknown = Reflect.get(proto, "startViewTransition");
+      if (typeof start === "function") {
+        Reflect.set(proto, "startViewTransition", function (this: unknown, update: unknown) {
+          const transition: unknown = start.call(this, update);
+          if (transition instanceof ViewTransition) finished.push(transition.finished);
+          return transition;
+        });
+      }
+    }
   });
 
 // Waits until every transition, including any a handler starts while
@@ -307,6 +311,67 @@ test.describe("View transitions", () => {
       await settleTransitions(page);
       await expect(page.getByTestId("click-content")).toBeVisible();
       await expect(page.getByTestId("click-trigger")).toHaveAttribute("aria-expanded", "true");
+    });
+
+    test("a press outside an open popover still clicks what it lands on", async ({
+      page,
+      renderer,
+    }) => {
+      await page.goto(`/${renderer}/popover/basic`);
+      test.skip(!(await supports(page, "viewport")), "no document view transition");
+      await slowTransitions(page);
+      await mark(page, "click-content", "viewport");
+      await trackTransitions(page);
+      await page.getByTestId("click-trigger").click();
+      await settleTransitions(page);
+      const box = await page.getByTestId("second-trigger").boundingBox();
+      expect(box).not.toBeNull();
+      await page.mouse.move((box?.x ?? 0) + 5, (box?.y ?? 0) + 5);
+      await page.mouse.down();
+      await page.waitForTimeout(100);
+      await page.mouse.up();
+      await settleTransitions(page);
+      await expect(page.getByTestId("click-content")).not.toBeVisible();
+      await expect(page.getByTestId("second-content")).toBeVisible();
+    });
+
+    test("a press on a running transition finishes it", async ({ page, renderer }) => {
+      await page.goto(`/${renderer}/tabs/horizontal`);
+      test.skip(!(await supports(page, "element")), "no element view transition");
+      await slowTransitions(page);
+      await markAncestor(page, "tab-1", "mcr:tabs:", "element");
+      await trackTransitions(page);
+      await page.getByTestId("tab-2").click();
+      await waitForTransition(page);
+      await page.getByTestId("tab-3").click({ force: true });
+      const running = await page.evaluate(async () => {
+        await new Promise(requestAnimationFrame);
+        await new Promise(requestAnimationFrame);
+        return document.getAnimations().length;
+      });
+      expect(running).toBe(0);
+      await expect(page.getByTestId("tab-2")).toHaveAttribute("aria-selected", "true");
+      await page.getByTestId("tab-3").click();
+      await settleTransitions(page);
+      await expect(page.getByTestId("tab-3")).toHaveAttribute("aria-selected", "true");
+    });
+
+    test("a press on an element transition keeps focus where it was", async ({
+      page,
+      renderer,
+    }) => {
+      test.skip(renderer !== "html", "tabs-in-dialog fixture");
+      await page.goto("/html/dialog/basic");
+      test.skip(!(await supports(page, "element")), "no element view transition");
+      await slowTransitions(page);
+      await page.getByTestId("tabs-dialog-trigger").click();
+      await markAncestor(page, "t1-trigger", "mcr:tabs:", "element");
+      await trackTransitions(page);
+      await page.getByTestId("t2-trigger").click();
+      await waitForTransition(page);
+      await page.getByTestId("t1-trigger").click({ force: true });
+      await settleTransitions(page);
+      await expect(page.getByTestId("t2-trigger")).toBeFocused();
     });
 
     test("a press on the transition overlay keeps focus in the dialog", async ({

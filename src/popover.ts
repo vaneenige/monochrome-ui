@@ -5,6 +5,7 @@ import {
   hasDocument,
   isElement,
   position,
+  viewListen,
   viewTransition,
 } from "./dom.js";
 
@@ -35,6 +36,7 @@ if (hasDocument) {
     }
   };
 
+  viewListen();
   addEventListener("pointerdown", (event: PointerEvent) => {
     if (event.button !== 0 || !popoverShown) return;
     const el = getTarget(event);

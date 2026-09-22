@@ -26,8 +26,9 @@ any more:
    `queueMicrotask`, debounce, or throttle. Every action is
    synchronous within its event. The one deferral is an
    opted-in view transition, where the browser runs the update
-   after its snapshot; the next input event applies it first,
-   so no handler reads stale state (`docs/dom.md`).
+   after its snapshot; the next pointer or key event applies it
+   first, so no library input handler reads stale state
+   (`docs/dom.md`).
 4. **Zero runtime dependencies.** Shared helpers (`src/dom.ts`)
    import nothing. Components import only those helpers. The
    wrappers import only their framework (as peer deps) plus one
