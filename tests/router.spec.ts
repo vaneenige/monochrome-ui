@@ -162,6 +162,69 @@ test.describe("Router", () => {
   });
 
   test.describe("Anchor filtering", () => {
+    test("swaps when the click lands on an element inside the link", async ({ page }) => {
+      await page.goto("/html/router/index");
+      await page.evaluate(() => {
+        window.__sentinel = 1;
+      });
+      await page.getByTestId("nav-about-label").click();
+      await expect(page).toHaveURL("/html/router/about");
+      await expect(page.getByTestId("page-title")).toHaveText("About");
+      const sentinel = await page.evaluate(() => window.__sentinel);
+      expect(sentinel).toBe(1);
+    });
+
+    test("swaps when the click lands on an SVG inside the link", async ({ page }) => {
+      await page.goto("/html/router/index");
+      await page.evaluate(() => {
+        window.__sentinel = 1;
+      });
+      await page.getByTestId("nav-about-rect").click();
+      await expect(page).toHaveURL("/html/router/about");
+      await expect(page.getByTestId("page-title")).toHaveText("About");
+      const sentinel = await page.evaluate(() => window.__sentinel);
+      expect(sentinel).toBe(1);
+    });
+
+    test("swaps when the navigate event names an element inside the link", async ({ page }) => {
+      // Safari 26.4 and 26.5 report the deepest clicked node as `sourceElement`
+      // instead of the anchor; WebKit 26.6 reports the anchor. Reshaping the
+      // getter keeps the regression covered on every engine.
+      await page.addInitScript(() => {
+        const native = Object.getOwnPropertyDescriptor(NavigateEvent.prototype, "sourceElement");
+        let clicked: EventTarget | null = null;
+        addEventListener("pointerdown", (event) => (clicked = event.target), true);
+        Object.defineProperty(NavigateEvent.prototype, "sourceElement", {
+          configurable: true,
+          get(this: NavigateEvent) {
+            return clicked || native?.get?.call(this);
+          },
+        });
+      });
+      await page.goto("/html/router/index");
+      await page.evaluate(() => {
+        window.__sentinel = 1;
+      });
+      await page.getByTestId("nav-about-label").click();
+      await expect(page).toHaveURL("/html/router/about");
+      await expect(page.getByTestId("page-title")).toHaveText("About");
+      const sentinel = await page.evaluate(() => window.__sentinel);
+      expect(sentinel).toBe(1);
+    });
+
+    test("ignores a script navigation", async ({ page }) => {
+      await page.goto("/html/router/index");
+      await page.evaluate(() => {
+        window.__sentinel = 1;
+      });
+      await page.evaluate(() => {
+        location.href = "/html/router/about";
+      });
+      await page.waitForURL("/html/router/about");
+      const sentinel = await page.evaluate(() => window.__sentinel);
+      expect(sentinel).toBeUndefined();
+    });
+
     test("ignores modifier-clicked links", async ({ page }) => {
       await page.goto("/html/router/index");
       await page.getByTestId("nav-about").click({ modifiers: ["ControlOrMeta"] });

@@ -2,6 +2,10 @@ import { execSync } from "node:child_process";
 import { readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { gzipSync } from "node:zlib";
 import { rolldown } from "rolldown";
+import { support } from "./scripts/support.js";
+
+// Reach past package.json `browserslist` fails the build.
+support();
 
 const cores = ["accordion", "collapsible", "dialog", "menu", "popover", "tabs", "tooltip"] as const;
 const wrappers = [
@@ -137,6 +141,7 @@ const gzipSizes: Record<string, Record<string, number>> = Object.fromEntries(
 );
 
 const pkg = JSON.parse(readFileSync("package.json", "utf8"));
+
 pkg.versionMeta = {
   gzipSize: coreGz,
   gzipSizes,
