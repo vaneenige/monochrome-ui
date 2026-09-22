@@ -9,6 +9,17 @@ import ts from "typescript-api";
 
 const engines = ["chrome", "safari", "firefox"] as const;
 type Engine = (typeof engines)[number];
+
+// Progressive enhancements (PRINCIPLES.md, north star 5): allowed
+// above the floor only in the one file that feature-detects them,
+// where every caller still works when they are missing.
+const enhancements = new Map([
+  ["Document.startViewTransition", "src/dom.ts"],
+  ["ViewTransition", "src/dom.ts"],
+  ["ViewTransition.finished", "src/dom.ts"],
+  ["ViewTransition.ready", "src/dom.ts"],
+  ["ViewTransition.skipTransition", "src/dom.ts"],
+]);
 type Target = "core" | "router";
 type Peak = { version: string; key: string } | null;
 
@@ -75,7 +86,9 @@ export const support = () => {
     router: { chrome: null, safari: null, firefox: null },
   };
 
+  let current = "";
   const record = (target: Target, key: string, node: Identifier) => {
+    if (enhancements.get(key) === current) return;
     for (const engine of engines) {
       const needs = version(node, engine);
       const peak = peaks[target][engine];
@@ -122,7 +135,8 @@ export const support = () => {
   };
 
   for (const file of program.getSourceFiles()) {
-    if (!files.includes(file.fileName.replace(`${process.cwd()}/`, ""))) continue;
+    current = file.fileName.replace(`${process.cwd()}/`, "");
+    if (!files.includes(current)) continue;
     const target: Target = file.fileName.endsWith("src/router.ts") ? "router" : "core";
     const visit = (node: ts.Node) => {
       if (ts.isPropertyAccessExpression(node)) {

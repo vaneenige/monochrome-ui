@@ -15,12 +15,19 @@ any more:
    DOM anywhere in the library.
 2. **Event delegation only.** Listeners go on `window`. Zero
    per-element listeners. Each component registers only the
-   events it handles. Combined, the set is still the nine:
+   events it handles. Combined, the set is the nine:
    `pointerdown`, `pointerup`, `click`, `pointermove`, `keydown`,
-   `scroll`, `resize`, `focusin`, `focusout`.
+   `scroll`, `resize`, `focusin`, `focusout`, plus Dialog's
+   `cancel` and `submit` for native close requests. One
+   exception: `cancel` does not bubble, so Dialog hands it to a
+   one-shot listener on the open dialog, which runs after the
+   author's own and lets them keep it open (`docs/dialog.md`).
 3. **Zero timers.** No `setTimeout`, `requestAnimationFrame`,
    `queueMicrotask`, debounce, or throttle. Every action is
-   synchronous within its event.
+   synchronous within its event. The one deferral is an
+   opted-in view transition, where the browser runs the update
+   after its snapshot; the next input event applies it first,
+   so no handler reads stale state (`docs/dom.md`).
 4. **Zero runtime dependencies.** Shared helpers (`src/dom.ts`)
    import nothing. Components import only those helpers. The
    wrappers import only their framework (as peer deps) plus one
@@ -34,9 +41,14 @@ any more:
    is to do without it rather than to raise the floor. Raising
    one is a release decision, not a convenience. No polyfills
    shipped, and `scripts/support.ts` fails the build on a reach.
+   A newer API may appear only as a progressive enhancement:
+   feature-detected in `src/dom.ts`, named in the
+   `scripts/support.ts` allowlist, and with every component
+   complete without it. The View Transition API is the one case.
 6. **One file per component.** Shared helpers live in
    `src/dom.ts`. Each component is `src/{name}.ts` and registers
-   its own window listeners. `src/index.ts` only imports every
+   its own window listeners; `src/dom.ts` registers only the
+   view-transition guard. `src/index.ts` only imports every
    component so `import "monochrome"` still lights up the page.
    Components do not import each other.
 

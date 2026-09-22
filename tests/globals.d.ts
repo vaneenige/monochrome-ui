@@ -8,7 +8,9 @@ interface Window {
   __fetchPriority?: [url: string, priority: RequestInit["priority"]][];
   __navigations?: boolean[];
   __vtCalls?: string[];
+  __vtFinished?: Promise<void>[];
   __vtFlush?: () => void;
+  __vtSkips?: string[];
 }
 
 declare module "*.vue" {

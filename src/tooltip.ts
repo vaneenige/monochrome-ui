@@ -1,11 +1,4 @@
-import {
-  findAncestor,
-  getLinked,
-  getTarget,
-  hasDocument,
-  position,
-  viewTransition,
-} from "./dom.js";
+import { findAncestor, getLinked, getTarget, hasDocument, position } from "./dom.js";
 
 enum Prefix {
   ContentTooltip = "mcc:tooltip:",
@@ -55,16 +48,9 @@ if (hasDocument) {
     const active = tooltipHovered || tooltipFocused;
     const next = active && active !== tooltipSuppressed ? active : null;
     if (next !== tooltipShown) {
-      const previous = tooltipShown;
-      const origin =
-        (next && getLinked(next, "aria-describedby")) ||
-        (previous && getLinked(previous, "aria-describedby"));
-      const deferred = viewTransition(origin, () => {
-        if (previous) tooltip(previous, false);
-        if (next) tooltip(next, true);
-        tooltipShown = next;
-      });
-      if (deferred) tooltipShown = next;
+      if (tooltipShown) tooltip(tooltipShown, false);
+      if (next) tooltip(next, true);
+      tooltipShown = next;
     }
   };
 

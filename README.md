@@ -24,20 +24,20 @@ npm install monochrome
 ```ts
 // every component, one flat file. For pages that ship no other
 // monochrome import; don't combine with the granular imports below
-import "monochrome";
+import "monochrome"
 
 // one component (shared helpers dedupe across entries)
-import "monochrome/menu";
+import "monochrome/menu"
 
 // optional router
-import "monochrome/router";
+import "monochrome/router"
 
 // React wrappers: each auto-imports its own core, so one import
 // wires markup and behavior, tree-shaken to the components you use
-import { Accordion, Menu } from "monochrome/react";
+import { Accordion, Menu } from "monochrome/react"
 
 // Vue wrappers, same shape
-import { Accordion, Menu } from "monochrome/vue";
+import { Accordion, Menu } from "monochrome/vue"
 ```
 
 ## Example
@@ -69,35 +69,82 @@ viewport and on hover; see
 full page loads; `import "monochrome/router"` is a no-op
 there.
 
+View transitions: optional, see below. Full-page transitions
+need Chrome 111, Safari 18, or Firefox 144; element-scoped
+ones need Chrome 147. Everywhere else the component updates
+instantly.
+
 ## View transitions
 
-Put `data-view-transition` on the element that should own
-the transition, or on an ancestor of the part that changes.
-Leave it off and the component behaves as before.
+Add `data-view-transition` to a component's content, or to an
+ancestor of it, and the component runs its change inside a
+[view transition](https://developer.mozilla.org/docs/Web/API/View_Transition_API).
+Your CSS decides what animates.
 
-`viewport` runs a full-page view transition
-(`document.startViewTransition`). `element` runs one scoped
-to the element with the attribute
-(`element.startViewTransition`). A tabs root is the usual
-place for `element`, so the snapshot covers every panel and
-not the rest of the page. Dialog, disclosure, menu, popover,
-and tooltip content (or a wrapper around that content) is
-the usual place for either value.
+| Value      | Transition                                                |
+| ---------- | --------------------------------------------------------- |
+| `viewport` | The whole page (`document.startViewTransition`)           |
+| `element`  | Only the element with the attribute (`startViewTransition` on it) |
+| `none`     | None; opts a subtree out of an ancestor's value           |
 
-Document view transitions are supported more widely than
-element-scoped ones. Each method is checked on its own host.
-If it is missing, the component updates immediately, and
-`element` does not fall back to a full-page transition.
+Where to put it:
 
-Style the snapshots in CSS with `::view-transition-old`,
-`::view-transition-new`, and `view-transition-name`. The
-router does not start view transitions.
+| Component   | Value      | On                                     |
+| ----------- | ---------- | -------------------------------------- |
+| Tabs        | `element`  | The tabs root (`mcr:tabs:`)            |
+| Accordion   | `element`  | The accordion root (`mcr:accordion:`)  |
+| Collapsible | `element`  | A wrapper around trigger and content   |
+| Dialog      | `viewport` | The `<dialog>`                         |
+| Popover     | `viewport` | The popover content                    |
+
+Dialog and popover content sits in the top layer, outside any
+element's snapshot, so only `viewport` animates both open and
+close. Menu, Menubar, and Tooltip ignore the attribute: they
+react to hover and to the press itself, and input that lands on
+a running transition is dropped. Animate them with
+`@starting-style` instead.
+
+A card that morphs into its dialog and back. Only one element
+may hold a `view-transition-name` at a time, so the name moves
+from the card to the open dialog:
 
 ```html
-<dialog id="mcc:dialog:1" data-view-transition="viewport">...</dialog>
+<style>
+  .card:has(+ dialog:not([open])),
+  .card + dialog[open] {
+    view-transition-name: card;
+  }
+</style>
 
-<div id="mcr:tabs:1" data-view-transition="element">...</div>
+<button class="card" type="button" id="mct:dialog-open:1"
+  aria-haspopup="dialog" aria-controls="mcc:dialog:1">
+  Project Aurora
+</button>
+<dialog id="mcc:dialog:1" aria-label="Project Aurora"
+  tabindex="-1" data-view-transition="viewport">
+  ...
+  <button type="button" id="mct:dialog-close:1">Close</button>
+</dialog>
 ```
+
+The dialog animates on every close: the Close button,
+Escape, a backdrop click with `closedby="any"`,
+`requestClose()`, and `<form method="dialog">`. A `cancel`
+listener that calls `preventDefault()` still keeps it open.
+Calling `close()` yourself skips the transition.
+
+Things the browser decides:
+
+- Input on a running transition is dropped, so keep
+  animations short (150 to 250 ms). Keys are never lost: the
+  next key or click applies a pending change before anything
+  handles it.
+- A duplicate `view-transition-name` skips the transition;
+  the change still happens.
+- With `prefers-reduced-motion: reduce`, no transition
+  starts.
+- Without support, the change is instant. `element` never
+  falls back to a full-page transition.
 
 ## Contributing
 

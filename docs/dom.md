@@ -117,38 +117,60 @@ and ArrowUp; otherwise ArrowRight and ArrowLeft. Both go through
 `spatialKey`. Home and End always rove the list.
 
 **View transitions.** `viewTransition(origin, update)` runs
-`update` inside a same-document view transition when `origin`
-or an ancestor has `data-view-transition`. `viewport` calls
-`document.startViewTransition`, which snapshots the whole page.
-`element` calls `startViewTransition` on the element that
-carries the attribute, which snapshots that subtree only. The
-method is checked on that host. A browser can implement the
-document call and not the element call, and `element` never
-falls back to the document. With no attribute, any other value,
-or a missing method, `update` runs before `viewTransition`
-returns and the component still changes. Otherwise the browser
-invokes `update` after it snapshots the old state. Author CSS
-styles the snapshots (`::view-transition-old`,
-`::view-transition-new`, `view-transition-name`).
+`update` inside a same-document view transition when
+`viewStart` finds a host, and runs it at once otherwise.
+`viewStart` walks up from `origin` to the nearest
+`data-view-transition`. `viewport` makes `document` the host;
+`element` makes the element carrying the attribute the host;
+any other value (`none`) ends the walk with no host. The
+method is checked on that host alone, since browsers ship the
+document call years before the element call, so `element`
+never falls back to the document. `prefers-reduced-motion:
+reduce` also yields no host. When a transition starts, the
+browser calls `update` after it snapshots the old state.
 
-**One transition per turn.** A `viewTransition` call made while
-an update is already queued or running joins that update, and
-the first host wins. Accordion wraps the exclusive close and
-the open in one call. Menu wraps a stack close the same way,
-and a keydown's trailing trim joins so it sees the focus the
-open moved. Nested `toggleDisclosure`, `menu`, and `tooltip`
-calls inside that update do not start a second transition.
-Disclosure and popover mirror `aria-expanded` before returning
-when the paint is deferred, so a second activation in the same
-turn reads the next state. `hidden`, `showPopover`,
-`hidePopover`, `showModal`, and `close` stay inside the
-snapshot callback.
+**One batch per transition.** A `viewTransition` call with a
+host joins the batch already waiting for its snapshot, and the
+first host wins. Calls made while a batch runs (`viewRunning`)
+run at once, so Accordion's exclusive close and its open, and
+the popover a new one replaces, land in one snapshot. A call
+with no host never joins a batch; it runs at once, so an
+un-opted component is never delayed by another one's
+transition. Each update in a batch runs on its own: a throw is
+passed to `reportError` and the rest still run.
 
-**Where the walk starts.** Disclosure, Dialog, Popover, Menu,
-and Tooltip start at the content they are about to show or
-hide, so the attribute belongs on that content or on a wrapper
-around it. Tabs starts at the tab, so the attribute belongs on
-the tabs root: an `element` transition then scopes to that root
-and includes every panel. Dialog's native dismiss stays outside
-this path (see `docs/dialog.md`). The router does not call
-`viewTransition`.
+**Input applies a pending batch first.** `src/dom.ts` registers
+`viewGuard` in capture on `window` for `pointerdown`,
+`pointerup`, `click`, `pointermove`, and `keydown`, ahead of
+every component listener. When a batch is still waiting,
+`pointerdown`, `pointerup`, `click`, and `keydown` run it at
+once and call `skipTransition` on its transition, so no
+handler ever reads the state from before the last event: Enter
+then Escape closes a popover, and Tab after opening a dialog
+moves inside it. `pointermove` does not apply the batch, so a
+moving pointer never cancels a transition.
+
+**Input on a running transition is dropped.** While a
+transition animates, the browser hit-tests its snapshots, not
+the page, and Chromium reports pointer events on the
+`<html>` element. `viewGuard` stops those at the capture
+listener and cancels `pointerdown`, so they never reach a
+component: the press does not read as outside a popover, and
+focus does not leave a modal dialog. `viewActive` counts the
+transitions between start and `finished`. Keyboard input is
+never dropped.
+
+**Transitions never fail loudly.** A `startViewTransition` that
+throws runs the batch at once. `ready` rejects when the browser
+skips a transition (a duplicate `view-transition-name`, a
+second document transition, `skipTransition`); `viewTransition`
+handles it, and the batch still runs, as the API guarantees.
+
+**Where the walk starts.** Disclosure, Dialog, and Popover
+start at the content they show or hide. Tabs starts at the
+tab, so the attribute belongs on the tabs root, and an
+`element` transition there covers the list and every panel.
+Menu, Menubar, Tooltip, and the router never call
+`viewTransition`: they act on hover and on the press itself,
+where dropped input would break them. Dialog's own close
+requests are in `docs/dialog.md`.

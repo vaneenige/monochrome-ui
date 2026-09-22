@@ -14,6 +14,12 @@ enum Transition {
 
 export const hasDocument = typeof document !== "undefined";
 
+let viewActive = 0;
+let viewGuarded = false;
+let viewPending: ViewTransition | null = null;
+let viewQueue: (() => void)[] | null = null;
+let viewRunning = false;
+
 export const isElement = (el: unknown): el is HTMLElement => el instanceof HTMLElement;
 
 export const isTrigger = (el: unknown, prefix: string): el is HTMLButtonElement =>
@@ -68,61 +74,79 @@ export const spatialKey = (key: string) =>
         : key
     : key;
 
-let viewQueue: (() => void)[] | null = null;
-let viewRunning = false;
-
-export const viewTransition = (origin: HTMLElement | null, update: () => void) => {
-  if (viewRunning) {
-    update();
-    return false;
-  }
-  if (viewQueue) {
-    viewQueue.push(update);
-    return true;
-  }
-  let host: object | null = null;
-  let el: HTMLElement | null = origin;
-  while (el && !host) {
-    const mode = el.getAttribute("data-view-transition");
-    if (mode === Transition.Element) host = el;
-    else if (mode === Transition.Viewport) host = document;
-    else if (mode !== null) break;
-    else el = el.parentElement;
-  }
-  let started = false;
-  if (host && "startViewTransition" in host) {
-    const start = host.startViewTransition;
-    if (typeof start === "function") {
-      const run = () => {
-        viewRunning = true;
-        const queued = viewQueue;
-        try {
-          while (queued?.[0]) {
-            const fn = queued.shift();
-            if (fn) fn();
-          }
-        } finally {
-          viewQueue = null;
-          viewRunning = false;
-        }
-      };
-      viewQueue = [update];
-      start.call(host, run);
-      started = true;
-    }
-  }
-  if (!started) update();
-  return started && viewQueue !== null;
-};
-
 export const toggleDisclosure = (trigger: HTMLElement) => {
   const content = getLinked(trigger, "aria-controls");
   if (content) {
-    const willOpen = trigger.ariaExpanded !== "true";
-    const deferred = viewTransition(content, () => {
+    viewTransition(content, () => {
+      const willOpen = trigger.ariaExpanded !== "true";
       trigger.ariaExpanded = `${willOpen}`;
       content.hidden = !willOpen;
     });
-    if (deferred) trigger.ariaExpanded = `${willOpen}`;
+  }
+};
+
+const viewDone = () => {
+  viewActive--;
+};
+
+const viewGuard = (event: Event) => {
+  if (event.type !== "keydown" && viewActive && event.target === document.documentElement) {
+    event.preventDefault();
+    event.stopImmediatePropagation();
+  } else if (viewQueue && event.type !== "pointermove") {
+    viewPending?.skipTransition();
+    viewRun(viewQueue);
+  }
+};
+
+const viewRun = (queue: (() => void)[]) => {
+  if (viewQueue === queue) viewQueue = null;
+  viewRunning = true;
+  for (const update of queue.splice(0)) {
+    try {
+      update();
+    } catch (error) {
+      reportError(error);
+    }
+  }
+  viewRunning = false;
+};
+
+export const viewStart = (origin: HTMLElement | null) => {
+  let el = origin;
+  while (el && !el.hasAttribute("data-view-transition")) el = el.parentElement;
+  const mode = el?.getAttribute("data-view-transition");
+  const host = mode === Transition.Viewport ? document : mode === Transition.Element ? el : null;
+  const start = host && "startViewTransition" in host ? host.startViewTransition : null;
+  return typeof start === "function" && !matchMedia("(prefers-reduced-motion: reduce)").matches
+    ? (update: () => void): unknown => start.call(host, update)
+    : null;
+};
+
+export const viewTransition = (origin: HTMLElement | null, update: () => void) => {
+  const start = viewRunning ? null : viewStart(origin);
+  if (!start) update();
+  else if (viewQueue) viewQueue.push(update);
+  else {
+    const queue = [update];
+    if (!viewGuarded) {
+      viewGuarded = true;
+      for (const type of ["pointerdown", "pointerup", "click", "pointermove", "keydown"]) {
+        addEventListener(type, viewGuard, true);
+      }
+    }
+    viewPending = null;
+    viewQueue = queue;
+    try {
+      const transition = start(() => viewRun(queue));
+      if (transition instanceof ViewTransition) {
+        viewActive++;
+        viewPending = transition;
+        void transition.ready.catch(() => {});
+        void transition.finished.then(viewDone, viewDone);
+      }
+    } catch {
+      viewRun(queue);
+    }
   }
 };

@@ -142,7 +142,8 @@ in `docs/`.
 
 - File-scope `let`, inside the `hasDocument` guard, for mutable
   state shared between handlers; file-scope `const` for
-  structures (stacks, maps, parsers).
+  structures (stacks, maps, parsers). `src/dom.ts` keeps its
+  `view*` state at module scope, because exported helpers read it.
 - No classes, no `this`, no closures-over-state threaded through
   call chains.
 - `should*` flags drive cross-handler signalling within a single
@@ -225,7 +226,7 @@ Fixed, non-alphabetical orders that stay fixed:
 
 - Listeners register in the north-star event order: pointerdown,
   pointerup, click, pointermove, keydown, scroll, resize,
-  focusin, focusout.
+  focusin, focusout, then Dialog's cancel and submit.
 - `switch` cases on keys: `Enter`, `" "`, `Tab`, `ArrowDown`,
   `ArrowUp`, `ArrowRight`, `ArrowLeft`, `Home`, `End`, then
   `default`. Skip keys the component does not handle.

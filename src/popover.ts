@@ -20,7 +20,7 @@ if (hasDocument) {
     if ((trigger.ariaExpanded === "true") === show) return;
     const content = getLinked(trigger, "aria-controls");
     if (content) {
-      const deferred = viewTransition(content, () => {
+      viewTransition(content, () => {
         if (show) {
           if (popoverShown && popoverShown !== trigger) popover(popoverShown, false);
           content.showPopover();
@@ -32,7 +32,6 @@ if (hasDocument) {
         }
         trigger.ariaExpanded = `${show}`;
       });
-      if (deferred) trigger.ariaExpanded = `${show}`;
     }
   };
 
