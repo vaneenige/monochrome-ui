@@ -36,9 +36,10 @@ or surprise users.
    stop is `tabindex="0"`, not `tabIndex={0}`.
 6. Do not paste every import sample in
    [Current contract](#current-contract-0160) into one
-   file. Pick exactly one recipe. Do not delete a
-   wrapper part because it is missing from a table
-   (keep `Tabs.List`, `Menubar.Menu`, `Dialog.Content`).
+   file. Pick one component recipe. `monochrome/router`
+   may sit next to wrappers. Do not delete a wrapper
+   part because it is missing from a table (keep
+   `Tabs.List`, `Menubar.Menu`, `Dialog.Content`).
 7. Do not restyle from `docs/`. Those files are present
    tense and will not mention removed APIs.
 
@@ -72,7 +73,7 @@ when that token last worked (or first appeared).
 | ids `mct:a:`, `mct:c:`, `mct:m:`, `mct:ta:`, `mct:to:`, `mct:p:`, `mct:dialog-o:`, `mct:dialog-c:`, `mcc:d:`, `mcc:m:`, `mcc:p:`, `mcc:to:`, `mcr:a:` | 0.11 | 0.12 full names required |
 | `history.scrollRestoration = "manual"` | 0.12 | 0.13 leaves `"auto"` |
 | `history.pushState` assumptions in router tests | 0.12 | 0.13 Navigation API |
-| Menubar first trigger without `tabIndex={0}` | 0.12 | 0.13 author the tab stop |
+| Menubar first trigger without `tabIndex={0}` / `tabindex="0"` | 0.12 | 0.13 author the tab stop |
 
 ## Current contract (0.16.0)
 
@@ -81,9 +82,11 @@ plain HTML must match it for the core to attach.
 
 ### Imports
 
-Pick exactly one recipe. Do not combine the HTML barrel
-or a granular core import with React or Vue wrappers
-(that component's listeners register twice).
+Pick exactly one component recipe. The router is additive
+and may sit next to any of them. Do not combine the HTML
+barrel or a granular component import (`monochrome/menu`,
+`monochrome/menubar`, and so on) with React or Vue
+wrappers (that component's listeners register twice).
 
 HTML, every component:
 
@@ -100,12 +103,20 @@ same module as `monochrome/menu`; import one of them.
 import "monochrome/menu"
 ```
 
-React or Vue. Each named export side-effects its core.
-Do not also import `"monochrome"` or `monochrome/menu`.
+React. Do not also import `"monochrome"`,
+`monochrome/menu`, or `monochrome/menubar`. The router
+is optional and allowed:
 
 ```ts
 import { Accordion, Menu, Menubar } from "monochrome/react"
+import "monochrome/router"
+```
+
+Vue, same rule (do not import React and Vue together):
+
+```ts
 import { Accordion, Menu, Menubar } from "monochrome/vue"
+import "monochrome/router"
 ```
 
 Peers: `react` / `react-dom` `>=19` (optional), `vue`
@@ -602,8 +613,8 @@ Pass `tabIndex={0}` (Vue: `tabindex="0"`) on exactly
 one menubar stop. A bar that leaves every item at `-1`
 is skipped by Tab. `tabIndex` you pass wins. Keep
 `Menubar.Menu` around each trigger and popover; dropping
-it throws (no menu context) and every trigger defaults
-to tab stop 0.
+it throws (no menu context). A standalone `Menu.Trigger`
+outside a menubar still defaults to tab stop 0.
 
 React:
 
@@ -703,8 +714,8 @@ Most consumers in the wild are on 0.12 or 0.13. From
 3. Remove `Accordion.Root type` and `data-mode`.
    Accordions are exclusive.
 4. `Accordion.Header as="h1"` → `h2` (or drop `as`).
-5. Delete `aria-hidden` assertions and CSS; use
-   `hidden` / `:popover-open`.
+5. Strip `aria-hidden` from library surfaces; use
+   `hidden` / `:popover-open`. Do not add it back.
 6. Put `tabIndex={0}` on one `Menubar.Trigger` (Vue:
    `tabindex="0"`). Keep `Menubar.Menu`.
 7. Router needs the Navigation API; otherwise accept
