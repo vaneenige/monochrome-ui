@@ -51,12 +51,27 @@ forms, `rel="external"`, cross-origin, new-tab, no root.
 Scroll, fragments, and refresh are the browser's.
 `history.scrollRestoration` stays `"auto"`.
 
+**Anchor resolution.** The navigate event names the element the
+navigation started from, and the filters above run on the nearest
+`<a>` ancestor of it rather than on that element. Chrome and
+WebKit 26.6 (2026-07-27) name the anchor. Safari 26.4
+(2026-03-24) and 26.5 (2026-05-11) name the deepest clicked
+node, so a link wrapping an icon or a span arrives as that
+child and would otherwise fall through to a full page load.
+Hover and focus prefetch resolve the same way, from
+`event.target`.
+
+`sourceElement` is what sets the Chrome floor: it lands in 135
+(2025-04-01), where the rest of the API the router uses is 105
+(2022-09-02), which is the trade `browserslist` records. A
+navigation no element started, from a script or a form, names
+nothing and is left alone.
+
 ## Support
 
 ```
 Browser   Version  Released
 Chrome    135      2025-04-01
-Edge      135      2025-04-03
 Safari    26.2     2025-12-12
 Firefox   147      2026-01-13
 ```

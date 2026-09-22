@@ -4,6 +4,7 @@ const navigation = typeof document !== "undefined" && window.navigation;
 if (navigation) {
   const cache = new Map<string, Promise<Fetched | null>>();
   const parser = new DOMParser();
+  const origin = location.origin;
   const stripHash = (url: string) => url.replace(/#.*/, "");
   let lastKey = stripHash(location.href);
   let prefetching: Promise<unknown> = Promise.resolve();
@@ -16,12 +17,12 @@ if (navigation) {
         const response = await fetch(key, init);
         if (
           response.ok &&
-          new URL(response.url).origin === location.origin &&
+          new URL(response.url).origin === origin &&
           response.headers.get("content-type")?.startsWith("text/html")
         ) {
           const result: Fetched = [await response.text(), response.url];
           const pending = cache.get(key);
-          if (pending && response.url !== key) cache.set(response.url, pending);
+          if (pending) cache.set(response.url, pending);
           return result;
         }
         void response.body?.cancel();
@@ -33,8 +34,14 @@ if (navigation) {
     return promise;
   };
 
-  const canHandle = (el: EventTarget | null): el is HTMLAnchorElement =>
-    el instanceof HTMLAnchorElement && !el.relList.contains("external");
+  const findAnchor = (node: EventTarget | null) => {
+    let el = node instanceof Element ? node : null;
+    while (el) {
+      if (el instanceof HTMLAnchorElement) return el.relList.contains("external") ? null : el;
+      el = el.parentElement;
+    }
+    return null;
+  };
 
   const collectAreas = (root: Document | ParentNode) => {
     const map = new Map<string, HTMLElement>();
@@ -45,13 +52,9 @@ if (navigation) {
     return map;
   };
 
-  const prefetch = (el: EventTarget | null, init?: RequestInit) => {
-    if (
-      canHandle(el) &&
-      el.origin === location.origin &&
-      !el.hasAttribute("download") &&
-      el.target !== "_blank"
-    ) {
+  const prefetch = (node: EventTarget | null, init?: RequestInit) => {
+    const el = findAnchor(node);
+    if (el && el.origin === origin && !el.hasAttribute("download") && el.target !== "_blank") {
       const key = stripHash(el.href);
       if (key !== lastKey) return fetchPage(key, init);
     }
@@ -100,7 +103,7 @@ if (navigation) {
   };
 
   const hint = (event: Event) => {
-    if (event.target instanceof Element) void prefetch(event.target.closest("a"));
+    void prefetch(event.target);
   };
   addEventListener("mouseover", hint);
   addEventListener("focusin", hint);
@@ -116,7 +119,7 @@ if (navigation) {
       event.downloadRequest !== null ||
       event.formData ||
       !collectAreas(document).has("root") ||
-      !(canHandle(event.sourceElement) || type === "traverse")
+      !(findAnchor(event.sourceElement) || type === "traverse")
     ) {
       return;
     }
@@ -139,10 +142,8 @@ if (navigation) {
             document.title = newDoc.title;
             if (swap(newDoc)) {
               lastKey = stripHash(url);
-              if (lastKey !== key) {
-                const hash = href.slice(key.length + 1);
-                history.replaceState(history.state, "", hash ? lastKey + "#" + hash : url);
-              }
+              if (lastKey !== key)
+                history.replaceState(history.state, "", lastKey + href.slice(key.length));
               dispatchEvent(new Event("mc:navigate"));
               prefetchDocument();
               return;
