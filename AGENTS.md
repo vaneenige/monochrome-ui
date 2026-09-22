@@ -43,6 +43,9 @@ Every change has exactly one home. Pick it before writing prose.
 - Toolchain, build, gate: this file › Build pipeline.
 - Test naming or structure: this file › Test naming.
 - What a component does for consumers: `README.md`.
+- Upgrade notes (breaking changes per release):
+  `MIGRATE.md`. Current behaviour stays in `docs/`
+  and `README.md`.
 
 Writing a mechanism paragraph in `docs/`:
 

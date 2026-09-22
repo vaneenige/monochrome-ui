@@ -55,6 +55,12 @@ import { Accordion, Menu } from "monochrome/vue"
 
 The React and Vue wrappers generate the same HTML and ARIA; all interactivity comes from the core.
 
+## Upgrading
+
+Breaking changes and syntax migrations live in
+[`MIGRATE.md`](./MIGRATE.md). Walk every version from
+the one you are on to the one you are installing.
+
 ## Browser support
 
 Core: Baseline 2024. Chrome 114 (2023-05-30), Safari 17
