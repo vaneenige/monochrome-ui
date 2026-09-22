@@ -1,4 +1,4 @@
-import { findAncestor, getLinked, getTarget, hasDocument } from "./dom.js";
+import { findAncestor, getLinked, getTarget, hasDocument, viewTransition } from "./dom.js";
 
 enum Prefix {
   TriggerDialogClose = "mct:dialog-close:",
@@ -15,16 +15,22 @@ if (hasDocument) {
     const trigger = dialogTrigger;
     dialogContent = null;
     dialogTrigger = null;
-    content.close();
-    if (document.activeElement !== trigger) trigger.focus();
+    viewTransition(content, () => {
+      content.close();
+      if (document.activeElement !== trigger) trigger.focus();
+    });
   };
 
   const dialogOpen = (trigger: HTMLElement) => {
     const content = getLinked(trigger, "aria-controls");
     if (!dialogContent?.open && content instanceof HTMLDialogElement) {
-      dialogContent = content;
-      dialogTrigger = trigger;
-      content.showModal();
+      viewTransition(content, () => {
+        if (!dialogContent?.open) {
+          dialogContent = content;
+          dialogTrigger = trigger;
+          content.showModal();
+        }
+      });
     }
   };
 

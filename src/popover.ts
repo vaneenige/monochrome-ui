@@ -1,4 +1,12 @@
-import { findAncestor, getLinked, getTarget, hasDocument, isElement, position } from "./dom.js";
+import {
+  findAncestor,
+  getLinked,
+  getTarget,
+  hasDocument,
+  isElement,
+  position,
+  viewTransition,
+} from "./dom.js";
 
 enum Prefix {
   ContentPopover = "mcc:popover:",
@@ -12,16 +20,19 @@ if (hasDocument) {
     if ((trigger.ariaExpanded === "true") === show) return;
     const content = getLinked(trigger, "aria-controls");
     if (content) {
-      if (show) {
-        if (popoverShown && popoverShown !== trigger) popover(popoverShown, false);
-        content.showPopover();
-        position(trigger, content);
-        popoverShown = trigger;
-      } else {
-        content.hidePopover();
-        if (popoverShown === trigger) popoverShown = null;
-      }
-      trigger.ariaExpanded = `${show}`;
+      const deferred = viewTransition(content, () => {
+        if (show) {
+          if (popoverShown && popoverShown !== trigger) popover(popoverShown, false);
+          content.showPopover();
+          position(trigger, content);
+          popoverShown = trigger;
+        } else {
+          content.hidePopover();
+          if (popoverShown === trigger) popoverShown = null;
+        }
+        trigger.ariaExpanded = `${show}`;
+      });
+      if (deferred) trigger.ariaExpanded = `${show}`;
     }
   };
 
@@ -36,13 +47,13 @@ if (hasDocument) {
   addEventListener("click", (event: MouseEvent) => {
     const trigger = findAncestor(getTarget(event), Prefix.TriggerPopover);
     if (trigger && trigger.ariaDisabled !== "true") {
+      const content = getLinked(trigger, "aria-controls");
       const isOpen = trigger.ariaExpanded === "true";
       popover(trigger, !isOpen);
-      if (isOpen) {
-        trigger.focus();
-      } else {
-        getLinked(trigger, "aria-controls")?.focus();
-      }
+      viewTransition(content, () => {
+        if (isOpen) trigger.focus();
+        else content?.focus();
+      });
     }
   });
 
@@ -54,7 +65,9 @@ if (hasDocument) {
       while (el && el !== content && !el.popover) el = el.parentElement;
       if (el === content || !el) {
         popover(trigger, false);
-        trigger.focus();
+        viewTransition(content, () => {
+          trigger.focus();
+        });
         event.preventDefault();
       }
     }

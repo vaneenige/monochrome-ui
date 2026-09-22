@@ -24,20 +24,20 @@ npm install monochrome
 ```ts
 // every component, one flat file. For pages that ship no other
 // monochrome import; don't combine with the granular imports below
-import "monochrome"
+import "monochrome";
 
 // one component (shared helpers dedupe across entries)
-import "monochrome/menu"
+import "monochrome/menu";
 
 // optional router
-import "monochrome/router"
+import "monochrome/router";
 
 // React wrappers: each auto-imports its own core, so one import
 // wires markup and behavior, tree-shaken to the components you use
-import { Accordion, Menu } from "monochrome/react"
+import { Accordion, Menu } from "monochrome/react";
 
 // Vue wrappers, same shape
-import { Accordion, Menu } from "monochrome/vue"
+import { Accordion, Menu } from "monochrome/vue";
 ```
 
 ## Example
@@ -68,6 +68,36 @@ viewport and on hover; see
 [`docs/router.md`](./docs/router.md). Older browsers keep
 full page loads; `import "monochrome/router"` is a no-op
 there.
+
+## View transitions
+
+Put `data-view-transition` on the element that should own
+the transition, or on an ancestor of the part that changes.
+Leave it off and the component behaves as before.
+
+`viewport` runs a full-page view transition
+(`document.startViewTransition`). `element` runs one scoped
+to the element with the attribute
+(`element.startViewTransition`). A tabs root is the usual
+place for `element`, so the snapshot covers every panel and
+not the rest of the page. Dialog, disclosure, menu, popover,
+and tooltip content (or a wrapper around that content) is
+the usual place for either value.
+
+Document view transitions are supported more widely than
+element-scoped ones. Each method is checked on its own host.
+If it is missing, the component updates immediately, and
+`element` does not fall back to a full-page transition.
+
+Style the snapshots in CSS with `::view-transition-old`,
+`::view-transition-new`, and `view-transition-name`. The
+router does not start view transitions.
+
+```html
+<dialog id="mcc:dialog:1" data-view-transition="viewport">...</dialog>
+
+<div id="mcr:tabs:1" data-view-transition="element">...</div>
+```
 
 ## Contributing
 

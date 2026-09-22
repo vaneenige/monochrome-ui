@@ -115,3 +115,40 @@ are no-ops.
 **Tabs orientation.** `aria-orientation="vertical"` uses ArrowDown
 and ArrowUp; otherwise ArrowRight and ArrowLeft. Both go through
 `spatialKey`. Home and End always rove the list.
+
+**View transitions.** `viewTransition(origin, update)` runs
+`update` inside a same-document view transition when `origin`
+or an ancestor has `data-view-transition`. `viewport` calls
+`document.startViewTransition`, which snapshots the whole page.
+`element` calls `startViewTransition` on the element that
+carries the attribute, which snapshots that subtree only. The
+method is checked on that host. A browser can implement the
+document call and not the element call, and `element` never
+falls back to the document. With no attribute, any other value,
+or a missing method, `update` runs before `viewTransition`
+returns and the component still changes. Otherwise the browser
+invokes `update` after it snapshots the old state. Author CSS
+styles the snapshots (`::view-transition-old`,
+`::view-transition-new`, `view-transition-name`).
+
+**One transition per turn.** A `viewTransition` call made while
+an update is already queued or running joins that update, and
+the first host wins. Accordion wraps the exclusive close and
+the open in one call. Menu wraps a stack close the same way,
+and a keydown's trailing trim joins so it sees the focus the
+open moved. Nested `toggleDisclosure`, `menu`, and `tooltip`
+calls inside that update do not start a second transition.
+Disclosure and popover mirror `aria-expanded` before returning
+when the paint is deferred, so a second activation in the same
+turn reads the next state. `hidden`, `showPopover`,
+`hidePopover`, `showModal`, and `close` stay inside the
+snapshot callback.
+
+**Where the walk starts.** Disclosure, Dialog, Popover, Menu,
+and Tooltip start at the content they are about to show or
+hide, so the attribute belongs on that content or on a wrapper
+around it. Tabs starts at the tab, so the attribute belongs on
+the tabs root: an `element` transition then scopes to that root
+and includes every panel. Dialog's native dismiss stays outside
+this path (see `docs/dialog.md`). The router does not call
+`viewTransition`.

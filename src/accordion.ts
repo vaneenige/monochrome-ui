@@ -1,5 +1,6 @@
 import {
   findAncestor,
+  getLinked,
   getTarget,
   hasDocument,
   isElement,
@@ -7,6 +8,7 @@ import {
   type RovingFocusCallback,
   roving,
   toggleDisclosure,
+  viewTransition,
 } from "./dom.js";
 
 enum Prefix {
@@ -53,20 +55,22 @@ if (hasDocument) {
 
   const accordion = (trigger: HTMLElement) => {
     if (trigger.ariaDisabled !== "true") {
-      if (trigger.ariaExpanded !== "true") {
-        const root = findAncestor(trigger, Prefix.RootAccordion);
-        if (root) {
-          let item = root.firstElementChild;
-          while (item) {
-            const itemTrigger = accordionTrigger(item);
-            if (itemTrigger && itemTrigger.ariaExpanded === "true") {
-              toggleDisclosure(itemTrigger);
+      viewTransition(getLinked(trigger, "aria-controls"), () => {
+        if (trigger.ariaExpanded !== "true") {
+          const root = findAncestor(trigger, Prefix.RootAccordion);
+          if (root) {
+            let item = root.firstElementChild;
+            while (item) {
+              const itemTrigger = accordionTrigger(item);
+              if (itemTrigger && itemTrigger.ariaExpanded === "true") {
+                toggleDisclosure(itemTrigger);
+              }
+              item = item.nextElementSibling;
             }
-            item = item.nextElementSibling;
           }
         }
-      }
-      toggleDisclosure(trigger);
+        toggleDisclosure(trigger);
+      });
     }
   };
 

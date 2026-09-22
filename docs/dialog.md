@@ -22,3 +22,10 @@ checked first. Menu calls `click()` on the item after keyboard
 activation of a non-href item, so a menuitem carrying the
 `mct:dialog-open:` id opens the dialog from the keyboard without
 Menu knowing what a dialog is.
+
+**View transitions.** `data-view-transition` on the dialog, or
+on an ancestor of it, runs `dialogOpen` and `dialogClose`
+inside a view transition (see `docs/dom.md`). Escape and a form
+`method="dialog"` stay on the browser's native close, which
+does not go through `dialogClose`, so they dismiss without a
+transition.

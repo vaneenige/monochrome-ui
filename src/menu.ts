@@ -9,6 +9,7 @@ import {
   type RovingFocusCallback,
   roving,
   spatialKey,
+  viewTransition,
 } from "./dom.js";
 
 enum Focus {
@@ -102,47 +103,48 @@ if (hasDocument) {
     if (trigger?.id.startsWith(Prefix.TriggerMenu)) {
       const content = getLinked(trigger, "aria-controls");
       if (content) {
-        if (trigger.ariaExpanded === "true") {
-          if (mode === Focus.First) {
-            menuRoving(content.firstElementChild, menuNext);
-          } else if (mode === Focus.Last) {
-            menuRoving(content.lastElementChild, menuPrevious);
-          } else {
-            if (mode === Focus.Trigger && trigger.role?.startsWith("menuitem")) {
-              menuHighlight(trigger);
-            } else {
-              if (mode !== Focus.None || content.contains(document.activeElement)) {
-                trigger.focus({ preventScroll: true });
-              }
-              if (content.contains(menuHighlighted)) menuHighlight(null);
-            }
-            content.hidePopover();
-            trigger.ariaExpanded = "false";
-          }
+        if (trigger.ariaExpanded === "true" && (mode === Focus.First || mode === Focus.Last)) {
+          if (mode === Focus.First) menuRoving(content.firstElementChild, menuNext);
+          else menuRoving(content.lastElementChild, menuPrevious);
         } else {
-          menuTrim(trigger);
-          if (!menuStack[0] && menuHighlighted !== trigger) menuHighlight(null);
-          if (trigger.ariaDisabled !== "true") {
-            menuStack.push(trigger);
-            content.showPopover();
-            trigger.ariaExpanded = "true";
-            position(trigger, content);
-            safeX = null;
-            if (mode === Focus.First) {
-              menuRoving(content.firstElementChild, menuNext);
-            } else if (mode === Focus.Last) {
-              menuRoving(content.lastElementChild, menuPrevious);
-            } else if (mode === Focus.Trigger) {
-              if (trigger.role?.startsWith("menuitem")) menuHighlight(trigger);
-              else trigger.focus({ preventScroll: true });
-            } else if (menuHighlighted === trigger && document.activeElement !== trigger) {
-              trigger.focus({ preventScroll: true });
-            } else if (menuHighlighted && menuHighlighted !== trigger) {
-              menuHighlighted.removeAttribute("data-highlighted");
-              menuHighlighted = trigger;
-              trigger.setAttribute("data-highlighted", "");
+          viewTransition(content, () => {
+            if (trigger.ariaExpanded === "true") {
+              if (mode === Focus.Trigger && trigger.role?.startsWith("menuitem")) {
+                menuHighlight(trigger);
+              } else {
+                if (mode !== Focus.None || content.contains(document.activeElement)) {
+                  trigger.focus({ preventScroll: true });
+                }
+                if (content.contains(menuHighlighted)) menuHighlight(null);
+              }
+              content.hidePopover();
+              trigger.ariaExpanded = "false";
+            } else {
+              menuTrim(trigger);
+              if (!menuStack[0] && menuHighlighted !== trigger) menuHighlight(null);
+              if (trigger.ariaDisabled !== "true") {
+                menuStack.push(trigger);
+                content.showPopover();
+                trigger.ariaExpanded = "true";
+                position(trigger, content);
+                safeX = null;
+                if (mode === Focus.First) {
+                  menuRoving(content.firstElementChild, menuNext);
+                } else if (mode === Focus.Last) {
+                  menuRoving(content.lastElementChild, menuPrevious);
+                } else if (mode === Focus.Trigger) {
+                  if (trigger.role?.startsWith("menuitem")) menuHighlight(trigger);
+                  else trigger.focus({ preventScroll: true });
+                } else if (menuHighlighted === trigger && document.activeElement !== trigger) {
+                  trigger.focus({ preventScroll: true });
+                } else if (menuHighlighted && menuHighlighted !== trigger) {
+                  menuHighlighted.removeAttribute("data-highlighted");
+                  menuHighlighted = trigger;
+                  trigger.setAttribute("data-highlighted", "");
+                }
+              }
             }
-          }
+          });
         }
       }
     }
@@ -177,7 +179,10 @@ if (hasDocument) {
   };
 
   const menuCloseAll = (keep = 0) => {
-    while (menuStack[keep]) menu(menuStack.pop(), Focus.None);
+    const trigger = menuStack[keep];
+    viewTransition(trigger ? getLinked(trigger, "aria-controls") : null, () => {
+      while (menuStack[keep]) menu(menuStack.pop(), Focus.None);
+    });
   };
 
   const menuOpen = (trigger: HTMLElement, mode: Focus) => {
@@ -399,8 +404,10 @@ if (hasDocument) {
           else if (isItem) menuNext(parent);
         }
     }
-    const active = document.activeElement;
-    if (isElement(active) && active !== menuStack.at(-1)) menuTrim(active);
+    viewTransition(null, () => {
+      const active = document.activeElement;
+      if (isElement(active) && active !== menuStack.at(-1)) menuTrim(active);
+    });
     if (shouldPreventDefault || (isItem && key.startsWith("Arrow"))) event.preventDefault();
   });
 

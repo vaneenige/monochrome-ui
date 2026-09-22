@@ -7,6 +7,11 @@ export type RovingFocusCallback = (
 
 export type Roving = (focus: RovingFocusCallback) => [RovingNavigator, RovingNavigator];
 
+enum Transition {
+  Element = "element",
+  Viewport = "viewport",
+}
+
 export const hasDocument = typeof document !== "undefined";
 
 export const isElement = (el: unknown): el is HTMLElement => el instanceof HTMLElement;
@@ -63,11 +68,61 @@ export const spatialKey = (key: string) =>
         : key
     : key;
 
+let viewQueue: (() => void)[] | null = null;
+let viewRunning = false;
+
+export const viewTransition = (origin: HTMLElement | null, update: () => void) => {
+  if (viewRunning) {
+    update();
+    return false;
+  }
+  if (viewQueue) {
+    viewQueue.push(update);
+    return true;
+  }
+  let host: object | null = null;
+  let el: HTMLElement | null = origin;
+  while (el && !host) {
+    const mode = el.getAttribute("data-view-transition");
+    if (mode === Transition.Element) host = el;
+    else if (mode === Transition.Viewport) host = document;
+    else if (mode !== null) break;
+    else el = el.parentElement;
+  }
+  let started = false;
+  if (host && "startViewTransition" in host) {
+    const start = host.startViewTransition;
+    if (typeof start === "function") {
+      const run = () => {
+        viewRunning = true;
+        const queued = viewQueue;
+        try {
+          while (queued?.[0]) {
+            const fn = queued.shift();
+            if (fn) fn();
+          }
+        } finally {
+          viewQueue = null;
+          viewRunning = false;
+        }
+      };
+      viewQueue = [update];
+      start.call(host, run);
+      started = true;
+    }
+  }
+  if (!started) update();
+  return started && viewQueue !== null;
+};
+
 export const toggleDisclosure = (trigger: HTMLElement) => {
   const content = getLinked(trigger, "aria-controls");
   if (content) {
     const willOpen = trigger.ariaExpanded !== "true";
-    trigger.ariaExpanded = `${willOpen}`;
-    content.hidden = !willOpen;
+    const deferred = viewTransition(content, () => {
+      trigger.ariaExpanded = `${willOpen}`;
+      content.hidden = !willOpen;
+    });
+    if (deferred) trigger.ariaExpanded = `${willOpen}`;
   }
 };

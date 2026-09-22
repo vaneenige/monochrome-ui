@@ -8,6 +8,7 @@ import {
   type RovingFocusCallback,
   roving,
   spatialKey,
+  viewTransition,
 } from "./dom.js";
 
 enum Prefix {
@@ -37,20 +38,24 @@ if (hasDocument) {
 
   const tabs = (trigger: HTMLElement) => {
     if (trigger.ariaDisabled !== "true" && trigger.ariaSelected !== "true") {
-      let tab = trigger.parentElement?.firstElementChild;
-      while (tab) {
-        if (isElement(tab) && (tab === trigger || tab.ariaSelected === "true")) {
-          const content = getLinked(tab, "aria-controls");
-          if (content) {
-            const willSelect = tab === trigger;
-            tab.ariaSelected = `${willSelect}`;
-            tab.tabIndex = willSelect ? 0 : -1;
-            if (content.hasAttribute("tabindex")) content.tabIndex = willSelect ? 0 : -1;
-            content.hidden = !willSelect;
+      viewTransition(trigger, () => {
+        if (trigger.ariaSelected !== "true") {
+          let tab = trigger.parentElement?.firstElementChild;
+          while (tab) {
+            if (isElement(tab) && (tab === trigger || tab.ariaSelected === "true")) {
+              const content = getLinked(tab, "aria-controls");
+              if (content) {
+                const willSelect = tab === trigger;
+                tab.ariaSelected = `${willSelect}`;
+                tab.tabIndex = willSelect ? 0 : -1;
+                if (content.hasAttribute("tabindex")) content.tabIndex = willSelect ? 0 : -1;
+                content.hidden = !willSelect;
+              }
+            }
+            tab = tab.nextElementSibling;
           }
         }
-        tab = tab.nextElementSibling;
-      }
+      });
     }
   };
 
