@@ -113,14 +113,23 @@ if (navigation) {
   addEventListener("pointerdown", hint);
 
   let prefetchArmed = false;
-  const prefetchArm = () => {
+  let prefetchPointer: string | null = null;
+  const prefetchArm = (event: Event) => {
     if (!prefetchArmed) {
-      prefetchArmed = true;
-      prefetchDocument();
+      let willArm = true;
+      if (event instanceof PointerEvent && event.type === "pointermove") {
+        const at = `${event.clientX},${event.clientY}`;
+        willArm = prefetchPointer !== null && prefetchPointer !== at;
+        prefetchPointer = at;
+      }
+      if (willArm) {
+        prefetchArmed = true;
+        prefetchDocument();
+      }
     }
   };
   for (const type of ["pointerdown", "pointermove", "keydown", "wheel", "scroll"])
-    addEventListener(type, prefetchArm, { once: true, passive: true });
+    addEventListener(type, prefetchArm, { passive: true });
 
   navigation.addEventListener("navigate", (event) => {
     const type = event.navigationType;

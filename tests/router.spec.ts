@@ -635,7 +635,7 @@ test.describe("Router", () => {
         (page: Page) =>
           page.dispatchEvent("body", "pointerdown", { pointerType: "touch", bubbles: true }),
       ],
-      ["a pointer move", (page: Page) => page.mouse.move(1, 1)],
+      ["a pointer move", (page: Page) => page.mouse.move(5, 5, { steps: 2 })],
       // Dispatched rather than `mouse.wheel`: headless WebKit drops some synthesized
       // wheel gestures before they reach the page.
       ["a wheel", (page: Page) => page.dispatchEvent("body", "wheel", { bubbles: true })],
@@ -648,6 +648,17 @@ test.describe("Router", () => {
         await expect.poll(() => fetched.some((u) => u.endsWith("/html/router/about"))).toBe(true);
       });
     }
+
+    test("a pointer resting in place does not arm", async ({ page }) => {
+      const fetched = await recordFetches(page);
+      await page.goto("/html/router/prefetch");
+      for (let i = 0; i < 2; i++)
+        await page.dispatchEvent("body", "pointermove", { pointerType: "mouse", bubbles: true });
+      await page.waitForLoadState("networkidle");
+      expect(fetched.some((u) => u.endsWith("/html/router/about"))).toBe(false);
+      await page.mouse.move(5, 5);
+      await expect.poll(() => fetched.some((u) => u.endsWith("/html/router/about"))).toBe(true);
+    });
 
     test("holds the queue until a pressed link's page is in", async ({ page }) => {
       await page.addInitScript(() => {
