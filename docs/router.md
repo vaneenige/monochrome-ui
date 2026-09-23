@@ -49,19 +49,30 @@ the previous page's links. Parse still happens on navigate.
 
 **Armed by the first interaction.** The first walk starts on
 the first `pointerdown`, `pointermove`, `keydown`, `wheel`, or
-`scroll`, whichever comes first (`prefetchArm`); each listener
-is `once` and passive. A page nobody touches spends no
-bandwidth on pages nobody opens, and a lab run (Lighthouse
-never interacts) records no prefetch at all: a prefetch that
-finishes before the first paint of a fast unthrottled load is
-otherwise charged to the simulated LCP. On touch the first
-contact is a `pointerdown`, whether it becomes a scroll or a
-tap, so reading arms the walk as early as it can. A first tap
-on a link is the one case the walk cannot have prepared: the
-press prefetch starts that fetch at touch-down, ahead of the
-`click`. A `scroll` without a gesture (restored scroll on
-reload, a fragment jump on load) also arms, which is harmless.
-A swap re-walks whether or not the page was armed.
+`scroll`, whichever comes first (`prefetchArm`); the listeners
+are passive, and `prefetchArmed` starts the walk only once. A
+page nobody touches spends no bandwidth on pages nobody opens,
+and a lab run (Lighthouse never interacts) records no prefetch
+at all: a prefetch that finishes before the first paint of a
+fast unthrottled load is otherwise charged to the simulated
+LCP. On touch the first contact is a `pointerdown`, whether it
+becomes a scroll or a tap, so reading arms the walk as early as
+it can. A first tap on a link is the one case the walk cannot
+have prepared: the press prefetch starts that fetch at
+touch-down, ahead of the `click`. A `scroll` without a gesture
+(restored scroll on reload, a fragment jump on load) also arms,
+which is harmless. A swap re-walks whether or not the page was
+armed.
+
+**A still pointer does not arm.** The first `pointermove`
+only records where the pointer is (`prefetchPointer`); a later
+one at a different point arms. Chromium fires a `pointermove`
+at the resting cursor when a page loads under it, so the page
+would otherwise arm before the reader does anything.
+`movementX` cannot tell the two apart: every engine reports
+zero on the first move, and WebKit on every move. The
+listeners are not `once` for the same reason: a skipped move
+must leave the `pointermove` listener in place for the next.
 
 ## Handles
 
