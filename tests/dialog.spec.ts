@@ -145,6 +145,23 @@ test.describe("Dialog", () => {
     });
   });
 
+  test.describe("Light dismiss (closedby)", () => {
+    test('`closedby="any"` closes on a backdrop click, natively', async ({ page, browserName }) => {
+      await page
+        .getByTestId("primary-content")
+        .evaluate((dialog) => dialog.setAttribute("closedby", "any"));
+      await page.getByTestId("primary-trigger").click();
+      await expect(page.getByTestId("primary-content")).toBeVisible();
+      await page.mouse.click(5, 5);
+      await expect(page.getByTestId("primary-content")).not.toBeVisible();
+      if (browserName !== "webkit") {
+        await expect(page.getByTestId("primary-trigger")).toBeFocused();
+      }
+      await page.getByTestId("primary-trigger").click();
+      await expect(page.getByTestId("primary-content")).toBeVisible();
+    });
+  });
+
   test.describe("Focus management", () => {
     test("focuses the first focusable element when no autofocus is set", async ({ page }) => {
       await page.getByTestId("primary-trigger").click();
