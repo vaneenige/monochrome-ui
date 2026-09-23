@@ -8,7 +8,10 @@ that needs `dialogClose`. Native close (Escape, form
 `method="dialog"`) leaves the file-scope `dialogContent` /
 `dialogTrigger` stale; `dialogOpen` guards on `dialogContent.open`
 rather than on the ref being set, so a natively closed dialog
-reopens cleanly.
+reopens cleanly. It also requires `isConnected`: removing an
+open dialog (a router swap, a framework unmount) drops it from
+the top layer but leaves its `open` attribute, and without that
+check the stale ref would refuse every later open.
 
 **Close button focus.** `dialogClose` calls `close()`, which
 restores the element focused when the dialog opened. It focuses

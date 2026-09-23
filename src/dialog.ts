@@ -21,7 +21,10 @@ if (hasDocument) {
 
   const dialogOpen = (trigger: HTMLElement) => {
     const content = getLinked(trigger, "aria-controls");
-    if (!dialogContent?.open && content instanceof HTMLDialogElement) {
+    if (
+      !(dialogContent?.open && dialogContent.isConnected) &&
+      content instanceof HTMLDialogElement
+    ) {
       dialogContent = content;
       dialogTrigger = trigger;
       content.showModal();

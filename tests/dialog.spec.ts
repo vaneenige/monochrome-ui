@@ -75,6 +75,14 @@ test.describe("Dialog", () => {
       await expect(page.getByTestId("disabled-content")).not.toBeVisible();
     });
 
+    test("a dialog removed while open does not block the next one", async ({ page }) => {
+      await page.getByTestId("primary-trigger").click();
+      await expect(page.getByTestId("primary-content")).toBeVisible();
+      await page.getByTestId("primary-content").evaluate((el) => el.remove());
+      await page.getByRole("button", { name: "Open alert" }).click();
+      await expect(page.getByTestId("alert-content")).toBeVisible();
+    });
+
     test("opens via a click on a nested SVG inside the trigger", async ({ page }) => {
       await page.getByTestId("svg-icon").click();
       await expect(page.getByTestId("primary-content")).toBeVisible();
