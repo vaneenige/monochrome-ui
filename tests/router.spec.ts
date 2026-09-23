@@ -478,6 +478,24 @@ test.describe("Router", () => {
       await expect.poll(() => fetched.some((u) => u.endsWith("/html/router/about"))).toBe(true);
     });
 
+    test("prefetches a link on pointerdown", async ({ page }) => {
+      await hoverOnly(page);
+      await page.goto("/html/router/index");
+      const fetched = await recordFetches(page);
+      await page.getByTestId("nav-about").dispatchEvent("pointerdown", { bubbles: true });
+      await expect.poll(() => fetched.some((u) => u.endsWith("/html/router/about"))).toBe(true);
+    });
+
+    test("ignores a right or middle press", async ({ page }) => {
+      await hoverOnly(page);
+      await page.goto("/html/router/index");
+      const fetched = await recordFetches(page);
+      for (const button of [1, 2])
+        await page.getByTestId("nav-about").dispatchEvent("pointerdown", { button, bubbles: true });
+      await page.waitForLoadState("networkidle");
+      expect(fetched.some((u) => u.endsWith("/html/router/about"))).toBe(false);
+    });
+
     test("uses cached HTML on navigation after hover", async ({ page }) => {
       await hoverOnly(page);
       await page.goto("/html/router/index");
@@ -630,6 +648,38 @@ test.describe("Router", () => {
         await expect.poll(() => fetched.some((u) => u.endsWith("/html/router/about"))).toBe(true);
       });
     }
+
+    test("holds the queue until a pressed link's page is in", async ({ page }) => {
+      await page.addInitScript(() => {
+        const original = fetch.bind(window);
+        window.fetch = async (input, init) => {
+          const name = String(input instanceof Request ? input.url : input)
+            .split("/")
+            .pop();
+          (window.__fetchLog ??= []).push(`start ${name}`);
+          const response = await original(input, init);
+          window.__fetchLog.push(`done ${name}`);
+          return response;
+        };
+      });
+      await page.route("**/html/router/*", async (route) => {
+        if (route.request().resourceType() === "fetch")
+          await new Promise((resolve) => setTimeout(resolve, 150));
+        await route.continue();
+      });
+      await page.goto("/html/router/prefetch");
+      await page.waitForLoadState("networkidle");
+      await page
+        .getByTestId("nav-off")
+        .dispatchEvent("pointerdown", { pointerType: "touch", bubbles: true });
+      const log = () => page.evaluate(() => window.__fetchLog ?? []);
+      await expect.poll(async () => (await log()).includes("start about")).toBe(true);
+      const events = await log();
+      const pressedDone = events.indexOf("done prefetch-off");
+      expect(events[0]).toBe("start prefetch-off");
+      expect(pressedDone).toBeGreaterThan(0);
+      expect(pressedDone).toBeLessThan(events.indexOf("start about"));
+    });
 
     test("fetches visible links once armed", async ({ page }) => {
       const fetched = await recordFetches(page);

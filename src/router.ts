@@ -103,10 +103,14 @@ if (navigation) {
   };
 
   const hint = (event: Event) => {
-    void prefetch(event.target);
+    if (!(event instanceof PointerEvent) || event.button === 0) {
+      const pending = prefetch(event.target);
+      if (pending) prefetching = Promise.all([prefetching, pending]);
+    }
   };
   addEventListener("mouseover", hint);
   addEventListener("focusin", hint);
+  addEventListener("pointerdown", hint);
 
   let prefetchArmed = false;
   const prefetchArm = () => {

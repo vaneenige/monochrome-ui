@@ -63,11 +63,11 @@ API and the native `<dialog>` element. No polyfills shipped.
 
 Router: Navigation API (Baseline 2026). Chrome 135
 (2025-04-01), Safari 26.2 (2025-12-12), and Firefox 147
-(2026-01-13). Links are prefetched as they enter the
-viewport and on hover; see
-[`docs/router.md`](./docs/router.md). Older browsers keep
-full page loads; `import "monochrome/router"` is a no-op
-there.
+(2026-01-13). Links are prefetched on hover, focus, and
+press, and, from the reader's first interaction, as they
+enter the viewport; see [`docs/router.md`](./docs/router.md).
+Older browsers keep full page loads; `import
+"monochrome/router"` is a no-op there.
 
 ## Contributing
 
