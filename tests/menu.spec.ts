@@ -1501,6 +1501,32 @@ test.describe("Menubar", () => {
       await expect(page.getByTestId("remote-list-1")).not.toBeVisible();
     });
 
+    test("Shift+Tab and Tab from a remote popover leave the bar", async ({ page, renderer }) => {
+      test.skip(renderer !== "html", "Remote popover markup is html-only");
+      await page.goto("/html/menu/menubar-remote");
+      await page.getByTestId("remote-menubar").evaluate((bar) => {
+        const input = (id: string) => {
+          const el = document.createElement("input");
+          el.dataset.testid = id;
+          return el;
+        };
+        bar.before(input("bar-before"));
+        bar.parentElement?.append(input("bar-after"));
+      });
+      for (const [key, landing] of [
+        ["Shift+Tab", "bar-before"],
+        ["Tab", "bar-after"],
+      ] as const) {
+        await page.getByTestId("remote-trigger-1").focus();
+        await page.keyboard.press("ArrowRight");
+        await page.keyboard.press("ArrowDown");
+        await expect(page.getByTestId("remote-item-2-1")).toBeFocused();
+        await page.keyboard.press(key);
+        await expect(page.getByTestId("remote-list-2")).not.toBeVisible();
+        await expect(page.getByTestId(landing)).toBeFocused();
+      }
+    });
+
     test("Escape closes the menu and returns focus to the trigger", async ({ page }) => {
       await page.getByTestId("menubar-trigger-1").click();
       await page.getByTestId("menubar-item-1-1").hover();
@@ -1548,6 +1574,63 @@ test.describe("Menubar", () => {
       await expect(page.getByTestId("menubar-list-1")).toBeVisible();
       await page.keyboard.press("Tab");
       await expect(page.getByTestId("menubar-list-1")).not.toBeVisible();
+    });
+
+    test.describe("Tab leaves the bar from any item", () => {
+      test.beforeEach(async ({ page }) => {
+        await page.getByTestId("menubar-list").evaluate((bar) => {
+          // Inputs, not buttons: WebKit leaves buttons out of the Tab order.
+          const input = (id: string) => {
+            const el = document.createElement("input");
+            el.dataset.testid = id;
+            return el;
+          };
+          bar.before(input("bar-before"));
+          bar.after(input("bar-after"));
+        });
+        await page.getByTestId("menubar-trigger-1").focus();
+        await page.keyboard.press("ArrowRight");
+        await page.keyboard.press("ArrowRight");
+        await expect(page.getByTestId("menubar-trigger-2")).toBeFocused();
+      });
+
+      test("the focused bar item becomes the only tab stop", async ({ page }) => {
+        await expect(page.getByTestId("menubar-trigger-2")).toHaveAttribute("tabindex", "0");
+        await expect(page.getByTestId("menubar-trigger-1")).toHaveAttribute("tabindex", "-1");
+        await expect(page.getByTestId("menubar-item-1")).toHaveAttribute("tabindex", "-1");
+      });
+
+      test("an item inside a menu does not take the tab stop", async ({ page }) => {
+        await page.keyboard.press("ArrowDown");
+        await expect(page.getByTestId("menubar-item-2-1")).toBeFocused();
+        await expect(page.getByTestId("menubar-item-2-1")).toHaveAttribute("tabindex", "-1");
+        await expect(page.getByTestId("menubar-trigger-2")).toHaveAttribute("tabindex", "0");
+      });
+
+      test("Tab back into the bar lands on the item last focused", async ({ page }) => {
+        await page.keyboard.press("Shift+Tab");
+        await expect(page.getByTestId("bar-before")).toBeFocused();
+        await page.keyboard.press("Tab");
+        await expect(page.getByTestId("menubar-trigger-2")).toBeFocused();
+      });
+
+      test("Shift+Tab from a roved-to item", async ({ page }) => {
+        await page.keyboard.press("Shift+Tab");
+        await expect(page.getByTestId("bar-before")).toBeFocused();
+      });
+
+      test("Tab from a roved-to item", async ({ page }) => {
+        await page.keyboard.press("Tab");
+        await expect(page.getByTestId("bar-after")).toBeFocused();
+      });
+
+      test("Shift+Tab from inside an open menu closes it", async ({ page }) => {
+        await page.keyboard.press("ArrowDown");
+        await expect(page.getByTestId("menubar-item-2-1")).toBeFocused();
+        await page.keyboard.press("Shift+Tab");
+        await expect(page.getByTestId("menubar-list-2")).not.toBeVisible();
+        await expect(page.getByTestId("bar-before")).toBeFocused();
+      });
     });
   });
 

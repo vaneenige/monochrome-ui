@@ -306,6 +306,25 @@ if (hasDocument) {
     }
   });
 
+  addEventListener("focusin", (event: FocusEvent) => {
+    const target = getTarget(event);
+    const menubar = target?.parentElement?.parentElement;
+    if (target && menubar?.role === "menubar" && target.role?.startsWith("menuitem")) {
+      let el = menubar.firstElementChild;
+      while (el) {
+        const menuitem = el.firstElementChild;
+        const tabIndex = menuitem === target ? 0 : -1;
+        if (
+          isElement(menuitem) &&
+          menuitem.role?.startsWith("menuitem") &&
+          menuitem.tabIndex !== tabIndex
+        )
+          menuitem.tabIndex = tabIndex;
+        el = el.nextElementSibling;
+      }
+    }
+  });
+
   addEventListener("keydown", (event: KeyboardEvent) => {
     shouldPreventDefault = false;
     rovingBoundary = null;

@@ -2,7 +2,7 @@
 
 How `src/menu.ts` works. Shared mechanisms (roving boundary, RTL
 key mirror, positioning, resize and scroll) live in `docs/dom.md`;
-the wrapper-side menubar tab stop lives in `docs/wrappers.md`.
+the authored first menubar tab stop lives in `docs/wrappers.md`.
 
 ## State
 
@@ -160,18 +160,39 @@ across elements, so `pointerup` calls `click()` on the link.
 Either way the `click` listener closes the menu once.
 
 **Arrows, Home, End, Tab.** Root ArrowDown / ArrowUp open and
-focus the first / last item. ArrowRight on a submenu trigger opens
-or roves in and does not fall through to a menubar step, so an
-empty submenu cannot move the bar. Home, End, and typeahead on an
-already-open root trigger (click-open, or the retarget when
-nothing is painted) rove the open menu; they do not open a closed
-one, and on menubar items they stay on the bar. Tab and Shift+Tab
-close every open menu whenever `menuStack[0]`, including from a
-pointer-opened standalone trigger (`role="button"`), and do not
-`preventDefault`. Root ArrowDown / ArrowUp and every arrow key on
-a menuitem `preventDefault`, so empty and all-disabled menus do
-not scroll and horizontal arrows on a standalone item do not
-scroll the page sideways.
+focus the first / last item. ArrowRight on a submenu trigger
+opens or roves in and does not fall through to a menubar step,
+so an empty submenu cannot move the bar. Home, End, and
+typeahead on an already-open root trigger (click-open, or the
+retarget when nothing is painted) rove the open menu; they do
+not open a closed one, and on menubar items they stay on the
+bar. Tab and Shift+Tab close every open menu whenever
+`menuStack[0]`, including from a pointer-opened standalone
+trigger (`role="button"`), and do not `preventDefault` (see
+"Moving tab stop" for why both leave the bar). Root ArrowDown /
+ArrowUp and every arrow key on a menuitem `preventDefault`, so
+empty and all-disabled menus do not scroll and horizontal arrows
+on a standalone item do not scroll the page sideways.
+
+**Moving tab stop.** A menubar keeps exactly one item at
+`tabindex="0"`, and it is the bar item that last took focus: a
+`focusin` on a bar-level menuitem (one whose wrapper's parent is
+`role="menubar"`) sets it to `0` and every other bar item to
+`-1`, writing only the values that change. That covers every way
+in: arrow roving, a click, a hover that focuses a trigger, a
+script `focus()`. Items inside a menu never take the stop; the
+bar keeps pointing at the trigger they belong to. Because the
+focused item is the stop, the browser's own Tab and Shift+Tab
+leave the bar from wherever the reader is, with no focus moved
+by script: the previous and next tabbable elements are outside
+the bar. From inside an open menu the Tab case first focuses the
+stack root, which makes that trigger the stop if a pointer open
+had not focused it, then closes the menus, so both directions
+leave from there; that one scripted focus predates the moving
+stop and exists because closing the menu has to move focus out
+of it anyway. Tabbing back in lands on the item the reader left
+from, as in Tabs and toolbars; the authored `tabindex="0"` is
+only where the first visit starts (see `docs/wrappers.md`).
 
 **Single-letter typeahead, on purpose.** A printable key (any
 single character except Space, in any script) moves focus to

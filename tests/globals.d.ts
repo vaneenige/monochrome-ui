@@ -7,6 +7,7 @@ interface Window {
   __navCount?: number;
   __fetchPriority?: [url: string, priority: RequestInit["priority"]][];
   __navigations?: boolean[];
+  __fetchLog?: string[];
 }
 
 declare module "*.vue" {

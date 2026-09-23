@@ -75,6 +75,14 @@ test.describe("Dialog", () => {
       await expect(page.getByTestId("disabled-content")).not.toBeVisible();
     });
 
+    test("a dialog removed while open does not block the next one", async ({ page }) => {
+      await page.getByTestId("primary-trigger").click();
+      await expect(page.getByTestId("primary-content")).toBeVisible();
+      await page.getByTestId("primary-content").evaluate((el) => el.remove());
+      await page.getByRole("button", { name: "Open alert" }).click();
+      await expect(page.getByTestId("alert-content")).toBeVisible();
+    });
+
     test("opens via a click on a nested SVG inside the trigger", async ({ page }) => {
       await page.getByTestId("svg-icon").click();
       await expect(page.getByTestId("primary-content")).toBeVisible();
@@ -134,6 +142,23 @@ test.describe("Dialog", () => {
         .getByTestId("primary-content")
         .evaluate((el) => (el as HTMLDialogElement).open);
       expect(open).toBe(false);
+    });
+  });
+
+  test.describe("Light dismiss (closedby)", () => {
+    test('`closedby="any"` closes on a backdrop click, natively', async ({ page, browserName }) => {
+      await page
+        .getByTestId("primary-content")
+        .evaluate((dialog) => dialog.setAttribute("closedby", "any"));
+      await page.getByTestId("primary-trigger").click();
+      await expect(page.getByTestId("primary-content")).toBeVisible();
+      await page.mouse.click(5, 5);
+      await expect(page.getByTestId("primary-content")).not.toBeVisible();
+      if (browserName !== "webkit") {
+        await expect(page.getByTestId("primary-trigger")).toBeFocused();
+      }
+      await page.getByTestId("primary-trigger").click();
+      await expect(page.getByTestId("primary-content")).toBeVisible();
     });
   });
 
