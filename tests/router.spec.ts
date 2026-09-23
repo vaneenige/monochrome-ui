@@ -602,9 +602,39 @@ test.describe("Router", () => {
   });
 
   test.describe("Prefetching (viewport)", () => {
-    test("fetches visible links after `load` by default", async ({ page }) => {
+    test("waits for the reader's first interaction", async ({ page }) => {
       const fetched = await recordFetches(page);
       await page.goto("/html/router/prefetch");
+      await page.waitForLoadState("networkidle");
+      expect(fetched.some((u) => u.endsWith("/html/router/about"))).toBe(false);
+      await page.keyboard.press("Shift");
+      await expect.poll(() => fetched.some((u) => u.endsWith("/html/router/about"))).toBe(true);
+    });
+
+    for (const [name, interact] of [
+      [
+        "a touch",
+        (page: Page) =>
+          page.dispatchEvent("body", "pointerdown", { pointerType: "touch", bubbles: true }),
+      ],
+      ["a pointer move", (page: Page) => page.mouse.move(1, 1)],
+      // Dispatched rather than `mouse.wheel`: headless WebKit drops some synthesized
+      // wheel gestures before they reach the page.
+      ["a wheel", (page: Page) => page.dispatchEvent("body", "wheel", { bubbles: true })],
+      ["a scroll", (page: Page) => page.evaluate(() => scrollTo(0, 1))],
+    ] as const) {
+      test(`arms on ${name}`, async ({ page }) => {
+        const fetched = await recordFetches(page);
+        await page.goto("/html/router/prefetch");
+        await interact(page);
+        await expect.poll(() => fetched.some((u) => u.endsWith("/html/router/about"))).toBe(true);
+      });
+    }
+
+    test("fetches visible links once armed", async ({ page }) => {
+      const fetched = await recordFetches(page);
+      await page.goto("/html/router/prefetch");
+      await page.keyboard.press("Shift");
       await expect.poll(() => fetched.some((u) => u.endsWith("/html/router/about"))).toBe(true);
       await expect.poll(() => fetched.some((u) => u.endsWith("/html/router/docs"))).toBe(true);
     });
@@ -612,6 +642,7 @@ test.describe("Router", () => {
     test("does not fetch the current path, downloads, or cross-origin", async ({ page }) => {
       const fetched = await recordFetches(page);
       await page.goto("/html/router/prefetch");
+      await page.keyboard.press("Shift");
       await expect
         .poll(() => fetched.some((u) => u.endsWith("/html/router/prefetch-off")))
         .toBe(true);
@@ -626,6 +657,7 @@ test.describe("Router", () => {
     test("skips links below the viewport until they scroll into view", async ({ page }) => {
       const fetched = await recordFetches(page);
       await page.goto("/html/router/prefetch");
+      await page.keyboard.press("Shift");
       await expect.poll(() => fetched.some((u) => u.endsWith("/html/router/about"))).toBe(true);
       await page.waitForLoadState("networkidle");
       expect(fetched.some((u) => u.endsWith("/html/router/frag-target"))).toBe(false);
@@ -642,6 +674,7 @@ test.describe("Router", () => {
         await route.fulfill({ contentType: "text/plain", body: "bytes" });
       });
       await page.goto("/html/router/prefetch");
+      await page.keyboard.press("Shift");
       await expect.poll(() => requests).toBe(1);
       await page.waitForLoadState("networkidle");
       const loaded = page.waitForEvent("load");
@@ -654,6 +687,7 @@ test.describe("Router", () => {
     test("skips hidden links", async ({ page }) => {
       const fetched = await recordFetches(page);
       await page.goto("/html/router/prefetch");
+      await page.keyboard.press("Shift");
       await expect.poll(() => fetched.some((u) => u.endsWith("/html/router/about"))).toBe(true);
       await page.waitForLoadState("networkidle");
       expect(fetched.some((u) => u.endsWith("/html/router/docs-guide"))).toBe(false);
@@ -662,6 +696,7 @@ test.describe("Router", () => {
     test("uses the cached document on click without a second fetch", async ({ page }) => {
       const fetched = await recordFetches(page);
       await page.goto("/html/router/prefetch");
+      await page.keyboard.press("Shift");
       await expect.poll(() => fetched.some((u) => u.endsWith("/html/router/about"))).toBe(true);
       const before = fetched.filter((u) => u.endsWith("/html/router/about")).length;
       await page.getByTestId("nav-about").click();
@@ -678,6 +713,7 @@ test.describe("Router", () => {
         await route.continue();
       });
       await page.goto("/html/router/prefetch");
+      await page.keyboard.press("Shift");
       await expect.poll(() => fetched.length).toBe(1);
       await page.getByTestId("nav-about").click();
       await expect(page).toHaveURL("/html/router/about");
@@ -688,6 +724,7 @@ test.describe("Router", () => {
     test("prefetches new links after a swap", async ({ page }) => {
       const fetched = await recordFetches(page);
       await page.goto("/html/router/prefetch");
+      await page.keyboard.press("Shift");
       await expect
         .poll(() => fetched.some((u) => u.endsWith("/html/router/prefetch-more")))
         .toBe(true);
@@ -706,6 +743,7 @@ test.describe("Router", () => {
         };
       });
       await page.goto("/html/router/prefetch");
+      await page.keyboard.press("Shift");
       await expect
         .poll(() =>
           page.evaluate(() =>
@@ -734,6 +772,7 @@ test.describe("Router", () => {
         await route.continue();
       });
       await page.goto("/html/router/prefetch");
+      await page.keyboard.press("Shift");
       await expect.poll(() => fetched.some((u) => u.endsWith("/html/router/about"))).toBe(true);
       await expect.poll(() => fetched.some((u) => u.endsWith("/html/router/docs"))).toBe(true);
       expect(maxInFlight).toBe(1);

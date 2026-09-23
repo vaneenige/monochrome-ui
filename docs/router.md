@@ -29,16 +29,32 @@ for the life of the page; a full load clears it. Entries
 hold raw HTML only.
 
 **Viewport prefetch.** By default the router also hands every
-entry of `document.links` to one `IntersectionObserver` on
-`load` and after each successful swap. A link is fetched when
-it enters the viewport and passes the same prefetch filters
-as hover, so links in a closed menu or drawer wait until it
-opens. Fetches run one at a time with fetch priority `"low"`.
-A hover or click on a queued link starts its fetch at once;
-the queue later finds it in the cache. Each walk disconnects
-the observer first, which drops the previous page's links.
-Parse still happens on navigate. A router imported after
-`load` first observes at its first swap.
+entry of `document.links` to one `IntersectionObserver` once
+the reader first interacts with the page (see "Armed by the
+first interaction"), and after each successful swap. A link is
+fetched when it enters the viewport and passes the same
+prefetch filters as hover, so links in a closed menu or drawer
+wait until it opens. Fetches run one at a time with fetch
+priority `"low"`. A hover or click on a queued link starts its
+fetch at once; the queue later finds it in the cache. Each
+walk disconnects the observer first, which drops the previous
+page's links. Parse still happens on navigate.
+
+**Armed by the first interaction.** The first walk starts on
+the first `pointerdown`, `pointermove`, `keydown`, `wheel`, or
+`scroll`, whichever comes first (`prefetchArm`); each listener
+is `once` and passive. A page nobody touches spends no
+bandwidth on pages nobody opens, and a lab run (Lighthouse
+never interacts) records no prefetch at all: a prefetch that
+finishes before the first paint of a fast unthrottled load is
+otherwise charged to the simulated LCP. On touch the first
+contact is a `pointerdown`, whether it becomes a scroll or a
+tap, so reading arms the walk as early as it can. A first tap
+on a link is the one case the walk cannot have prepared: the
+press prefetch starts that fetch at touch-down, ahead of the
+`click`. A `scroll` without a gesture (restored scroll on
+reload, a fragment jump on load) also arms, which is harmless.
+A swap re-walks whether or not the page was armed.
 
 ## Handles
 
