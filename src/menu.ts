@@ -1,5 +1,6 @@
 import {
   findAncestor,
+  getControls,
   getLinked,
   getTarget,
   hasDocument,
@@ -100,7 +101,7 @@ if (hasDocument) {
 
   const menu = (trigger: HTMLElement | undefined, mode: Focus) => {
     if (trigger?.id.startsWith(Prefix.TriggerMenu)) {
-      const content = getLinked(trigger, "aria-controls");
+      const content = getControls(trigger);
       if (content) {
         if (trigger.ariaExpanded === "true") {
           if (mode === Focus.First) {
@@ -189,7 +190,7 @@ if (hasDocument) {
   };
 
   const menuTrim = (el: HTMLElement) => {
-    while (menuStack[0] && !getLinked(menuStack.at(-1) || el, "aria-controls")?.contains(el))
+    while (menuStack[0] && !getControls(menuStack.at(-1) || el)?.contains(el))
       menu(menuStack.pop(), Focus.None);
   };
 
@@ -245,7 +246,7 @@ if (hasDocument) {
         safeX = event.clientX;
         safeY = event.clientY;
       } else if (safeX !== null) {
-        const safeRect = getLinked(subTrigger, "aria-controls")?.getBoundingClientRect();
+        const safeRect = getControls(subTrigger)?.getBoundingClientRect();
         if (safeRect) {
           const dx =
             (safeX < safeRect.left

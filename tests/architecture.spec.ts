@@ -58,6 +58,26 @@ test.describe("Architecture invariants", () => {
     }
   });
 
+  test("core listens on `window` for the nine north-star events only", () => {
+    const events = new Set<string>();
+    for (const source of cores) {
+      expect(source).not.toMatch(/\.addEventListener\(/);
+      for (const [, event = ""] of source.matchAll(/addEventListener\(\s*"([a-z]+)"/g))
+        events.add(event);
+    }
+    expect([...events].sort()).toEqual([
+      "click",
+      "focusin",
+      "focusout",
+      "keydown",
+      "pointerdown",
+      "pointermove",
+      "pointerup",
+      "resize",
+      "scroll",
+    ]);
+  });
+
   test("router contains no timers", () => {
     for (const banned of timers) expect(router).not.toContain(banned);
   });

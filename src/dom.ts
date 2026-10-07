@@ -14,13 +14,12 @@ export const isElement = (el: unknown): el is HTMLElement => el instanceof HTMLE
 export const isTrigger = (el: unknown, prefix: string): el is HTMLButtonElement =>
   el instanceof HTMLButtonElement && el.id.startsWith(prefix);
 
-export const findAncestor = (el: HTMLElement | null, prefix: string): HTMLElement | null => {
-  while (el) {
-    if (el.id.startsWith(prefix)) return el;
-    el = el.parentElement;
-  }
-  return null;
+export const findAncestor = (el: HTMLElement | null, prefix: string) => {
+  while (el && !el.id.startsWith(prefix)) el = el.parentElement;
+  return el;
 };
+
+export const getControls = (el: HTMLElement) => getLinked(el, "aria-controls");
 
 export const getLinked = (el: HTMLElement, attr: string) => {
   const id = el.getAttribute(attr);
@@ -64,7 +63,7 @@ export const spatialKey = (key: string) =>
     : key;
 
 export const toggleDisclosure = (trigger: HTMLElement) => {
-  const content = getLinked(trigger, "aria-controls");
+  const content = getControls(trigger);
   if (content) {
     const willOpen = trigger.ariaExpanded !== "true";
     trigger.ariaExpanded = `${willOpen}`;

@@ -1,4 +1,12 @@
-import { findAncestor, getLinked, getTarget, hasDocument, isElement, position } from "./dom.js";
+import {
+  findAncestor,
+  getControls,
+  getLinked,
+  getTarget,
+  hasDocument,
+  isElement,
+  position,
+} from "./dom.js";
 
 enum Prefix {
   ContentPopover = "mcc:popover:",
@@ -10,7 +18,7 @@ if (hasDocument) {
 
   const popover = (trigger: HTMLElement, show: boolean) => {
     if ((trigger.ariaExpanded === "true") === show) return;
-    const content = getLinked(trigger, "aria-controls");
+    const content = getControls(trigger);
     if (content) {
       if (show) {
         if (popoverShown && popoverShown !== trigger) popover(popoverShown, false);
@@ -41,7 +49,7 @@ if (hasDocument) {
       if (isOpen) {
         trigger.focus();
       } else {
-        getLinked(trigger, "aria-controls")?.focus();
+        getControls(trigger)?.focus();
       }
     }
   });
@@ -49,7 +57,7 @@ if (hasDocument) {
   addEventListener("keydown", (event: KeyboardEvent) => {
     if (event.key === "Escape" && popoverShown && !event.defaultPrevented) {
       const trigger = popoverShown;
-      const content = getLinked(trigger, "aria-controls");
+      const content = getControls(trigger);
       let el = getTarget(event);
       while (el && el !== content && !el.popover) el = el.parentElement;
       if (el === content || !el) {
