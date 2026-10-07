@@ -50,7 +50,7 @@ listener reads the scroll as a dismissal. A touch open passes
 the open focuses it with `preventScroll` and paints it when it
 is a menuitem. A mouse open that leaves focus on `body` is
 retargeted on the next key (see "Retarget from the surface or
-`body`").
+an ancestor").
 
 **Walks break on `mct:menu:` before activation.** The `click`
 walk stops at `mct:menu:` (and `mcc:menu:`) before it tests for
@@ -115,13 +115,18 @@ any other keystroke on the page costs two checks and a switch.
 `shouldPreventDefault` is set by the cases and applied once at the
 tail.
 
-**Retarget from the surface or `body`.** `showPopover` can leave
-focus on the content node, and a click on a label or separator
-inside the menu blurs the item to `body`. When a menu is open and
-`keydown` fires from a `mcc:menu:` surface or from `body`, the
-target is retargeted to the painted item or the stack top and
-focused, so the switch always sees a live element. Opening a root
-menu clears a `data-highlighted` left on a menubar trigger by an
+**Retarget from the surface or an ancestor.** `showPopover` can
+leave focus on the content node, and a click on a label or
+separator inside the menu blurs the item to `body`. Safari does
+not focus a clicked button, so a mouse open leaves focus on the
+nearest focusable ancestor of the trigger: `body`, or a popover
+content, a `<dialog>`, or the router's `main` around it. When a
+menu is open and `keydown` fires from a `mcc:menu:` surface or
+from any element other than the root trigger that contains it,
+the target is retargeted to the painted item, or to the stack top
+when that item left the document, and focused, so the switch
+always sees a live element in the open menu. Opening a root menu
+clears a `data-mc-highlighted` left on a menubar trigger by an
 earlier Escape or bar roving, unless it is the trigger being
 opened, so that retarget never picks an item from a closed
 session.
@@ -215,8 +220,10 @@ only where the first visit starts (see `docs/wrappers.md`).
 **Single-letter typeahead, on purpose.** A printable key (any
 single character except Space, in any script) moves focus to
 the next enabled item whose text starts with that character;
-pressing it again cycles. `shouldMatchLetter` carries the letter
-into the roving walk for that keydown only.
+pressing it again cycles. A Ctrl or Meta chord is a shortcut,
+not a letter, and never reaches the walk: `keydown` returns on
+any chord first (see `docs/dom.md`). `shouldMatchLetter`
+carries the letter into the roving walk for that keydown only.
 
 **No prefix buffer.** Multi-character typeahead needs a window
 ("keys within 500 ms belong together"), and inside that window
@@ -277,12 +284,13 @@ focuses and paints").
 `menuHighlight` focuses even when the painted item did not
 change, so a later move on the same trigger repairs stolen focus.
 
-**Painting on close.** Close only clears `data-highlighted` when
-the painted item lives in that menu's content, so the next parent
-item keeps its highlight. A `Focus.Trigger` close (ArrowLeft /
-Escape) paints the menuitem trigger, so leaving a submenu is not
-an empty slot. `Focus.None` does not, so a sibling hover is not
-overwritten.
+**Painting on close.** Close only clears `data-mc-highlighted` when
+the painted item lives in that menu's content, or is the closed
+trigger itself (a bar item left by Tab or an outside press), so
+the next parent item keeps its highlight. A `Focus.Trigger` close
+(ArrowLeft / Escape) paints the menuitem trigger, so leaving a
+submenu is not an empty slot. `Focus.None` does not, so a sibling
+hover is not overwritten.
 
 **Sibling submenu replace.** Opening a menu closes every stack
 entry whose content does not contain the new trigger (`menuTrim`).
@@ -296,9 +304,13 @@ parent therefore closes it; ArrowRight still enters.
 **Menubar by role.** `menubarItem` walks up to the element whose
 parent is `role="menubar"`: the bar-level wrapper that ArrowRight
 / ArrowLeft rove. Hover-switch compares the menubars of the two
-wrappers instead of assuming trigger, wrapper, menubar depth. In
-`keydown` the walk starts from the open root trigger when a menu
-is open, so a menubar popover rendered outside the bar still
-steps; it falls back to the focused item. A standalone menu has
-no menubar ancestor, so ArrowRight / ArrowLeft on its items are
-inert without walking unrelated siblings.
+wrappers instead of assuming trigger, wrapper, menubar depth. A
+plain bar item (a `menuitem` whose wrapper's parent is the
+menubar) joins the hover trigger path as a trigger does, so
+hovering it while a bar menu is open closes that menu, with
+nothing to open in its place. In `keydown` the walk starts from
+the open root trigger when a menu is open, so a menubar popover
+rendered outside the bar still steps; it falls back to the
+focused item. A standalone menu has no menubar ancestor, so
+ArrowRight / ArrowLeft on its items are inert without walking
+unrelated siblings.

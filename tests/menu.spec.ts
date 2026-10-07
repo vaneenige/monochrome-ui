@@ -960,6 +960,15 @@ test.describe("Menu", () => {
       await expect(page.getByTestId("root-list")).toBeVisible();
     });
 
+    test("scroll inside a menu closes the submenus below it", async ({ page }) => {
+      await openRoot(page);
+      await openSubmenuViaKeyboard(page);
+      await page.getByTestId("root-list").dispatchEvent("scroll");
+      await expect(page.getByTestId("root-submenu-list")).not.toBeVisible();
+      await expect(page.getByTestId("root-list")).toBeVisible();
+      await expect(page.getByTestId("root-submenu-trigger")).toBeFocused();
+    });
+
     test("scroll inside a scrollable region nested in the popover does not close the menu", async ({
       page,
       renderer,
@@ -1145,6 +1154,13 @@ test.describe("Keyboard (typeahead)", () => {
     await page.keyboard.press("a");
     await expect(page.getByTestId("typeahead-item-1")).toBeFocused();
   });
+
+  for (const modifier of ["Control", "Meta"] as const) {
+    test(`${modifier} plus a letter does not move focus`, async ({ page }) => {
+      await page.keyboard.press(`${modifier}+b`);
+      await expect(page.getByTestId("typeahead-item-1")).toBeFocused();
+    });
+  }
 
   test("two letters in quick succession are two single-letter jumps", async ({ page }) => {
     await page.keyboard.press("a");
@@ -1338,6 +1354,25 @@ test.describe("Menubar", () => {
       await expect(page.getByTestId("menubar-trigger-1")).toBeFocused();
       await page.keyboard.press("ArrowRight");
       await expect(page.getByTestId("menubar-trigger-3")).toBeFocused();
+    });
+
+    test("Alt, Ctrl, and Meta chords pass through to the browser", async ({ page }) => {
+      await page.getByTestId("menubar-trigger-2").focus();
+      // Dispatched, not pressed: a real Alt+ArrowLeft is the browser's Back.
+      const prevented = await page.evaluate(() =>
+        (["altKey", "ctrlKey", "metaKey"] as const).map((modifier) => {
+          const event = new KeyboardEvent("keydown", {
+            key: "ArrowLeft",
+            [modifier]: true,
+            bubbles: true,
+            cancelable: true,
+          });
+          document.activeElement?.dispatchEvent(event);
+          return event.defaultPrevented;
+        }),
+      );
+      expect(prevented).toEqual([false, false, false]);
+      await expect(page.getByTestId("menubar-trigger-2")).toBeFocused();
     });
 
     test("Home / End jump to first / last menubar item", async ({ page }) => {
@@ -1814,6 +1849,35 @@ test.describe("Menubar", () => {
       await page.getByTestId("menubar-trigger-3").hover();
       await expect(page.getByTestId("menubar-list-1")).not.toBeVisible();
       await expect(page.getByTestId("menubar-list-3")).toBeVisible();
+    });
+
+    test("an outside press leaves no bar item highlighted", async ({ page }) => {
+      const trigger = page.getByTestId("menubar-trigger-1");
+      await trigger.click();
+      await trigger.hover({ position: { x: 4, y: 4 } });
+      await expect(trigger).toHaveAttribute("data-mc-highlighted", "");
+      const viewport = page.viewportSize();
+      if (!viewport) throw new Error("missing viewport");
+      await page.mouse.click(viewport.width - 5, viewport.height - 5);
+      await expect(page.getByTestId("menubar-list-1")).not.toBeVisible();
+      await expect(trigger).not.toHaveAttribute("data-mc-highlighted");
+    });
+
+    test("pressing the open trigger again leaves it unhighlighted", async ({ page }) => {
+      const trigger = page.getByTestId("menubar-trigger-1");
+      await trigger.click();
+      await trigger.hover({ position: { x: 4, y: 4 } });
+      await trigger.click();
+      await expect(page.getByTestId("menubar-list-1")).not.toBeVisible();
+      await expect(trigger).not.toHaveAttribute("data-mc-highlighted");
+    });
+
+    test("hovering a plain bar item closes the open menu", async ({ page }) => {
+      await page.getByTestId("menubar-trigger-1").click();
+      await expect(page.getByTestId("menubar-list-1")).toBeVisible();
+      await page.getByTestId("menubar-item-1").hover();
+      await expect(page.getByTestId("menubar-list-1")).not.toBeVisible();
+      await expect(page.getByTestId("menubar-item-1")).toBeFocused();
     });
   });
 });
@@ -2654,6 +2718,21 @@ test.describe("Dynamic", () => {
     await expect(page.getByTestId("menu2-list")).toBeVisible();
     await expect(page.getByTestId("list")).not.toBeVisible();
     await page.keyboard.press("Escape");
+  });
+
+  test("ArrowDown after the highlighted item is removed focuses the first item", async ({
+    page,
+    renderer,
+  }) => {
+    test.skip(renderer !== "html", "Removes a node the renderer owns");
+    await page.goto("/html/menu/basic");
+    await openRootViaKeyboard(page);
+    await page.keyboard.press("ArrowDown");
+    await expect(page.getByTestId("root-item-2")).toBeFocused();
+    await page.getByTestId("root-item-2").evaluate((el) => el.parentElement?.remove());
+    await page.keyboard.press("ArrowDown");
+    await expect(page.getByTestId("root-item-1")).toBeFocused();
+    await expect(page.getByTestId("root-list")).toBeVisible();
   });
 });
 

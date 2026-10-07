@@ -140,7 +140,9 @@ if (hasDocument) {
               if (mode !== Focus.None || content.contains(document.activeElement)) {
                 trigger.focus({ preventScroll: true });
               }
-              if (content.contains(menuHighlighted)) menuHighlight(null);
+              if (menuHighlighted === trigger || content.contains(menuHighlighted)) {
+                menuHighlight(null);
+              }
             }
             content.hidePopover();
             trigger.ariaExpanded = "false";
@@ -310,7 +312,10 @@ if (hasDocument) {
         foundItem = true;
       }
       if (!foundItem && el.id.startsWith(Prefix.Content)) return;
-      if (el.id.startsWith(Prefix.TriggerMenu)) {
+      if (
+        el.id.startsWith(Prefix.TriggerMenu) ||
+        (el.role === "menuitem" && el.parentElement?.parentElement?.role === "menubar")
+      ) {
         triggerPath.unshift(el);
       } else if (el.id.startsWith(Prefix.ContentMenu)) {
         const trigger = getLinked(el, "aria-labelledby");
@@ -358,14 +363,19 @@ if (hasDocument) {
   addEventListener("keydown", (event: KeyboardEvent) => {
     shouldPreventDefault = false;
     rovingBoundary = null;
+    if (event.altKey || event.ctrlKey || event.metaKey) return;
     const key = spatialKey(event.key);
     let target = event.target;
     if (
       menuStack[0] &&
       isElement(target) &&
-      (target.id.startsWith(Prefix.ContentMenu) || target === document.body)
+      (target.id.startsWith(Prefix.ContentMenu) ||
+        (target !== menuStack[0] && target.contains(menuStack[0])))
     ) {
-      (target = menuHighlighted || menuStack.at(-1) || target).focus({ preventScroll: true });
+      (target =
+        (menuHighlighted?.isConnected && menuHighlighted) || menuStack.at(-1) || target).focus({
+        preventScroll: true,
+      });
     }
     const el = isElement(target) ? target : null;
     const trigger = isTrigger(el, Prefix.TriggerMenu) ? el : null;
@@ -458,11 +468,8 @@ if (hasDocument) {
   addEventListener(
     "scroll",
     (event) => {
-      if (
-        menuStack[0] &&
-        !(isElement(event.target) && findAncestor(event.target, Prefix.ContentMenu))
-      ) {
-        menuCloseAll();
+      if (menuStack[0]) {
+        menuTrim(findAncestor(getTarget(event), Prefix.ContentMenu) || document.body);
       }
     },
     true,
