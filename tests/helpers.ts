@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import type { Locator, Page } from "@playwright/test";
 
 /**
@@ -32,6 +33,24 @@ export const setRtl = (page: Page) =>
   page.evaluate(() => {
     document.dir = "rtl";
   });
+
+/** Swaps the fixture stylesheet for each named spec's Styling CSS
+ *  (Required and Example), as a project that follows it renders. */
+export const loadSpecCss = (page: Page, ...names: string[]) => {
+  const styling = (name: string) => {
+    const text = readFileSync(new URL(`../spec/${name}.md`, import.meta.url), "utf8");
+    const at = text.indexOf("\n## Styling\n");
+    const section = text.slice(at, text.indexOf("\n## ", at + 1));
+    return Array.from(section.matchAll(/```css\n([\s\S]*?)```/g), ([, css]) => css).join("\n");
+  };
+  const css = names.map(styling).join("\n");
+  return page.evaluate((text) => {
+    document.querySelector('link[href="/test.css"]')?.remove();
+    const style = document.createElement("style");
+    style.textContent = text;
+    document.head.append(style);
+  }, css);
+};
 
 export const pointerDown = (locator: Locator, init: PointerEventInit = {}) =>
   locator.dispatchEvent("pointerdown", init);

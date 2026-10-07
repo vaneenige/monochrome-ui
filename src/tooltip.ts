@@ -17,7 +17,7 @@ if (hasDocument) {
     if (content) {
       if (show) {
         content.showPopover();
-        position(trigger, content);
+        position(trigger, content, "top");
       } else {
         content.hidePopover();
       }
@@ -93,10 +93,7 @@ if (hasDocument) {
   );
 
   addEventListener("resize", () => {
-    if (tooltipShown) {
-      const content = getLinked(tooltipShown, "aria-describedby");
-      if (content) position(tooltipShown, content);
-    }
+    if (tooltipShown) position(tooltipShown, getLinked(tooltipShown, "aria-describedby"), "top");
     pointerTarget = null;
   });
 

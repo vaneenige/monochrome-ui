@@ -152,7 +152,7 @@ if (hasDocument) {
             menuStack.push(trigger);
             content.showPopover();
             trigger.ariaExpanded = "true";
-            position(trigger, content);
+            menuPosition(trigger, content);
             safeX = null;
             if (mode === Focus.First) {
               menuRoving(content.firstElementChild, menuNext);
@@ -211,6 +211,14 @@ if (hasDocument) {
     } else if (!menuStack.includes(trigger)) {
       menu(trigger, mode);
     }
+  };
+
+  const menuPosition = (trigger: HTMLElement, content: HTMLElement | null) => {
+    const parent = findAncestor(trigger, Prefix.ContentMenu);
+    const toward =
+      parent?.getAttribute("data-mc-x") ||
+      (getComputedStyle(trigger).direction === "rtl" ? "left" : "right");
+    position(trigger, content, parent ? (toward === "left" ? "left" : "right") : "bottom");
   };
 
   const menuTrim = (el: HTMLElement) => {
@@ -461,9 +469,6 @@ if (hasDocument) {
   );
 
   addEventListener("resize", () => {
-    for (const trigger of menuStack) {
-      const content = getLinked(trigger, "aria-controls");
-      if (content) position(trigger, content);
-    }
+    for (const trigger of menuStack) menuPosition(trigger, getControls(trigger));
   });
 }

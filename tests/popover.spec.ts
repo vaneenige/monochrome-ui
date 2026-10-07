@@ -1,4 +1,6 @@
+import type { Page } from "@playwright/test";
 import { expect, test } from "./fixtures";
+import { loadSpecCss, setRtl } from "./helpers";
 
 test.describe("Popover", () => {
   test.beforeEach(async ({ page, renderer }) => {
@@ -291,14 +293,38 @@ test.describe("Positioning", () => {
     const vars = await page
       .getByTestId("click-content")
       .evaluate((el) => [
-        el.style.getPropertyValue("--top"),
-        el.style.getPropertyValue("--right"),
-        el.style.getPropertyValue("--bottom"),
-        el.style.getPropertyValue("--left"),
-        el.style.getPropertyValue("--width"),
-        el.style.getPropertyValue("--height"),
+        el.style.getPropertyValue("--mc-trigger-top"),
+        el.style.getPropertyValue("--mc-trigger-right"),
+        el.style.getPropertyValue("--mc-trigger-bottom"),
+        el.style.getPropertyValue("--mc-trigger-left"),
+        el.style.getPropertyValue("--mc-content-width"),
+        el.style.getPropertyValue("--mc-content-height"),
       ]);
     for (const value of vars) expect(value).toMatch(/^-?\d+(\.\d+)?px$/);
+  });
+
+  test("caps content too tall for either side to the viewport, and it scrolls", async ({
+    page,
+    renderer,
+  }) => {
+    test.skip(renderer !== "html", "Placement is the spec's CSS, not the renderer");
+    await page.setViewportSize({ width: 320, height: 240 });
+    await page.goto("/html/popover/tall");
+    await loadSpecCss(page, "popover");
+    await page.getByTestId("trigger").click();
+    await expect(page.getByTestId("content")).toBeVisible();
+    const content = await page.getByTestId("content").boundingBox();
+    if (!content) throw new Error("missing bounding box");
+    expect(content.y).toBeGreaterThanOrEqual(0);
+    expect(content.y + content.height).toBeLessThanOrEqual(240);
+    expect(
+      await page.getByTestId("content").evaluate((el) => el.scrollHeight > el.clientHeight),
+    ).toBe(true);
+    expect(
+      await page
+        .getByTestId("content")
+        .evaluate((el) => el.style.getPropertyValue("--mc-available-height")),
+    ).toMatch(/^\d+(\.\d+)?px$/);
   });
 
   test("viewport resize keeps the popover open and republishes the trigger rect", async ({
@@ -312,10 +338,117 @@ test.describe("Positioning", () => {
     await page.getByTestId("click-trigger").click();
     await expect(page.getByTestId("click-content")).toBeVisible();
     const left = () =>
-      page.getByTestId("click-content").evaluate((el) => el.style.getPropertyValue("--left"));
+      page
+        .getByTestId("click-content")
+        .evaluate((el) => el.style.getPropertyValue("--mc-trigger-left"));
     const before = await left();
     await page.setViewportSize({ width: 800, height: 400 });
     await expect(page.getByTestId("click-content")).toBeVisible();
     await expect.poll(left).not.toBe(before);
+  });
+});
+
+test.describe("Placement (spec CSS)", () => {
+  test.beforeEach(({ renderer }) => {
+    test.skip(renderer !== "html", "Placement is the spec's CSS, not the renderer");
+  });
+
+  const open = async (
+    page: Page,
+    attrs: Record<string, string> = {},
+    at: Record<string, string> = { left: "300px", top: "250px" },
+  ) => {
+    await page.setViewportSize({ width: 800, height: 600 });
+    await page.goto("/html/popover/basic");
+    await loadSpecCss(page, "popover");
+    await page.getByTestId("click-trigger").evaluate((el, style) => {
+      Object.assign(el.style, { position: "fixed", ...style });
+    }, at);
+    await page.getByTestId("click-content").evaluate((el, values) => {
+      for (const [name, value] of Object.entries(values)) el.setAttribute(name, value);
+    }, attrs);
+    await page.getByTestId("click-trigger").click();
+    await expect(page.getByTestId("click-content")).toBeVisible();
+    const trigger = await page.getByTestId("click-trigger").boundingBox();
+    const content = await page.getByTestId("click-content").boundingBox();
+    if (!trigger || !content) throw new Error("missing bounding box");
+    return { trigger, content };
+  };
+
+  test("opens below and centered by default", async ({ page }) => {
+    const { trigger, content } = await open(page);
+    await expect(page.getByTestId("click-content")).toHaveAttribute("data-mc-y", "bottom");
+    await expect(page.getByTestId("click-content")).not.toHaveAttribute("data-mc-x");
+    expect(content.y).toBeGreaterThanOrEqual(trigger.y + trigger.height);
+    expect(Math.abs(content.x + content.width / 2 - (trigger.x + trigger.width / 2))).toBeLessThan(
+      1,
+    );
+  });
+
+  test("`data-mc-side` picks each side", async ({ page }) => {
+    let { trigger, content } = await open(page, { "data-mc-side": "top" });
+    await expect(page.getByTestId("click-content")).toHaveAttribute("data-mc-y", "top");
+    expect(content.y + content.height).toBeLessThanOrEqual(trigger.y);
+
+    ({ trigger, content } = await open(page, { "data-mc-side": "right" }));
+    await expect(page.getByTestId("click-content")).toHaveAttribute("data-mc-x", "right");
+    await expect(page.getByTestId("click-content")).not.toHaveAttribute("data-mc-y");
+    expect(content.x).toBeGreaterThanOrEqual(trigger.x + trigger.width);
+    expect(
+      Math.abs(content.y + content.height / 2 - (trigger.y + trigger.height / 2)),
+    ).toBeLessThan(1);
+
+    ({ trigger, content } = await open(
+      page,
+      { "data-mc-side": "left" },
+      { left: "500px", top: "250px" },
+    ));
+    await expect(page.getByTestId("click-content")).toHaveAttribute("data-mc-x", "left");
+    expect(content.x + content.width).toBeLessThanOrEqual(trigger.x);
+  });
+
+  test("`data-mc-align` lines up start and end edges", async ({ page }) => {
+    let { trigger, content } = await open(page, { "data-mc-align": "start" });
+    expect(Math.abs(content.x - trigger.x)).toBeLessThan(1);
+    ({ trigger, content } = await open(page, { "data-mc-align": "end" }));
+    expect(Math.abs(content.x + content.width - (trigger.x + trigger.width))).toBeLessThan(1);
+    ({ trigger, content } = await open(page, {
+      "data-mc-side": "right",
+      "data-mc-align": "start",
+    }));
+    expect(Math.abs(content.y - trigger.y)).toBeLessThan(1);
+  });
+
+  test("start lines up the right edges on a right-to-left page", async ({ page }) => {
+    await page.setViewportSize({ width: 800, height: 600 });
+    await page.goto("/html/popover/basic");
+    await loadSpecCss(page, "popover");
+    await setRtl(page);
+    await page.getByTestId("click-trigger").evaluate((el) => {
+      Object.assign(el.style, { position: "fixed", left: "300px", top: "250px" });
+    });
+    await page.getByTestId("click-content").evaluate((el) => {
+      el.setAttribute("data-mc-align", "start");
+    });
+    await page.getByTestId("click-trigger").click();
+    const trigger = await page.getByTestId("click-trigger").boundingBox();
+    const content = await page.getByTestId("click-content").boundingBox();
+    if (!trigger || !content) throw new Error("missing bounding box");
+    expect(Math.abs(content.x + content.width - (trigger.x + trigger.width))).toBeLessThan(1);
+  });
+
+  test("an authored side flips when it does not fit", async ({ page }) => {
+    const { trigger, content } = await open(
+      page,
+      { "data-mc-side": "top" },
+      { left: "300px", top: "0px" },
+    );
+    await expect(page.getByTestId("click-content")).toHaveAttribute("data-mc-y", "bottom");
+    expect(content.y).toBeGreaterThanOrEqual(trigger.y + trigger.height);
+  });
+
+  test("an unknown side falls back to the default", async ({ page }) => {
+    await open(page, { "data-mc-side": "middle" });
+    await expect(page.getByTestId("click-content")).toHaveAttribute("data-mc-y", "bottom");
   });
 });

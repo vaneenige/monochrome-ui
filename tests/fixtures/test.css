@@ -7,24 +7,24 @@
   inset: auto;
   margin: 0;
   border: none;
-  top: var(--bottom);
-  left: var(--left);
+  top: var(--mc-trigger-bottom);
+  left: var(--mc-trigger-left);
 }
 
 /* Submenus open to the side of their parent menuitem. */
 [role="menu"] [role="menu"] {
-  top: var(--top);
-  left: var(--right);
+  top: var(--mc-trigger-top);
+  left: var(--mc-trigger-right);
   margin-left: 16px;
 }
 
 /* RTL: surfaces align to the trigger's right edge and submenus
    open to the left. */
 [dir="rtl"] [popover] {
-  left: calc(var(--right) - var(--width));
+  left: calc(var(--mc-trigger-right) - var(--mc-content-width));
 }
 [dir="rtl"] [role="menu"] [role="menu"] {
-  left: calc(var(--left) - var(--width) - 16px);
+  left: calc(var(--mc-trigger-left) - var(--mc-content-width) - 16px);
   margin-left: 0;
 }
 

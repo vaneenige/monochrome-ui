@@ -23,7 +23,7 @@ if (hasDocument) {
       if (show) {
         if (popoverShown && popoverShown !== trigger) popover(popoverShown, false);
         content.showPopover();
-        position(trigger, content);
+        position(trigger, content, "bottom");
         popoverShown = trigger;
       } else {
         content.hidePopover();
@@ -82,10 +82,7 @@ if (hasDocument) {
   );
 
   addEventListener("resize", () => {
-    if (popoverShown) {
-      const content = getLinked(popoverShown, "aria-controls");
-      if (content) position(popoverShown, content);
-    }
+    if (popoverShown) position(popoverShown, getControls(popoverShown), "bottom");
   });
 
   addEventListener("focusout", (event: FocusEvent) => {
