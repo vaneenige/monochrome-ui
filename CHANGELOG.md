@@ -15,7 +15,7 @@ npx monochrome changelog               # since the installed version
 npx monochrome changelog --from 0.17.0 # since a given version
 ```
 
-## Unreleased
+## 0.18.0 (2026-10-07)
 
 ### Upgrade
 

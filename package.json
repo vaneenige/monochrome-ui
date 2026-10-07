@@ -1,6 +1,6 @@
 {
   "name": "monochrome",
-  "version": "0.17.0",
+  "version": "0.18.0",
   "description": "The framework-agnostic UI library for agents. Accessible, HTML-first components with no hydration.",
   "author": "Colin van Eenige",
   "license": "MIT",
