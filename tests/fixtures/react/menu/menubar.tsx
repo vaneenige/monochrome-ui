@@ -1,4 +1,4 @@
-import { Menubar } from "monochrome/react";
+import { Menubar } from "@/components/ui";
 
 export default () => (
   <Menubar.Root data-testid="menubar-list">
@@ -10,13 +10,13 @@ export default () => (
         <Menubar.Item data-testid="menubar-item-1-1">MenuItem 1.1</Menubar.Item>
         <Menubar.Item>MenuItem 1.2</Menubar.Item>
         <Menubar.Item>MenuItem 1.3</Menubar.Item>
-        <Menubar.Group>
+        <Menubar.Sub>
           <Menubar.Trigger data-testid="menubar-submenu-trigger-1">Submenu 1</Menubar.Trigger>
           <Menubar.Popover data-testid="menubar-submenu-list-1">
             <Menubar.Item data-testid="menubar-submenu-item-1-1">Submenu Item 1.1</Menubar.Item>
             <Menubar.Item>Submenu Item 1.2</Menubar.Item>
           </Menubar.Popover>
-        </Menubar.Group>
+        </Menubar.Sub>
       </Menubar.Popover>
     </Menubar.Menu>
     <Menubar.Item data-testid="menubar-item-1">MenuItem 1</Menubar.Item>
@@ -26,10 +26,10 @@ export default () => (
         <Menubar.Item data-testid="menubar-item-2-1">MenuItem 2.1</Menubar.Item>
         <Menubar.Item>MenuItem 2.2</Menubar.Item>
         <Menubar.Item>MenuItem 2.3</Menubar.Item>
-        <Menubar.Group>
+        <Menubar.Sub>
           <Menubar.Trigger data-testid="menubar-empty-trigger">Empty</Menubar.Trigger>
           <Menubar.Popover data-testid="menubar-empty-list">{null}</Menubar.Popover>
-        </Menubar.Group>
+        </Menubar.Sub>
       </Menubar.Popover>
     </Menubar.Menu>
     <Menubar.Menu>

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Menu, Popover, Tooltip } from "monochrome/vue"
+import { Menu, Popover, Tooltip } from "@/components/ui"
 </script>
 
 <template>

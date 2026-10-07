@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from "vue"
-import { Menu } from "monochrome/vue"
+import { Menu } from "@/components/ui"
 
 const items = ref(["Item 1", "Item 2", "Item 3"])
 const hasSubmenu = ref(false)
@@ -120,7 +120,7 @@ function handleItemClick(index: number) {
         >
           Radio B
         </Menu.RadioItem>
-        <Menu.Group v-if="hasSubmenu">
+        <Menu.Sub v-if="hasSubmenu">
           <Menu.Trigger data-testid="submenu-trigger">
             Submenu
           </Menu.Trigger>
@@ -132,7 +132,7 @@ function handleItemClick(index: number) {
               Sub Item 2
             </Menu.Item>
           </Menu.Popover>
-        </Menu.Group>
+        </Menu.Sub>
       </Menu.Popover>
     </Menu.Root>
     <Menu.Root>

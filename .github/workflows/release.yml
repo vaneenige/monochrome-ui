@@ -40,10 +40,6 @@ jobs:
 
       - run: bun install --frozen-lockfile
 
-      - run: bun run build
-
-      - run: test -f dist/index.js
-
       - name: Bump version
         env:
           BUMP: ${{ inputs.bump }}
@@ -64,6 +60,29 @@ jobs:
           ')
           echo "VERSION=$VERSION" >> "$GITHUB_ENV"
 
+      # The Unreleased section becomes this version's, so the package, the
+      # tag, and `npx monochrome changelog` carry its notes. A release
+      # without notes stops here, before anything is published.
+      - name: Stamp changelog
+        run: |
+          bun -e '
+            const file = Bun.file("CHANGELOG.md");
+            const text = await file.text();
+            const notes = /^## Unreleased\n([\s\S]*?)(?=^## |(?![\s\S]))/m.exec(text)?.[1];
+            if (!notes?.trim()) {
+              console.error("CHANGELOG.md needs a non-empty ## Unreleased section.");
+              process.exit(1);
+            }
+            const date = new Date().toISOString().slice(0, 10);
+            await Bun.write(file, text.replace(/^## Unreleased$/m, `## ${process.env.VERSION} (${date})`));
+          '
+
+      # Build after the bump: the build stamps the version into the files
+      # `add` copies and restamps versionMeta.
+      - run: bun run build
+
+      - run: test -f dist/index.js
+
       - name: Publish to npm
         run: bunx npm@latest publish --access public --ignore-scripts --provenance
 
@@ -71,7 +90,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add package.json
+          git add package.json CHANGELOG.md
           git commit --no-verify -m "v${VERSION}"
           git tag -a "v${VERSION}" -m "v${VERSION}"
           git push origin HEAD --follow-tags

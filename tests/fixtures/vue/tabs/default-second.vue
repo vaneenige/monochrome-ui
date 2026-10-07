@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Tabs } from "monochrome/vue"
+import { Tabs } from "@/components/ui"
 </script>
 
 <template>

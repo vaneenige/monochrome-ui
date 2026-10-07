@@ -1,4 +1,4 @@
-import { Accordion } from "monochrome/react";
+import { Accordion } from "@/components/ui";
 import { useState } from "react";
 import { createRoot } from "react-dom/client";
 

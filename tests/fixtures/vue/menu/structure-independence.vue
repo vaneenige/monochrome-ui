@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Menu } from "monochrome/vue"
+import { Menu } from "@/components/ui"
 </script>
 
 <template>
@@ -57,7 +57,7 @@ import { Menu } from "monochrome/vue"
           <Menu.Item data-testid="c-item-1">
             C Item 1
           </Menu.Item>
-          <Menu.Group>
+          <Menu.Sub>
             <Menu.Trigger data-testid="c-submenu-trigger">
               C Submenu
             </Menu.Trigger>
@@ -71,7 +71,7 @@ import { Menu } from "monochrome/vue"
                 </Menu.Item>
               </Menu.Popover>
             </footer>
-          </Menu.Group>
+          </Menu.Sub>
         </Menu.Popover>
       </aside>
     </Menu.Root>

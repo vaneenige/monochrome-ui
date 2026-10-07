@@ -1,4 +1,4 @@
-import { Collapsible } from "monochrome/react";
+import { Collapsible } from "@/components/ui";
 import { useState } from "react";
 import { createRoot } from "react-dom/client";
 

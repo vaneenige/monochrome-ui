@@ -41,17 +41,28 @@ walks where one pass mixes prefixes with roles; see
 `docs/menu.md`.
 
 **Roving-boundary sentinel.** `rovingBoundary` remembers the first
-candidate the walker rejected; if we ever see it again we give
+candidate the walker visits; if we ever see it again we give
 up and set `shouldPreventDefault` so the key does not scroll. A
 generic sibling walker can't distinguish "walked past the end
 and wrapped" from "kept going past the start", and on an
 all-disabled list the naive walker loops forever. One pointer,
-zero counters, zero extra passes. The boundary is cleared at the
-top of every listener that drives a walk: `keydown` in Accordion,
-Tabs, and Menu, and Menu's `pointerup` (the radio sweep).
-Accordion and Tabs bail out of `keydown` on an Alt / Ctrl /
-Meta modifier so browser shortcuts such as back and forward
-pass through untouched.
+zero counters, zero extra passes. A candidate counts only when it
+takes focus: each roving callback calls `focus()` and accepts the
+candidate once it is `document.activeElement`, so a hidden one
+(`hidden`, `display: none`) is skipped like a disabled one
+instead of ending the walk with focus still behind it, where
+every later key would find it again. The boundary is cleared at
+the top of every listener that drives a walk: `keydown` in
+Accordion, Tabs, and Menu, and Menu's `pointerup` (the radio
+sweep).
+
+**Accordion, Menu, and Tabs bail on chords.** Each `keydown`
+listener returns before its switch when Alt, Ctrl, or Meta is
+held, so browser and system shortcuts pass through untouched:
+Alt+ArrowLeft and Alt+ArrowRight (Back and Forward on Windows
+and Linux) would otherwise rove a menubar. Shift is not a chord:
+Shift+Tab still leaves a menu, and typeahead matches the shifted
+character (see `docs/menu.md`).
 
 **RTL by mirroring the key, once.** Menu and Tabs pass `event.key`
 through `spatialKey`, which swaps ArrowLeft and ArrowRight when
@@ -64,25 +75,75 @@ Direction is read from `document.dir` on every keydown (DOM as
 state, never cached); consumers declare `dir` on `<html>`. The
 pointer layer needs no branch: the safety triangle's near-edge
 clamp and signed-movement test are side-agnostic, and which side
-anything opens on is consumer CSS.
+anything opens on is consumer CSS, told by the side attributes
+when its preferred side has no room.
 
-**Popover API with CSS-variable positioning.** `position` publishes
-the trigger rect (`--top`, `--right`, `--bottom`, `--left`, in
-TRBL order) and the content's own size (`--width`, `--height`)
-as CSS custom properties on the content element. All
-positioning happens in CSS. No JS layout math, no `z-index`
-management (top layer handles that).
+**Popover API with CSS-variable positioning.** `position`
+publishes the trigger rect (`--mc-trigger-top`,
+`--mc-trigger-right`, `--mc-trigger-bottom`, `--mc-trigger-left`,
+in TRBL order) and the content's own size (`--mc-content-width`,
+`--mc-content-height`) as CSS custom properties on the content
+element. Placement happens in CSS; no `z-index` management (top
+layer handles that). The values are a snapshot: `position` runs
+when a surface opens, on `resize`, and for a shown tooltip on
+scroll, and nothing observes the content, so content that grows
+while open keeps its old size and side until the next of those.
+The rect is in viewport pixels, which CSS `zoom` on an ancestor
+of the content scales a second time, so a zoomed surface lands
+off its trigger.
+
+**The core names the side it opened on.** `position` takes the
+component's default side (a menu passes `bottom`, or for a submenu
+its parent's `data-mc-x`, else the inline end; a popover `bottom`;
+a tooltip `top`) and uses the content's `data-mc-side` instead when
+it is one of the four sides. `positionSide` then compares the room
+on that side of the trigger with the content's size, which
+`position` already read: the content stays when it fits, or when
+the opposite side has no more room, and otherwise flips. It writes
+the result, `data-mc-y="top"` or `"bottom"`, or `data-mc-x="left"`
+or `"right"`, and removes the other axis's attribute, so exactly
+one is set while the content is open. Stylesheets place from that
+result alone: one rule per side and one per alignment, never the
+preference combined with a fit. Alignment along the side
+(`data-mc-align`) is pure CSS, with no measuring: clamping into the
+viewport keeps it on screen. The sides are physical; `start` and
+`end` are logical in CSS (`:dir(rtl)`). They are attributes, not
+custom properties, because CSS can match an attribute but not a
+custom property's value within the Baseline 2024 floor.
+
+**The room on the open side is published too.** For a top or
+bottom side, `positionSide` returns the room on the side the
+content opens, and `position` writes it as
+`--mc-available-height`, raw, so CSS caps a surface too tall for
+either side and subtracts its own offset and margin. Before it
+measures, `position` sets that property to `initial` and removes
+`data-mc-x` and `data-mc-y`: the Required CSS derives its
+height cap from those, so the content lays out uncapped and
+`--mc-content-height` is its natural height. `initial` rather than
+removing the property, because a submenu would otherwise inherit
+its parent menu's room and measure capped to it. A cap from an
+earlier open therefore never shrinks the measurement, and a surface
+reopened with more room flips and sizes as if new. The attributes
+come back in the same synchronous call, so nothing renders without
+them.
+The tooltip reads no cap, and `offsetHeight` leaves out its
+hover bridge, so its measurement is unchanged.
 
 **Resize repositions, scroll dismisses.** `resize` re-runs
 `position` for every open surface (the whole `menuStack`,
 `popoverShown`, `tooltipShown`) instead of closing it. On Android
 the soft keyboard fires a window `resize`, so a popover holding
 an input would otherwise close the moment its field gained focus.
-Scroll still dismisses. The listener runs in capture so a scroll
-inside a nested scroller is seen too; Menu and Popover ignore
-scrolls that originate inside their own content, so a scrollable
-list in the surface does not close it. A surface that follows a
-moving trigger is a different design.
+Scroll still dismisses, in capture so a nested scroller counts (an
+SVG target counts as its parent element). Popover ignores a
+scroll inside its content. Menu trims instead: it hands `menuTrim`
+the scrolled `mcc:menu:`, or `body` for any other scroll, so a
+scroll inside a menu closes only the submenus below it (their
+triggers may have moved) and any other scroll closes every menu. A
+tooltip shown by hover hides; one shown by focus stays and is
+repositioned, because Tab onto an off-screen trigger scrolls it
+into view after the `focusin` that showed it. A surface that
+follows a moving trigger is a different design.
 
 **`toggleDisclosure`.** `toggleDisclosure` flips `aria-expanded`
 on the trigger and `hidden` on the `aria-controls` content.

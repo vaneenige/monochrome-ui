@@ -7,15 +7,14 @@ test.describe("Collapsible", () => {
       await page.goto(`/${renderer}/collapsible/basic`);
     });
 
-    test("wires trigger and panel via `aria-controls`/`aria-labelledby`", async ({ page }) => {
+    test("wires trigger to panel via `aria-controls` alone", async ({ page }) => {
       const trigger = page.getByTestId("collapsible-trigger");
       const content = page.getByTestId("collapsible-content");
-      const triggerId = await trigger.getAttribute("id");
       const contentId = await content.getAttribute("id");
 
       await expect(trigger).toHaveAttribute("aria-controls", contentId as string);
-      await expect(content).toHaveAttribute("aria-labelledby", triggerId as string);
       await expect(trigger).toHaveAttribute("type", "button");
+      await expect(content).not.toHaveAttribute("aria-labelledby");
       await expect(content).not.toHaveAttribute("role");
     });
 
@@ -257,6 +256,19 @@ test.describe("Collapsible", () => {
   });
 
   test.describe("Edge cases", () => {
+    test('`role="region"` on the panel names it after the trigger', async ({ page, renderer }) => {
+      test.skip(renderer === "html", "The Panel part adds the link");
+      await page.goto("/react/collapsible/region");
+      const triggerId = await page.getByTestId("region-trigger").getAttribute("id");
+      await expect(page.getByTestId("region-content")).toHaveAttribute(
+        "aria-labelledby",
+        triggerId as string,
+      );
+      await expect(page.getByTestId("plain-content")).not.toHaveAttribute("aria-labelledby");
+      await page.getByTestId("region-trigger").click();
+      await expect(page.getByRole("region", { name: "Shipping", exact: true })).toBeVisible();
+    });
+
     test("`ref` attaches to the trigger host", async ({ page, renderer }) => {
       test.skip(renderer !== "react", "Ref as a prop is a React wrapper API");
       await page.goto("/react/collapsible/ref");

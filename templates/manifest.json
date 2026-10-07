@@ -1,0 +1,123 @@
+{
+  "$comment": "Every component, the one list the build, the CLI, and the tests read. Each names the components it needs first, whether its spec has Required CSS (placement: true, checked by the build), and its own files per framework (react: templates/react/, vue: templates/vue/). scripts/files.ts builds them into dist/files; a framework without files gets the HTML example.",
+  "components": {
+    "accordion": {
+      "requires": [],
+      "files": {
+        "react": ["accordion.tsx"],
+        "vue": [
+          "accordion/index.ts",
+          "accordion/context.ts",
+          "accordion/Header.vue",
+          "accordion/Item.vue",
+          "accordion/Panel.vue",
+          "accordion/Root.vue",
+          "accordion/Trigger.vue"
+        ]
+      }
+    },
+    "collapsible": {
+      "requires": [],
+      "files": {
+        "react": ["collapsible.tsx"],
+        "vue": [
+          "collapsible/index.ts",
+          "collapsible/context.ts",
+          "collapsible/Panel.vue",
+          "collapsible/Root.vue",
+          "collapsible/Trigger.vue"
+        ]
+      }
+    },
+    "dialog": {
+      "requires": [],
+      "files": {
+        "react": ["dialog.tsx"],
+        "vue": [
+          "dialog/index.ts",
+          "dialog/context.ts",
+          "dialog/Action.vue",
+          "dialog/Close.vue",
+          "dialog/Content.vue",
+          "dialog/Description.vue",
+          "dialog/Root.vue",
+          "dialog/Title.vue",
+          "dialog/Trigger.vue"
+        ]
+      }
+    },
+    "menu": {
+      "requires": [],
+      "placement": true,
+      "files": {
+        "react": ["menu.tsx"],
+        "vue": [
+          "menu/index.ts",
+          "menu/context.ts",
+          "menu/CheckboxItem.vue",
+          "menu/Group.vue",
+          "menu/Item.vue",
+          "menu/Label.vue",
+          "menu/Popover.vue",
+          "menu/RadioItem.vue",
+          "menu/Root.vue",
+          "menu/Row.vue",
+          "menu/Separator.vue",
+          "menu/Sub.vue",
+          "menu/Trigger.vue"
+        ]
+      }
+    },
+    "menubar": {
+      "requires": ["menu"],
+      "files": {
+        "react": ["menubar.tsx"],
+        "vue": ["menubar/index.ts", "menubar/Menu.vue", "menubar/Root.vue"]
+      }
+    },
+    "popover": {
+      "requires": [],
+      "placement": true,
+      "files": {
+        "react": ["popover.tsx"],
+        "vue": [
+          "popover/index.ts",
+          "popover/context.ts",
+          "popover/Content.vue",
+          "popover/Description.vue",
+          "popover/Root.vue",
+          "popover/Title.vue",
+          "popover/Trigger.vue"
+        ]
+      }
+    },
+    "tabs": {
+      "requires": [],
+      "files": {
+        "react": ["tabs.tsx"],
+        "vue": [
+          "tabs/index.ts",
+          "tabs/context.ts",
+          "tabs/List.vue",
+          "tabs/Panel.vue",
+          "tabs/Root.vue",
+          "tabs/Tab.vue"
+        ]
+      }
+    },
+    "tooltip": {
+      "requires": [],
+      "placement": true,
+      "files": {
+        "react": ["tooltip.tsx"],
+        "vue": [
+          "tooltip/index.ts",
+          "tooltip/context.ts",
+          "tooltip/Content.vue",
+          "tooltip/Root.vue",
+          "tooltip/Trigger.vue"
+        ]
+      }
+    }
+  }
+}

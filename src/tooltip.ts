@@ -17,17 +17,11 @@ if (hasDocument) {
     if (content) {
       if (show) {
         content.showPopover();
-        position(trigger, content);
+        position(trigger, content, "top");
       } else {
         content.hidePopover();
       }
     }
-  };
-
-  const tooltipReset = () => {
-    tooltipFocused = null;
-    tooltipHovered = null;
-    tooltipSync();
   };
 
   const tooltipSuppress = () => {
@@ -86,17 +80,16 @@ if (hasDocument) {
   addEventListener(
     "scroll",
     () => {
-      if (tooltipShown) tooltipReset();
+      tooltipHovered = null;
+      tooltipSync();
+      if (tooltipShown) position(tooltipShown, getLinked(tooltipShown, "aria-describedby"), "top");
       pointerTarget = null;
     },
     true,
   );
 
   addEventListener("resize", () => {
-    if (tooltipShown) {
-      const content = getLinked(tooltipShown, "aria-describedby");
-      if (content) position(tooltipShown, content);
-    }
+    if (tooltipShown) position(tooltipShown, getLinked(tooltipShown, "aria-describedby"), "top");
     pointerTarget = null;
   });
 

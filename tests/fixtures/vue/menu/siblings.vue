@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Menu } from "monochrome/vue"
+import { Menu } from "@/components/ui"
 </script>
 
 <template>
@@ -12,7 +12,7 @@ import { Menu } from "monochrome/vue"
         <Menu.Item data-testid="item-new">
           New file
         </Menu.Item>
-        <Menu.Group>
+        <Menu.Sub>
           <Menu.Trigger data-testid="share-trigger">
             Share
           </Menu.Trigger>
@@ -24,8 +24,8 @@ import { Menu } from "monochrome/vue"
               Invite…
             </Menu.Item>
           </Menu.Popover>
-        </Menu.Group>
-        <Menu.Group>
+        </Menu.Sub>
+        <Menu.Sub>
           <Menu.Trigger data-testid="export-trigger">
             Export
           </Menu.Trigger>
@@ -37,7 +37,7 @@ import { Menu } from "monochrome/vue"
               SVG
             </Menu.Item>
           </Menu.Popover>
-        </Menu.Group>
+        </Menu.Sub>
       </Menu.Popover>
     </Menu.Root>
   </div>

@@ -1,4 +1,6 @@
+import type { Page } from "@playwright/test";
 import { expect, test } from "./fixtures";
+import { loadSpecCss, mimicSafariClick, setRtl } from "./helpers";
 
 test.describe("Popover", () => {
   test.beforeEach(async ({ page, renderer }) => {
@@ -18,6 +20,25 @@ test.describe("Popover", () => {
       await expect(trigger).toHaveAttribute("aria-controls", contentId as string);
       await expect(content).toHaveAttribute("aria-labelledby", triggerId as string);
       await expect(content).toHaveAttribute("popover", "manual");
+    });
+
+    test("content is a `dialog` named by its trigger", async ({ page }) => {
+      await page.getByTestId("click-trigger").click();
+      await expect(page.getByRole("dialog", { name: "Open", exact: true })).toBeVisible();
+    });
+
+    test("`aria-describedby={undefined}` drops the Description link", async ({
+      page,
+      renderer,
+    }) => {
+      test.skip(renderer === "html", "The Content part writes the link");
+      await page.goto("/react/popover/no-description");
+      await expect(page.getByTestId("plain-content")).not.toHaveAttribute("aria-describedby");
+      const descId = await page.getByTestId("described-desc").getAttribute("id");
+      await expect(page.getByTestId("described-content")).toHaveAttribute(
+        "aria-describedby",
+        descId as string,
+      );
     });
 
     test("toggles `aria-expanded` across the open and close cycle", async ({ page }) => {
@@ -64,6 +85,18 @@ test.describe("Popover", () => {
       await page.getByTestId("click-trigger").click();
       await expect(page.getByTestId("click-content")).toBeVisible();
       await page.getByTestId("click-trigger").click();
+      await expect(page.getByTestId("click-content")).not.toBeVisible();
+    });
+
+    test("closes on second click when the trigger sits in a focusable ancestor", async ({
+      page,
+    }) => {
+      // Think `<main tabindex="-1">`, which the router gives the swapped region.
+      const trigger = page.getByTestId("click-trigger");
+      await trigger.evaluate((el) => el.parentElement?.setAttribute("tabindex", "-1"));
+      await trigger.click();
+      await expect(page.getByTestId("click-content")).toBeVisible();
+      await mimicSafariClick(trigger);
       await expect(page.getByTestId("click-content")).not.toBeVisible();
     });
 
@@ -155,12 +188,43 @@ test.describe("Popover", () => {
       await expect(page.getByTestId("click-content")).not.toBeVisible();
     });
 
+    test('focus moving to a `tabindex="0"` ancestor of the trigger closes it', async ({ page }) => {
+      const trigger = page.getByTestId("click-trigger");
+      await trigger.evaluate((el) => el.parentElement?.setAttribute("tabindex", "0"));
+      await trigger.click();
+      await expect(page.getByTestId("click-content")).toBeVisible();
+      await trigger.evaluate((el) => el.parentElement?.focus());
+      await expect(page.getByTestId("click-content")).not.toBeVisible();
+    });
+
     test("Shift+Tab off the trigger closes the popover", async ({ page, browserName }) => {
       test.skip(browserName === "webkit", "WebKit Tab order after popover");
       await page.getByTestId("click-trigger").click();
       await page.getByTestId("click-trigger").focus();
       await page.keyboard.press("Shift+Tab");
       await expect(page.getByTestId("click-content")).not.toBeVisible();
+    });
+  });
+
+  test.describe("Dynamic", () => {
+    test("an open popover removed from the page leaves Escape to a later dialog", async ({
+      page,
+      renderer,
+    }) => {
+      test.skip(renderer !== "html", "Removes a node the renderer owns");
+      await page.getByTestId("click-trigger").click();
+      await expect(page.getByTestId("click-content")).toBeVisible();
+      await page.evaluate(() => {
+        document.querySelector('[data-testid="click-content"]')?.remove();
+        const dialog = document.createElement("dialog");
+        dialog.dataset.testid = "late-dialog";
+        dialog.textContent = "Later";
+        document.body.append(dialog);
+        dialog.showModal();
+      });
+      await expect(page.getByTestId("late-dialog")).toBeVisible();
+      await page.keyboard.press("Escape");
+      await expect(page.getByTestId("late-dialog")).not.toBeVisible();
     });
   });
 
@@ -248,6 +312,15 @@ test.describe("Popover", () => {
       await expect(page.getByTestId("popover-trigger")).toBeFocused();
     });
 
+    test("ArrowDown after a Safari pointer open focuses the first menu item", async ({ page }) => {
+      await mimicSafariClick(page.getByTestId("menu-trigger"));
+      await expect(page.getByTestId("menu-list")).toBeVisible();
+      await expect(page.getByTestId("popover-content")).toBeFocused();
+      await page.keyboard.press("ArrowDown");
+      await expect(page.getByTestId("menu-trigger")).toHaveAttribute("aria-expanded", "true");
+      await expect(page.getByTestId("menu-item-1")).toBeFocused();
+    });
+
     test("Escape closes a pointer-opened menu inside the popover first", async ({ page }) => {
       await page.getByTestId("menu-trigger").click();
       await expect(page.getByTestId("menu-list")).toBeVisible();
@@ -257,6 +330,43 @@ test.describe("Popover", () => {
       await expect(page.getByTestId("popover-content")).toBeVisible();
       await page.keyboard.press("Escape");
       await expect(page.getByTestId("popover-content")).not.toBeVisible();
+    });
+  });
+
+  test.describe("Composition (dialog)", () => {
+    test("Escape closes a dialog inside the content before the popover", async ({
+      page,
+      renderer,
+    }) => {
+      test.skip(renderer !== "html", "Cross-component fixture is plain HTML");
+      await page.goto("/html/popover/with-dialog");
+      await page.getByTestId("popover-trigger").click();
+      await page.getByTestId("dialog-trigger").click();
+      await expect(page.getByTestId("dialog-content")).toBeVisible();
+      await page.keyboard.press("Escape");
+      await expect(page.getByTestId("dialog-content")).not.toHaveAttribute("open");
+      await expect(page.getByTestId("popover-content")).toBeVisible();
+      await expect(page.getByTestId("dialog-trigger")).toBeFocused();
+      await page.keyboard.press("Escape");
+      await expect(page.getByTestId("popover-content")).not.toBeVisible();
+      await expect(page.getByTestId("popover-trigger")).toBeFocused();
+    });
+
+    test("Escape on the trigger inside a dialog closes only the popover", async ({
+      page,
+      renderer,
+    }) => {
+      test.skip(renderer !== "html", "Cross-component fixture is plain HTML");
+      await page.goto("/html/popover/in-dialog");
+      await page.getByTestId("dialog-trigger").click();
+      await page.getByTestId("popover-trigger").click();
+      await expect(page.getByTestId("popover-content")).toBeVisible();
+      await page.getByTestId("popover-trigger").focus();
+      await expect(page.getByTestId("popover-content")).toBeVisible();
+      await page.keyboard.press("Escape");
+      await expect(page.getByTestId("popover-content")).not.toBeVisible();
+      await expect(page.getByTestId("dialog-content")).toHaveAttribute("open");
+      await expect(page.getByTestId("popover-trigger")).toBeFocused();
     });
   });
 });
@@ -291,14 +401,38 @@ test.describe("Positioning", () => {
     const vars = await page
       .getByTestId("click-content")
       .evaluate((el) => [
-        el.style.getPropertyValue("--top"),
-        el.style.getPropertyValue("--right"),
-        el.style.getPropertyValue("--bottom"),
-        el.style.getPropertyValue("--left"),
-        el.style.getPropertyValue("--width"),
-        el.style.getPropertyValue("--height"),
+        el.style.getPropertyValue("--mc-trigger-top"),
+        el.style.getPropertyValue("--mc-trigger-right"),
+        el.style.getPropertyValue("--mc-trigger-bottom"),
+        el.style.getPropertyValue("--mc-trigger-left"),
+        el.style.getPropertyValue("--mc-content-width"),
+        el.style.getPropertyValue("--mc-content-height"),
       ]);
     for (const value of vars) expect(value).toMatch(/^-?\d+(\.\d+)?px$/);
+  });
+
+  test("caps content too tall for either side to the viewport, and it scrolls", async ({
+    page,
+    renderer,
+  }) => {
+    test.skip(renderer !== "html", "Placement is the spec's CSS, not the renderer");
+    await page.setViewportSize({ width: 320, height: 240 });
+    await page.goto("/html/popover/tall");
+    await loadSpecCss(page, "popover");
+    await page.getByTestId("trigger").click();
+    await expect(page.getByTestId("content")).toBeVisible();
+    const content = await page.getByTestId("content").boundingBox();
+    if (!content) throw new Error("missing bounding box");
+    expect(content.y).toBeGreaterThanOrEqual(0);
+    expect(content.y + content.height).toBeLessThanOrEqual(240);
+    expect(
+      await page.getByTestId("content").evaluate((el) => el.scrollHeight > el.clientHeight),
+    ).toBe(true);
+    expect(
+      await page
+        .getByTestId("content")
+        .evaluate((el) => el.style.getPropertyValue("--mc-available-height")),
+    ).toMatch(/^\d+(\.\d+)?px$/);
   });
 
   test("viewport resize keeps the popover open and republishes the trigger rect", async ({
@@ -312,10 +446,117 @@ test.describe("Positioning", () => {
     await page.getByTestId("click-trigger").click();
     await expect(page.getByTestId("click-content")).toBeVisible();
     const left = () =>
-      page.getByTestId("click-content").evaluate((el) => el.style.getPropertyValue("--left"));
+      page
+        .getByTestId("click-content")
+        .evaluate((el) => el.style.getPropertyValue("--mc-trigger-left"));
     const before = await left();
     await page.setViewportSize({ width: 800, height: 400 });
     await expect(page.getByTestId("click-content")).toBeVisible();
     await expect.poll(left).not.toBe(before);
+  });
+});
+
+test.describe("Placement (spec CSS)", () => {
+  test.beforeEach(({ renderer }) => {
+    test.skip(renderer !== "html", "Placement is the spec's CSS, not the renderer");
+  });
+
+  const open = async (
+    page: Page,
+    attrs: Record<string, string> = {},
+    at: Record<string, string> = { left: "300px", top: "250px" },
+  ) => {
+    await page.setViewportSize({ width: 800, height: 600 });
+    await page.goto("/html/popover/basic");
+    await loadSpecCss(page, "popover");
+    await page.getByTestId("click-trigger").evaluate((el, style) => {
+      Object.assign(el.style, { position: "fixed", ...style });
+    }, at);
+    await page.getByTestId("click-content").evaluate((el, values) => {
+      for (const [name, value] of Object.entries(values)) el.setAttribute(name, value);
+    }, attrs);
+    await page.getByTestId("click-trigger").click();
+    await expect(page.getByTestId("click-content")).toBeVisible();
+    const trigger = await page.getByTestId("click-trigger").boundingBox();
+    const content = await page.getByTestId("click-content").boundingBox();
+    if (!trigger || !content) throw new Error("missing bounding box");
+    return { trigger, content };
+  };
+
+  test("opens below and centered by default", async ({ page }) => {
+    const { trigger, content } = await open(page);
+    await expect(page.getByTestId("click-content")).toHaveAttribute("data-mc-y", "bottom");
+    await expect(page.getByTestId("click-content")).not.toHaveAttribute("data-mc-x");
+    expect(content.y).toBeGreaterThanOrEqual(trigger.y + trigger.height);
+    expect(Math.abs(content.x + content.width / 2 - (trigger.x + trigger.width / 2))).toBeLessThan(
+      1,
+    );
+  });
+
+  test("`data-mc-side` picks each side", async ({ page }) => {
+    let { trigger, content } = await open(page, { "data-mc-side": "top" });
+    await expect(page.getByTestId("click-content")).toHaveAttribute("data-mc-y", "top");
+    expect(content.y + content.height).toBeLessThanOrEqual(trigger.y);
+
+    ({ trigger, content } = await open(page, { "data-mc-side": "right" }));
+    await expect(page.getByTestId("click-content")).toHaveAttribute("data-mc-x", "right");
+    await expect(page.getByTestId("click-content")).not.toHaveAttribute("data-mc-y");
+    expect(content.x).toBeGreaterThanOrEqual(trigger.x + trigger.width);
+    expect(
+      Math.abs(content.y + content.height / 2 - (trigger.y + trigger.height / 2)),
+    ).toBeLessThan(1);
+
+    ({ trigger, content } = await open(
+      page,
+      { "data-mc-side": "left" },
+      { left: "500px", top: "250px" },
+    ));
+    await expect(page.getByTestId("click-content")).toHaveAttribute("data-mc-x", "left");
+    expect(content.x + content.width).toBeLessThanOrEqual(trigger.x);
+  });
+
+  test("`data-mc-align` lines up start and end edges", async ({ page }) => {
+    let { trigger, content } = await open(page, { "data-mc-align": "start" });
+    expect(Math.abs(content.x - trigger.x)).toBeLessThan(1);
+    ({ trigger, content } = await open(page, { "data-mc-align": "end" }));
+    expect(Math.abs(content.x + content.width - (trigger.x + trigger.width))).toBeLessThan(1);
+    ({ trigger, content } = await open(page, {
+      "data-mc-side": "right",
+      "data-mc-align": "start",
+    }));
+    expect(Math.abs(content.y - trigger.y)).toBeLessThan(1);
+  });
+
+  test("start lines up the right edges on a right-to-left page", async ({ page }) => {
+    await page.setViewportSize({ width: 800, height: 600 });
+    await page.goto("/html/popover/basic");
+    await loadSpecCss(page, "popover");
+    await setRtl(page);
+    await page.getByTestId("click-trigger").evaluate((el) => {
+      Object.assign(el.style, { position: "fixed", left: "300px", top: "250px" });
+    });
+    await page.getByTestId("click-content").evaluate((el) => {
+      el.setAttribute("data-mc-align", "start");
+    });
+    await page.getByTestId("click-trigger").click();
+    const trigger = await page.getByTestId("click-trigger").boundingBox();
+    const content = await page.getByTestId("click-content").boundingBox();
+    if (!trigger || !content) throw new Error("missing bounding box");
+    expect(Math.abs(content.x + content.width - (trigger.x + trigger.width))).toBeLessThan(1);
+  });
+
+  test("an authored side flips when it does not fit", async ({ page }) => {
+    const { trigger, content } = await open(
+      page,
+      { "data-mc-side": "top" },
+      { left: "300px", top: "0px" },
+    );
+    await expect(page.getByTestId("click-content")).toHaveAttribute("data-mc-y", "bottom");
+    expect(content.y).toBeGreaterThanOrEqual(trigger.y + trigger.height);
+  });
+
+  test("an unknown side falls back to the default", async ({ page }) => {
+    await open(page, { "data-mc-side": "middle" });
+    await expect(page.getByTestId("click-content")).toHaveAttribute("data-mc-y", "bottom");
   });
 });

@@ -1,4 +1,5 @@
 import { expect, test } from "./fixtures";
+import { loadSpecCss } from "./helpers";
 
 test.describe("Tooltip", () => {
   test.beforeEach(async ({ page, renderer }) => {
@@ -53,6 +54,29 @@ test.describe("Tooltip", () => {
       await expect(page.getByTestId("tooltip-content")).toBeVisible();
     });
 
+    test("the pointer crosses the gap onto the tooltip without hiding it", async ({
+      page,
+      renderer,
+    }) => {
+      await page.goto(`/${renderer}/tooltip/basic`);
+      await loadSpecCss(page, "tooltip");
+      const trigger = page.getByTestId("tooltip-trigger");
+      const content = page.getByTestId("tooltip-content");
+      await trigger.evaluate((el) => {
+        el.style.marginTop = "120px";
+      });
+      await trigger.hover();
+      await expect(content).toBeVisible();
+      await expect(content).toHaveAttribute("data-mc-y", "top");
+      const from = await trigger.boundingBox();
+      const to = await content.boundingBox();
+      if (!from || !to) throw new Error("missing bounding box");
+      const x = from.x + from.width / 2;
+      await page.mouse.move(x, from.y + 1);
+      await page.mouse.move(x, to.y + to.height / 2, { steps: 24 });
+      await expect(content).toBeVisible();
+    });
+
     test("touch pointermove does not show the tooltip", async ({ page }) => {
       await page.getByTestId("tooltip-trigger").dispatchEvent("pointermove", {
         pointerType: "touch",
@@ -82,7 +106,7 @@ test.describe("Tooltip", () => {
     });
 
     test("shows on focus for a non-button trigger", async ({ page, renderer }) => {
-      test.skip(renderer !== "html", "Wrappers always render a button trigger");
+      test.skip(renderer !== "html", "Parts always render a button trigger");
       await page.getByTestId("link-trigger").focus();
       await expect(page.getByTestId("link-content")).toBeVisible();
       await page.getByTestId("focus-before").focus();
@@ -140,7 +164,30 @@ test.describe("Tooltip", () => {
       await expect(page.getByTestId("tooltip-content")).toBeVisible();
     });
 
-    test("scroll hides the tooltip", async ({ page }) => {
+    test("scroll keeps a focus-shown tooltip and repositions it", async ({ page }) => {
+      await page.setViewportSize({ width: 800, height: 300 });
+      await page.evaluate(() => {
+        const div = document.createElement("div");
+        div.style.height = "2000px";
+        document.body.appendChild(div);
+      });
+      await page.getByTestId("tooltip-trigger").focus();
+      await expect(page.getByTestId("tooltip-content")).toBeVisible();
+      const before = await page
+        .getByTestId("tooltip-content")
+        .evaluate((el) => el.style.getPropertyValue("--mc-trigger-top"));
+      await page.evaluate(() => window.scrollTo(0, 200));
+      await expect(page.getByTestId("tooltip-content")).toBeVisible();
+      await expect
+        .poll(() =>
+          page
+            .getByTestId("tooltip-content")
+            .evaluate((el) => el.style.getPropertyValue("--mc-trigger-top")),
+        )
+        .not.toBe(before);
+    });
+
+    test("scroll hides a hover-shown tooltip", async ({ page }) => {
       await page.setViewportSize({ width: 800, height: 300 });
       await page.evaluate(() => {
         const div = document.createElement("div");
@@ -265,14 +312,84 @@ test.describe("Positioning", () => {
     const vars = await page
       .getByTestId("tooltip-content")
       .evaluate((el) => [
-        el.style.getPropertyValue("--top"),
-        el.style.getPropertyValue("--right"),
-        el.style.getPropertyValue("--bottom"),
-        el.style.getPropertyValue("--left"),
-        el.style.getPropertyValue("--width"),
-        el.style.getPropertyValue("--height"),
+        el.style.getPropertyValue("--mc-trigger-top"),
+        el.style.getPropertyValue("--mc-trigger-right"),
+        el.style.getPropertyValue("--mc-trigger-bottom"),
+        el.style.getPropertyValue("--mc-trigger-left"),
+        el.style.getPropertyValue("--mc-content-width"),
+        el.style.getPropertyValue("--mc-content-height"),
       ]);
     for (const value of vars) expect(value).toMatch(/^-?\d+(\.\d+)?px$/);
+  });
+
+  test("names the bottom side when there is no room above the trigger", async ({
+    page,
+    renderer,
+  }) => {
+    await page.goto(`/${renderer}/tooltip/basic`);
+    await page.getByTestId("tooltip-trigger").evaluate((el) => {
+      Object.assign(el.style, { position: "fixed", top: "0px", left: "40vw" });
+    });
+    await page.getByTestId("tooltip-trigger").hover();
+    await expect(page.getByTestId("tooltip-content")).toBeVisible();
+    await expect(page.getByTestId("tooltip-content")).toHaveAttribute("data-mc-y", "bottom");
+  });
+
+  test("`data-mc-side` puts it beside the trigger, with the bridge facing it", async ({
+    page,
+    renderer,
+  }) => {
+    test.skip(renderer !== "html", "Placement is the spec's CSS, not the renderer");
+    await page.goto("/html/tooltip/basic");
+    await loadSpecCss(page, "tooltip");
+    const trigger = page.getByTestId("tooltip-trigger");
+    const content = page.getByTestId("tooltip-content");
+    await trigger.evaluate((el) => {
+      Object.assign(el.style, { position: "fixed", left: "200px", top: "200px" });
+    });
+    await content.evaluate((el) => el.setAttribute("data-mc-side", "right"));
+    await trigger.hover();
+    await expect(content).toHaveAttribute("data-mc-x", "right");
+    await expect(content).not.toHaveAttribute("data-mc-y");
+    const from = await trigger.boundingBox();
+    const to = await content.boundingBox();
+    if (!from || !to) throw new Error("missing bounding box");
+    expect(to.x).toBeGreaterThanOrEqual(from.x + from.width);
+    const y = from.y + from.height / 2;
+    await page.mouse.move(from.x + from.width - 1, y);
+    await page.mouse.move(to.x + to.width / 2, y, { steps: 24 });
+    await expect(content).toBeVisible();
+  });
+
+  test("spec CSS keeps a tooltip at the right edge the same width on every show", async ({
+    page,
+    renderer,
+  }) => {
+    await page.setViewportSize({ width: 800, height: 600 });
+    await page.goto(`/${renderer}/tooltip/basic`);
+    await loadSpecCss(page, "tooltip");
+    await page.getByTestId("tooltip-trigger").evaluate((el) => {
+      Object.assign(el.style, { position: "fixed", top: "100px", right: "4px" });
+    });
+    await page.getByTestId("tooltip-content").evaluate((el) => {
+      el.textContent = "Settings for this workspace and everyone in it";
+    });
+    const rects: { width: number; right: number }[] = [];
+    for (let i = 0; i < 3; i++) {
+      await page.getByTestId("tooltip-trigger").focus();
+      await expect(page.getByTestId("tooltip-content")).toBeVisible();
+      rects.push(
+        await page.getByTestId("tooltip-content").evaluate((el) => {
+          const { width, right } = el.getBoundingClientRect();
+          return { width, right };
+        }),
+      );
+      await page.getByTestId("focus-before").focus();
+    }
+    for (const { width, right } of rects) {
+      expect(width).toBe(rects[0]?.width);
+      expect(right).toBeLessThanOrEqual(800);
+    }
   });
 
   test("viewport resize keeps the tooltip shown and republishes the trigger rect", async ({
@@ -286,7 +403,9 @@ test.describe("Positioning", () => {
     await page.getByTestId("tooltip-trigger").hover();
     await expect(page.getByTestId("tooltip-content")).toBeVisible();
     const left = () =>
-      page.getByTestId("tooltip-content").evaluate((el) => el.style.getPropertyValue("--left"));
+      page
+        .getByTestId("tooltip-content")
+        .evaluate((el) => el.style.getPropertyValue("--mc-trigger-left"));
     const before = await left();
     await page.setViewportSize({ width: 800, height: 400 });
     await expect(page.getByTestId("tooltip-content")).toBeVisible();

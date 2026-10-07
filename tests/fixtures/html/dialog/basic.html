@@ -98,10 +98,25 @@
   </dialog>
 </div>
 
+<div>
+  <button data-testid="initial-trigger" type="button"
+    id="mct:dialog-open:7" aria-haspopup="dialog" aria-controls="mcc:dialog:7">Open initial focus</button>
+  <dialog
+    id="mcc:dialog:7"
+    aria-labelledby="mcc:dialog-title:7" aria-describedby="mcc:dialog-description:7"
+    data-mc-autofocus="mct:dialog-close:7"
+    tabindex="-1">
+    <h2 id="mcc:dialog-title:7">Delete this file?</h2>
+    <p id="mcc:dialog-description:7">This cannot be undone.</p>
+    <button data-testid="initial-close" type="button" id="mct:dialog-close:7">Cancel</button>
+    <button type="button">Delete</button>
+  </dialog>
+</div>
+
 <div class="popover">
   <button data-testid="popover-trigger" type="button"
     id="mct:popover:1" aria-controls="mcc:popover:1" aria-expanded="false">Popover</button>
-  <div data-testid="popover-content" id="mcc:popover:1"
+  <div role="dialog" data-testid="popover-content" id="mcc:popover:1"
     aria-labelledby="mct:popover:1" popover="manual" tabindex="-1">
     <p>Popover content</p>
   </div>

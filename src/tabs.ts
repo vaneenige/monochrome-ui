@@ -1,6 +1,6 @@
 import {
   findAncestor,
-  getLinked,
+  getControls,
   getTarget,
   hasDocument,
   isElement,
@@ -28,7 +28,7 @@ if (hasDocument) {
       if (isTrigger(node, Prefix.TriggerTabs) && node.ariaDisabled !== "true") {
         shouldPreventDefault = true;
         node.focus();
-        return node;
+        if (document.activeElement === node) return node;
       }
     }
     return fallback(node);
@@ -40,7 +40,7 @@ if (hasDocument) {
       let tab = trigger.parentElement?.firstElementChild;
       while (tab) {
         if (isElement(tab) && (tab === trigger || tab.ariaSelected === "true")) {
-          const content = getLinked(tab, "aria-controls");
+          const content = getControls(tab);
           if (content) {
             const willSelect = tab === trigger;
             tab.ariaSelected = `${willSelect}`;

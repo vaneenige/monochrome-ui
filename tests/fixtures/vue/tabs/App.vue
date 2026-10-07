@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from "vue"
-import { Tabs } from "monochrome/vue"
+import { Tabs } from "@/components/ui"
 
 const tabs = ref([
   { value: "tab1", label: "Tab 1", content: "Content 1" },

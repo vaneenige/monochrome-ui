@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Menu } from "monochrome/vue"
+import { Menu } from "@/components/ui"
 </script>
 
 <template>
@@ -15,7 +15,7 @@ import { Menu } from "monochrome/vue"
         <Menu.Item data-testid="item-2">
           Item 2
         </Menu.Item>
-        <Menu.Group data-testid="group">
+        <Menu.Sub data-testid="group">
           <Menu.Trigger data-testid="submenu-trigger">
             Submenu
           </Menu.Trigger>
@@ -26,7 +26,7 @@ import { Menu } from "monochrome/vue"
             <Menu.Item>
               Sub Item 2
             </Menu.Item>
-            <Menu.Group data-testid="subgroup">
+            <Menu.Sub data-testid="subgroup">
               <Menu.Trigger data-testid="submenu2-trigger">
                 Nested
               </Menu.Trigger>
@@ -38,9 +38,9 @@ import { Menu } from "monochrome/vue"
                   Deep Item 2
                 </Menu.Item>
               </Menu.Popover>
-            </Menu.Group>
+            </Menu.Sub>
           </Menu.Popover>
-        </Menu.Group>
+        </Menu.Sub>
       </Menu.Popover>
     </Menu.Root>
   </div>

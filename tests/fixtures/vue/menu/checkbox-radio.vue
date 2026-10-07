@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Menu } from "monochrome/vue"
+import { Menu } from "@/components/ui"
 </script>
 
 <template>
@@ -69,6 +69,12 @@ import { Menu } from "monochrome/vue"
         <Menu.Item data-testid="regular-item">
           Regular Action
         </Menu.Item>
+        <Menu.Item data-testid="kept-item" keep-open>
+          Zoom in
+        </Menu.Item>
+        <Menu.CheckboxItem data-testid="kept-checkbox" :default-checked="false" keep-open>
+          Show grid
+        </Menu.CheckboxItem>
       </Menu.Popover>
     </Menu.Root>
     <button

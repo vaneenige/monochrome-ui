@@ -1,4 +1,4 @@
-import { Accordion } from "monochrome/react";
+import { Accordion } from "@/components/ui";
 
 export default () => (
   <Accordion.Root>

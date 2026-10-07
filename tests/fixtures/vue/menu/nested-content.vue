@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Collapsible, Menu } from "monochrome/vue"
+import { Collapsible, Menu } from "@/components/ui"
 </script>
 
 <template>

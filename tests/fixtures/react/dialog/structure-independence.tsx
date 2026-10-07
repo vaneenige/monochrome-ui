@@ -1,4 +1,4 @@
-import { Dialog } from "monochrome/react";
+import { Dialog } from "@/components/ui";
 
 export default () => (
   <Dialog.Root>

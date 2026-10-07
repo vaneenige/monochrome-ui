@@ -1,4 +1,4 @@
-import { Menu } from "monochrome/react";
+import { Menu } from "@/components/ui";
 
 export default () => (
   <>
@@ -39,7 +39,7 @@ export default () => (
       <aside>
         <Menu.Popover data-testid="c-list">
           <Menu.Item data-testid="c-item-1">C Item 1</Menu.Item>
-          <Menu.Group>
+          <Menu.Sub>
             <Menu.Trigger data-testid="c-submenu-trigger">C Submenu</Menu.Trigger>
             <footer>
               <Menu.Popover data-testid="c-submenu-list">
@@ -47,7 +47,7 @@ export default () => (
                 <Menu.Item>C Sub Item 2</Menu.Item>
               </Menu.Popover>
             </footer>
-          </Menu.Group>
+          </Menu.Sub>
         </Menu.Popover>
       </aside>
     </Menu.Root>

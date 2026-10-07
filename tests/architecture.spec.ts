@@ -16,18 +16,19 @@ const components = readdirSync("src")
   .sort()
   .map((name) => [name, readFileSync(`src/${name}`, "utf8")] as const);
 
-const reactWrappers = readdirSync("src/react")
-  .filter((name) => name.endsWith(".ts"))
+// The framework parts are templates `add` copies into projects.
+const reactParts = readdirSync("templates/react")
+  .filter((name) => name.endsWith(".tsx"))
   .sort()
-  .map((name) => [name, readFileSync(`src/react/${name}`, "utf8")] as const);
+  .map((name) => [name, readFileSync(`templates/react/${name}`, "utf8")] as const);
 
-const vueWrappers = readdirSync("src/vue")
-  .filter((name) => name.endsWith(".ts"))
+const vueParts = readdirSync("templates/vue", { recursive: true, encoding: "utf8" })
+  .filter((path) => /\.(vue|ts)$/.test(path) && !path.startsWith("examples"))
   .sort()
-  .map((name) => [name, readFileSync(`src/vue/${name}`, "utf8")] as const);
+  .map((path) => [path, readFileSync(`templates/vue/${path}`, "utf8")] as const);
 
 const cores = [helper, combined, ...components.map(([, source]) => source)];
-const wrappers = [...reactWrappers, ...vueWrappers].map(([, source]) => source);
+const parts = [...reactParts, ...vueParts].map(([, source]) => source);
 const timers = ["setTimeout(", "setInterval(", "requestAnimationFrame(", "queueMicrotask("];
 
 const importsFrom = (source: string) =>
@@ -51,15 +52,41 @@ test.describe("Architecture invariants", () => {
     }
   });
 
-  test("core and wrappers never write `aria-hidden`", () => {
-    for (const source of [...cores, ...wrappers]) {
+  test("core and parts never write `aria-hidden`", () => {
+    for (const source of [...cores, ...parts]) {
       expect(source).not.toContain("aria-hidden");
       expect(source).not.toContain("ariaHidden");
     }
   });
 
-  test("router contains no timers", () => {
-    for (const banned of timers) expect(router).not.toContain(banned);
+  test("core listens on `window` for the nine north-star events only", () => {
+    const events = new Set<string>();
+    for (const source of cores) {
+      expect(source).not.toMatch(/\.addEventListener\(/);
+      for (const [, event = ""] of source.matchAll(/addEventListener\(\s*"([a-z]+)"/g))
+        events.add(event);
+    }
+    expect([...events].sort()).toEqual([
+      "click",
+      "focusin",
+      "focusout",
+      "keydown",
+      "pointerdown",
+      "pointermove",
+      "pointerup",
+      "resize",
+      "scroll",
+    ]);
+  });
+
+  // One paint yield, and nothing else: after the fetch, the router
+  // waits for the click's frame to paint before it swaps (PRINCIPLES.md
+  // #3, docs/router.md). No delay, interval, or microtask.
+  test("router yields once for paint and has no other timers", () => {
+    const yieldForPaint = "requestAnimationFrame(() => setTimeout(resolve))";
+    expect(router.split(yieldForPaint).length - 1).toBe(1);
+    const rest = router.replace(yieldForPaint, "");
+    for (const banned of timers) expect(rest).not.toContain(banned);
   });
 
   test("router uses `querySelectorAll` exactly once, for the area lookup", () => {
@@ -92,10 +119,17 @@ test.describe("Architecture invariants", () => {
     }
   });
 
-  test("React wrappers provide context without `.Provider` or `useContext`", () => {
-    for (const [name, source] of reactWrappers) {
+  test("React parts provide context without `.Provider` or `useContext`", () => {
+    for (const [name, source] of reactParts) {
       expect(source, name).not.toContain(".Provider");
       expect(source, name).not.toContain("useContext");
+    }
+  });
+
+  test("each Vue component's `index.ts` loads its own core", () => {
+    for (const [path, source] of vueParts.filter(([path]) => path.endsWith("/index.ts"))) {
+      const name = path.split("/")[0];
+      expect(source, path).toContain(`import "monochrome/${name}";`);
     }
   });
 

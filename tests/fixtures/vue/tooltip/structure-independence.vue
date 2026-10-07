@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Tooltip } from "monochrome/vue"
+import { Tooltip } from "@/components/ui"
 </script>
 
 <template>

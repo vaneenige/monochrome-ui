@@ -1,10 +1,16 @@
 import type { Page } from "@playwright/test";
 import { expect, test } from "./fixtures";
-import { pointerDown, pointerUp, scrollAndSettle, setRtl } from "./helpers";
+import { loadSpecCss, pointerDown, pointerUp, scrollAndSettle, setRtl } from "./helpers";
 
 const openRoot = async (page: Page) => {
   await page.getByTestId("root-trigger").click();
   await expect(page.getByTestId("root-list")).toBeVisible();
+};
+
+const pinTrigger = async (page: Page, place: Record<string, string>) => {
+  await page.getByTestId("root-trigger").evaluate((el, style) => {
+    Object.assign(el.style, { position: "fixed", ...style });
+  }, place);
 };
 
 const openRootViaPointer = async (page: Page) => {
@@ -248,6 +254,14 @@ test.describe("Menu", () => {
       await expect(page.getByTestId("root-submenu-trigger")).toBeFocused();
     });
 
+    test("ArrowDown skips a hidden item", async ({ page }) => {
+      await page.getByTestId("root-item-2").evaluate((el) => {
+        el.parentElement?.setAttribute("hidden", "");
+      });
+      await page.keyboard.press("ArrowDown");
+      await expect(page.getByTestId("root-item-3")).toBeFocused();
+    });
+
     test("ArrowLeft / ArrowRight on a regular item are inert (no submenu)", async ({ page }) => {
       await page.getByTestId("root-item-1").press("ArrowLeft");
       await expect(page.getByTestId("root-item-1")).toBeFocused();
@@ -261,7 +275,7 @@ test.describe("Menu", () => {
       await page.keyboard.press("Escape");
       await expect(page.getByTestId("root-list")).not.toBeVisible();
       await expect(page.getByTestId("root-trigger")).toBeFocused();
-      await expect(page.getByTestId("root-trigger")).not.toHaveAttribute("data-highlighted");
+      await expect(page.getByTestId("root-trigger")).not.toHaveAttribute("data-mc-highlighted");
     });
   });
 
@@ -306,7 +320,7 @@ test.describe("Menu", () => {
         await expect(page.getByTestId("root-submenu-list")).not.toBeVisible();
         await expect(page.getByTestId("root-submenu-trigger")).toBeFocused();
         await expect(page.getByTestId("root-submenu-trigger")).toHaveAttribute(
-          "data-highlighted",
+          "data-mc-highlighted",
           "",
         );
       });
@@ -316,7 +330,7 @@ test.describe("Menu", () => {
       await openSubmenuViaKeyboard(page);
       await page.getByTestId("root-submenu-item-1").press("ArrowLeft");
       await expect(page.getByTestId("root-submenu-trigger")).toHaveAttribute(
-        "data-highlighted",
+        "data-mc-highlighted",
         "",
       );
       await page.keyboard.press("ArrowRight");
@@ -330,7 +344,7 @@ test.describe("Menu", () => {
       await page.keyboard.press("ArrowDown");
       await expect(page.getByTestId("root-submenu-list")).not.toBeVisible();
       await expect(page.getByTestId("root-item-1")).toBeFocused();
-      await expect(page.getByTestId("root-item-1")).toHaveAttribute("data-highlighted", "");
+      await expect(page.getByTestId("root-item-1")).toHaveAttribute("data-mc-highlighted", "");
     });
 
     test("ArrowLeft opens and ArrowRight closes the submenu in RTL", async ({ page }) => {
@@ -343,7 +357,7 @@ test.describe("Menu", () => {
       await expect(page.getByTestId("root-submenu-list")).not.toBeVisible();
       await expect(page.getByTestId("root-submenu-trigger")).toBeFocused();
       await expect(page.getByTestId("root-submenu-trigger")).toHaveAttribute(
-        "data-highlighted",
+        "data-mc-highlighted",
         "",
       );
     });
@@ -475,6 +489,16 @@ test.describe("Menu", () => {
       await expect(page.getByTestId("root-list")).not.toBeVisible();
     });
 
+    test("press, drag to an item, release runs its click handler", async ({ page }) => {
+      await page.getByTestId("trigger").hover();
+      await page.mouse.down();
+      await expect(page.getByTestId("list")).toBeVisible();
+      await page.getByTestId("item").hover();
+      await page.mouse.up();
+      await expect(page.getByTestId("output")).toHaveText("item-clicked");
+      await expect(page.getByTestId("list")).not.toBeVisible();
+    });
+
     test("pointerup outside after opening leaves the menu open (sticky miss)", async ({ page }) => {
       await openRootViaPointer(page);
       await pointerUp(page.getByTestId("scroll-container"));
@@ -596,7 +620,7 @@ test.describe("Menu", () => {
       await expect(page.getByTestId("root-list")).toBeVisible();
       await expect(page.getByTestId("root-submenu-trigger")).toBeFocused();
       await expect(page.getByTestId("root-submenu-trigger")).toHaveAttribute(
-        "data-highlighted",
+        "data-mc-highlighted",
         "",
       );
     });
@@ -640,7 +664,7 @@ test.describe("Menu", () => {
       await page.keyboard.press("Escape");
       await expect(page.getByTestId("root-list")).not.toBeVisible();
       await expect(page.getByTestId("root-trigger")).toBeFocused();
-      await expect(page.getByTestId("root-trigger")).not.toHaveAttribute("data-highlighted");
+      await expect(page.getByTestId("root-trigger")).not.toHaveAttribute("data-mc-highlighted");
     });
 
     test("ArrowDown after a click on a label roves from the highlighted item", async ({ page }) => {
@@ -661,7 +685,7 @@ test.describe("Menu", () => {
       await expect(page.getByTestId("root-submenu-list")).not.toBeVisible();
       await expect(page.getByTestId("root-submenu-trigger")).toBeFocused();
       await expect(page.getByTestId("root-submenu-trigger")).toHaveAttribute(
-        "data-highlighted",
+        "data-mc-highlighted",
         "",
       );
     });
@@ -690,7 +714,7 @@ test.describe("Menu", () => {
       await page.keyboard.press("ArrowDown");
       await expect(page.getByTestId("root-submenu-list")).not.toBeVisible();
       await expect(page.getByTestId("root-item-1")).toBeFocused();
-      await expect(page.getByTestId("root-item-1")).toHaveAttribute("data-highlighted", "");
+      await expect(page.getByTestId("root-item-1")).toHaveAttribute("data-mc-highlighted", "");
       await expect(page.getByTestId("root-list")).toBeVisible();
     });
 
@@ -705,11 +729,11 @@ test.describe("Menu", () => {
     }) => {
       await openRoot(page);
       await page.getByTestId("root-item-1").hover();
-      await expect(page.getByTestId("root-item-1")).toHaveAttribute("data-highlighted", "");
+      await expect(page.getByTestId("root-item-1")).toHaveAttribute("data-mc-highlighted", "");
       for (const id of ["root-item-disabled", "root-label", "root-separator"] as const) {
         await page.getByTestId(id).hover();
         await expect(page.getByTestId("root-item-1")).toBeFocused();
-        await expect(page.getByTestId("root-item-1")).toHaveAttribute("data-highlighted", "");
+        await expect(page.getByTestId("root-item-1")).toHaveAttribute("data-mc-highlighted", "");
         await page.getByTestId("root-item-1").hover();
       }
     });
@@ -721,7 +745,7 @@ test.describe("Menu", () => {
       await page.getByTestId("root-item-2").hover();
       await page.mouse.move(0, 0);
       await expect(page.getByTestId("root-item-2")).toBeFocused();
-      await expect(page.getByTestId("root-item-2")).toHaveAttribute("data-highlighted", "");
+      await expect(page.getByTestId("root-item-2")).toHaveAttribute("data-mc-highlighted", "");
       await page.keyboard.press("ArrowDown");
       await expect(page.getByTestId("root-item-3")).toBeFocused();
     });
@@ -814,19 +838,21 @@ test.describe("Menu", () => {
   });
 
   test.describe("Focus management (highlight)", () => {
-    test("keyboard roving sets `data-highlighted` on the focused item", async ({ page }) => {
+    test("keyboard roving sets `data-mc-highlighted` on the focused item", async ({ page }) => {
       await openRootViaKeyboard(page);
-      await expect(page.getByTestId("root-item-1")).toHaveAttribute("data-highlighted", "");
+      await expect(page.getByTestId("root-item-1")).toHaveAttribute("data-mc-highlighted", "");
       await page.keyboard.press("ArrowDown");
-      await expect(page.getByTestId("root-item-1")).not.toHaveAttribute("data-highlighted");
-      await expect(page.getByTestId("root-item-2")).toHaveAttribute("data-highlighted", "");
+      await expect(page.getByTestId("root-item-1")).not.toHaveAttribute("data-mc-highlighted");
+      await expect(page.getByTestId("root-item-2")).toHaveAttribute("data-mc-highlighted", "");
     });
 
-    test("pointermove sets `data-highlighted` on the item under the pointer", async ({ page }) => {
+    test("pointermove sets `data-mc-highlighted` on the item under the pointer", async ({
+      page,
+    }) => {
       await openRootViaPointer(page);
       await page.getByTestId("root-item-2").hover();
-      await expect(page.getByTestId("root-item-2")).toHaveAttribute("data-highlighted", "");
-      await expect(page.getByTestId("root-item-1")).not.toHaveAttribute("data-highlighted");
+      await expect(page.getByTestId("root-item-2")).toHaveAttribute("data-mc-highlighted", "");
+      await expect(page.getByTestId("root-item-1")).not.toHaveAttribute("data-mc-highlighted");
     });
 
     test("hover focus after a pointer open does not match `:focus-visible`", async ({
@@ -869,10 +895,10 @@ test.describe("Menu", () => {
       await expect(page.getByTestId("root-submenu-list")).toBeVisible();
       await expect(page.getByTestId("root-submenu-trigger")).toBeFocused();
       await expect(page.getByTestId("root-submenu-trigger")).toHaveAttribute(
-        "data-highlighted",
+        "data-mc-highlighted",
         "",
       );
-      await expect(page.getByTestId("root-item-1")).not.toHaveAttribute("data-highlighted");
+      await expect(page.getByTestId("root-item-1")).not.toHaveAttribute("data-mc-highlighted");
       if (browserName === "chromium") {
         expect(
           await page
@@ -888,10 +914,10 @@ test.describe("Menu", () => {
       await expect(page.getByTestId("root-submenu-list")).toBeVisible();
       await expect(page.getByTestId("root-submenu-trigger")).toBeFocused();
       await expect(page.getByTestId("root-submenu-trigger")).toHaveAttribute(
-        "data-highlighted",
+        "data-mc-highlighted",
         "",
       );
-      await expect(page.getByTestId("root-item-1")).not.toHaveAttribute("data-highlighted");
+      await expect(page.getByTestId("root-item-1")).not.toHaveAttribute("data-mc-highlighted");
     });
 
     test("hold from the trigger still highlights the item under the pointer", async ({ page }) => {
@@ -905,7 +931,7 @@ test.describe("Menu", () => {
       const itemBox = await item.boundingBox();
       if (!itemBox) throw new Error("missing bounding box");
       await page.mouse.move(itemBox.x + itemBox.width / 2, itemBox.y + itemBox.height / 2);
-      await expect(item).toHaveAttribute("data-highlighted", "");
+      await expect(item).toHaveAttribute("data-mc-highlighted", "");
       await page.mouse.up();
     });
   });
@@ -932,6 +958,15 @@ test.describe("Menu", () => {
       await openRoot(page);
       await page.getByTestId("root-list").dispatchEvent("scroll");
       await expect(page.getByTestId("root-list")).toBeVisible();
+    });
+
+    test("scroll inside a menu closes the submenus below it", async ({ page }) => {
+      await openRoot(page);
+      await openSubmenuViaKeyboard(page);
+      await page.getByTestId("root-list").dispatchEvent("scroll");
+      await expect(page.getByTestId("root-submenu-list")).not.toBeVisible();
+      await expect(page.getByTestId("root-list")).toBeVisible();
+      await expect(page.getByTestId("root-submenu-trigger")).toBeFocused();
     });
 
     test("scroll inside a scrollable region nested in the popover does not close the menu", async ({
@@ -1119,6 +1154,13 @@ test.describe("Keyboard (typeahead)", () => {
     await page.keyboard.press("a");
     await expect(page.getByTestId("typeahead-item-1")).toBeFocused();
   });
+
+  for (const modifier of ["Control", "Meta"] as const) {
+    test(`${modifier} plus a letter does not move focus`, async ({ page }) => {
+      await page.keyboard.press(`${modifier}+b`);
+      await expect(page.getByTestId("typeahead-item-1")).toBeFocused();
+    });
+  }
 
   test("two letters in quick succession are two single-letter jumps", async ({ page }) => {
     await page.keyboard.press("a");
@@ -1312,6 +1354,25 @@ test.describe("Menubar", () => {
       await expect(page.getByTestId("menubar-trigger-1")).toBeFocused();
       await page.keyboard.press("ArrowRight");
       await expect(page.getByTestId("menubar-trigger-3")).toBeFocused();
+    });
+
+    test("Alt, Ctrl, and Meta chords pass through to the browser", async ({ page }) => {
+      await page.getByTestId("menubar-trigger-2").focus();
+      // Dispatched, not pressed: a real Alt+ArrowLeft is the browser's Back.
+      const prevented = await page.evaluate(() =>
+        (["altKey", "ctrlKey", "metaKey"] as const).map((modifier) => {
+          const event = new KeyboardEvent("keydown", {
+            key: "ArrowLeft",
+            [modifier]: true,
+            bubbles: true,
+            cancelable: true,
+          });
+          document.activeElement?.dispatchEvent(event);
+          return event.defaultPrevented;
+        }),
+      );
+      expect(prevented).toEqual([false, false, false]);
+      await expect(page.getByTestId("menubar-trigger-2")).toBeFocused();
     });
 
     test("Home / End jump to first / last menubar item", async ({ page }) => {
@@ -1533,7 +1594,10 @@ test.describe("Menubar", () => {
       await page.keyboard.press("Escape");
       await expect(page.getByTestId("menubar-list-1")).not.toBeVisible();
       await expect(page.getByTestId("menubar-trigger-1")).toBeFocused();
-      await expect(page.getByTestId("menubar-trigger-1")).toHaveAttribute("data-highlighted", "");
+      await expect(page.getByTestId("menubar-trigger-1")).toHaveAttribute(
+        "data-mc-highlighted",
+        "",
+      );
     });
 
     for (const key of ["ArrowLeft", "Escape"] as const) {
@@ -1545,7 +1609,7 @@ test.describe("Menubar", () => {
         await expect(page.getByTestId("menubar-list-1")).toBeVisible();
         await expect(page.getByTestId("menubar-submenu-trigger-1")).toBeFocused();
         await expect(page.getByTestId("menubar-submenu-trigger-1")).toHaveAttribute(
-          "data-highlighted",
+          "data-mc-highlighted",
           "",
         );
       });
@@ -1673,7 +1737,10 @@ test.describe("Menubar", () => {
       await page.keyboard.press("Escape");
       await expect(page.getByTestId("menubar-list-1")).not.toBeVisible();
       await expect(page.getByTestId("menubar-trigger-1")).toBeFocused();
-      await expect(page.getByTestId("menubar-trigger-1")).toHaveAttribute("data-highlighted", "");
+      await expect(page.getByTestId("menubar-trigger-1")).toHaveAttribute(
+        "data-mc-highlighted",
+        "",
+      );
     });
 
     test("ArrowDown from the menu popover ignores a trigger painted by an earlier Escape", async ({
@@ -1681,9 +1748,14 @@ test.describe("Menubar", () => {
     }) => {
       await page.getByTestId("menubar-trigger-1").click();
       await page.keyboard.press("Escape");
-      await expect(page.getByTestId("menubar-trigger-1")).toHaveAttribute("data-highlighted", "");
+      await expect(page.getByTestId("menubar-trigger-1")).toHaveAttribute(
+        "data-mc-highlighted",
+        "",
+      );
       await page.getByTestId("menubar-trigger-2").click();
-      await expect(page.getByTestId("menubar-trigger-1")).not.toHaveAttribute("data-highlighted");
+      await expect(page.getByTestId("menubar-trigger-1")).not.toHaveAttribute(
+        "data-mc-highlighted",
+      );
       await focusPopover(page, "menubar-list-2");
       await page.keyboard.press("ArrowDown");
       await expect(page.getByTestId("menubar-item-2-1")).toBeFocused();
@@ -1725,7 +1797,7 @@ test.describe("Menubar", () => {
       await expect(page.getByTestId("menubar-list-1")).toBeVisible();
       await expect(page.getByTestId("menubar-submenu-trigger-1")).toBeFocused();
       await expect(page.getByTestId("menubar-submenu-trigger-1")).toHaveAttribute(
-        "data-highlighted",
+        "data-mc-highlighted",
         "",
       );
     });
@@ -1744,7 +1816,10 @@ test.describe("Menubar", () => {
       await page.keyboard.press("Escape");
       await expect(page.getByTestId("menubar-list-2")).not.toBeVisible();
       await expect(page.getByTestId("menubar-trigger-2")).toBeFocused();
-      await expect(page.getByTestId("menubar-trigger-2")).toHaveAttribute("data-highlighted", "");
+      await expect(page.getByTestId("menubar-trigger-2")).toHaveAttribute(
+        "data-mc-highlighted",
+        "",
+      );
     });
 
     test("hovering out of a menubar menu keeps highlight; ArrowDown continues from there", async ({
@@ -1756,7 +1831,7 @@ test.describe("Menubar", () => {
       if (!box) throw new Error("missing bounding box");
       await page.mouse.move(box.x + box.width / 2, box.y + box.height + 40);
       await expect(page.getByTestId("menubar-item-1-1")).toBeFocused();
-      await expect(page.getByTestId("menubar-item-1-1")).toHaveAttribute("data-highlighted", "");
+      await expect(page.getByTestId("menubar-item-1-1")).toHaveAttribute("data-mc-highlighted", "");
       await page.keyboard.press("ArrowDown");
       await expect(page.getByTestId("menubar-item-1-1")).not.toBeFocused();
       await expect(page.getByTestId("menubar-list-1")).toBeVisible();
@@ -1774,6 +1849,35 @@ test.describe("Menubar", () => {
       await page.getByTestId("menubar-trigger-3").hover();
       await expect(page.getByTestId("menubar-list-1")).not.toBeVisible();
       await expect(page.getByTestId("menubar-list-3")).toBeVisible();
+    });
+
+    test("an outside press leaves no bar item highlighted", async ({ page }) => {
+      const trigger = page.getByTestId("menubar-trigger-1");
+      await trigger.click();
+      await trigger.hover({ position: { x: 4, y: 4 } });
+      await expect(trigger).toHaveAttribute("data-mc-highlighted", "");
+      const viewport = page.viewportSize();
+      if (!viewport) throw new Error("missing viewport");
+      await page.mouse.click(viewport.width - 5, viewport.height - 5);
+      await expect(page.getByTestId("menubar-list-1")).not.toBeVisible();
+      await expect(trigger).not.toHaveAttribute("data-mc-highlighted");
+    });
+
+    test("pressing the open trigger again leaves it unhighlighted", async ({ page }) => {
+      const trigger = page.getByTestId("menubar-trigger-1");
+      await trigger.click();
+      await trigger.hover({ position: { x: 4, y: 4 } });
+      await trigger.click();
+      await expect(page.getByTestId("menubar-list-1")).not.toBeVisible();
+      await expect(trigger).not.toHaveAttribute("data-mc-highlighted");
+    });
+
+    test("hovering a plain bar item closes the open menu", async ({ page }) => {
+      await page.getByTestId("menubar-trigger-1").click();
+      await expect(page.getByTestId("menubar-list-1")).toBeVisible();
+      await page.getByTestId("menubar-item-1").hover();
+      await expect(page.getByTestId("menubar-list-1")).not.toBeVisible();
+      await expect(page.getByTestId("menubar-item-1")).toBeFocused();
     });
   });
 });
@@ -1916,7 +2020,7 @@ test.describe("Mouse (safety triangle)", () => {
     await expect(page.getByTestId("submenu2-list")).not.toBeVisible();
     await expect(page.getByTestId("submenu-list")).toBeVisible();
     await expect(page.getByTestId("submenu2-trigger")).toBeFocused();
-    await expect(page.getByTestId("submenu2-trigger")).toHaveAttribute("data-highlighted", "");
+    await expect(page.getByTestId("submenu2-trigger")).toHaveAttribute("data-mc-highlighted", "");
   });
 
   test("items under the triangle do not take focus", async ({ page }) => {
@@ -2091,7 +2195,7 @@ test.describe("Nested (sibling submenus)", () => {
     await expect(page.getByTestId("share-list")).toBeVisible();
     await page.keyboard.press("ArrowDown");
     await expect(page.getByTestId("export-trigger")).toBeFocused();
-    await expect(page.getByTestId("export-trigger")).toHaveAttribute("data-highlighted", "");
+    await expect(page.getByTestId("export-trigger")).toHaveAttribute("data-mc-highlighted", "");
     await expect(page.getByTestId("share-list")).not.toBeVisible();
     await expect(page.getByTestId("list")).toBeVisible();
   });
@@ -2117,7 +2221,7 @@ test.describe("Activation (checkbox and radio)", () => {
   });
 
   test("the wrap seam scopes a bottom radio group from a top one", async ({ page, renderer }) => {
-    test.skip(renderer !== "html", "Structure edge case; wrappers emit the canonical shape");
+    test.skip(renderer !== "html", "Structure edge case; parts emit the canonical shape");
     // Groups touch the physical ends of the menu, so the sweep's
     // last-to-first wrap runs straight from group B into group A. The
     // seam must act as a group boundary or selecting in B clears A.
@@ -2131,7 +2235,7 @@ test.describe("Activation (checkbox and radio)", () => {
   });
 
   test("the wrap seam scopes a top radio group from a bottom one", async ({ page, renderer }) => {
-    test.skip(renderer !== "html", "Structure edge case; wrappers emit the canonical shape");
+    test.skip(renderer !== "html", "Structure edge case; parts emit the canonical shape");
     await page.goto("/html/menu/radio-groups-at-ends");
     await page.getByTestId("trigger").click();
     await page.getByTestId("radio-a2").click();
@@ -2163,7 +2267,11 @@ test.describe("Activation (checkbox and radio)", () => {
   });
 
   for (const activation of ["click", "Enter", "Space"] as const) {
-    test(`${activation} toggles a checkbox without closing the menu`, async ({ page }) => {
+    const keepOpen = activation === "Space";
+
+    test(`${activation} toggles a checkbox and ${keepOpen ? "keeps" : "closes"} the menu`, async ({
+      page,
+    }) => {
       if (activation === "click") {
         await page.getByTestId("checkbox-1").click();
       } else {
@@ -2171,10 +2279,10 @@ test.describe("Activation (checkbox and radio)", () => {
         await page.keyboard.press(activation);
       }
       await expect(page.getByTestId("checkbox-1")).toHaveAttribute("aria-checked", "true");
-      await expect(page.getByTestId("list")).toBeVisible();
+      await expect(page.getByTestId("list")).toBeVisible({ visible: keepOpen });
     });
 
-    test(`${activation} selects a radio and unchecks same-group siblings without closing the menu`, async ({
+    test(`${activation} selects a radio, unchecks its set, and ${keepOpen ? "keeps" : "closes"} the menu`, async ({
       page,
     }) => {
       if (activation === "click") {
@@ -2185,9 +2293,63 @@ test.describe("Activation (checkbox and radio)", () => {
       }
       await expect(page.getByTestId("radio-a2")).toHaveAttribute("aria-checked", "true");
       await expect(page.getByTestId("radio-a1")).toHaveAttribute("aria-checked", "false");
+      await expect(page.getByTestId("list")).toBeVisible({ visible: keepOpen });
+    });
+
+    test(`${activation} on a \`data-mc-keep-open\` item activates it and keeps the menu open`, async ({
+      page,
+    }) => {
+      if (activation === "click") {
+        await page.getByTestId("kept-item").click();
+      } else {
+        await page.getByTestId("kept-item").focus();
+        await page.keyboard.press(activation);
+      }
+      await expect(page.getByTestId("list")).toBeVisible();
+      await expect(page.getByTestId("kept-item")).toBeFocused();
+    });
+
+    test(`${activation} on a \`data-mc-keep-open\` checkbox toggles it and keeps the menu open`, async ({
+      page,
+    }) => {
+      if (activation === "click") {
+        await page.getByTestId("kept-checkbox").click();
+      } else {
+        await page.getByTestId("kept-checkbox").focus();
+        await page.keyboard.press(activation);
+      }
+      await expect(page.getByTestId("kept-checkbox")).toHaveAttribute("aria-checked", "true");
       await expect(page.getByTestId("list")).toBeVisible();
     });
   }
+
+  test("Space on a regular menuitem closes the menu", async ({ page }) => {
+    await page.getByTestId("regular-item").focus();
+    await page.keyboard.press("Space");
+    await expect(page.getByTestId("list")).not.toBeVisible();
+  });
+
+  test("Space toggles several checkboxes in one visit", async ({ page }) => {
+    await page.getByTestId("checkbox-1").focus();
+    await page.keyboard.press("Space");
+    await page.keyboard.press("ArrowDown");
+    await page.keyboard.press("Space");
+    await expect(page.getByTestId("checkbox-1")).toHaveAttribute("aria-checked", "true");
+    await expect(page.getByTestId("checkbox-2")).toHaveAttribute("aria-checked", "false");
+    await expect(page.getByTestId("checkbox-2")).toBeFocused();
+  });
+
+  test("press, drag to a checkbox, release toggles it and closes the menu", async ({ page }) => {
+    await page.keyboard.press("Escape");
+    await expect(page.getByTestId("list")).not.toBeVisible();
+    await page.getByTestId("trigger").hover();
+    await page.mouse.down();
+    await expect(page.getByTestId("list")).toBeVisible();
+    await page.getByTestId("checkbox-1").hover();
+    await page.mouse.up();
+    await expect(page.getByTestId("checkbox-1")).toHaveAttribute("aria-checked", "true");
+    await expect(page.getByTestId("list")).not.toBeVisible();
+  });
 
   test("re-clicking a checked checkbox unchecks it", async ({ page }) => {
     await page.getByTestId("checkbox-2").click();
@@ -2203,8 +2365,10 @@ test.describe("Activation (checkbox and radio)", () => {
   });
 
   test("selecting an earlier radio clears a later checked sibling", async ({ page }) => {
-    await page.getByTestId("radio-a2").click();
-    await page.getByTestId("radio-a1").click();
+    await page.getByTestId("radio-a2").focus();
+    await page.keyboard.press("Space");
+    await page.keyboard.press("ArrowUp");
+    await page.keyboard.press("Space");
     await expect(page.getByTestId("radio-a1")).toHaveAttribute("aria-checked", "true");
     await expect(page.getByTestId("radio-a2")).toHaveAttribute("aria-checked", "false");
   });
@@ -2241,9 +2405,129 @@ test.describe("Activation (checkbox and radio)", () => {
     await expect(page.getByTestId("radio-a2")).toBeFocused();
   });
 
-  test("activating a regular menuitem still closes the menu", async ({ page }) => {
+  test("activating a regular menuitem closes the menu", async ({ page }) => {
     await page.getByTestId("regular-item").click();
     await expect(page.getByTestId("list")).not.toBeVisible();
+  });
+});
+
+test.describe("Groups", () => {
+  test.beforeEach(async ({ page, renderer }) => {
+    await page.goto(`/${renderer}/menu/groups`);
+  });
+
+  const openWith = async (page: Page, key: string) => {
+    await page.getByTestId("trigger").focus();
+    await page.keyboard.press(key);
+    await expect(page.getByTestId("list")).toBeVisible();
+  };
+
+  test("names each group from its label or `aria-label`", async ({ page }) => {
+    await page.getByTestId("trigger").click();
+    await expect(page.getByRole("group", { name: "Size", exact: true })).toBeVisible();
+    await expect(page.getByRole("group", { name: "Color", exact: true })).toBeVisible();
+    await expect(page.getByTestId("group-a")).toHaveAttribute(
+      "aria-labelledby",
+      (await page
+        .getByTestId("radio-a1")
+        .evaluate((el) => el.closest("ul")?.firstElementChild?.id)) as string,
+    );
+  });
+
+  test("ArrowDown on the trigger enters a leading group past its label", async ({ page }) => {
+    await openWith(page, "ArrowDown");
+    await expect(page.getByTestId("radio-a1")).toBeFocused();
+  });
+
+  test("ArrowUp on the trigger enters a trailing group past its hidden item", async ({ page }) => {
+    await openWith(page, "ArrowUp");
+    await expect(page.getByTestId("radio-b2")).toBeFocused();
+  });
+
+  test("ArrowDown leaves a group past a disabled item, and enters the next", async ({ page }) => {
+    await openWith(page, "ArrowDown");
+    await page.keyboard.press("ArrowDown");
+    await expect(page.getByTestId("radio-a2")).toBeFocused();
+    await page.keyboard.press("ArrowDown");
+    await expect(page.getByTestId("item-cut")).toBeFocused();
+    await page.keyboard.press("ArrowDown");
+    await page.keyboard.press("ArrowDown");
+    await page.keyboard.press("ArrowDown");
+    await expect(page.getByTestId("radio-b1")).toBeFocused();
+  });
+
+  test("ArrowDown from a group's last item wraps to the first item of the menu", async ({
+    page,
+  }) => {
+    await openWith(page, "ArrowUp");
+    await page.keyboard.press("ArrowDown");
+    await expect(page.getByTestId("radio-a1")).toBeFocused();
+  });
+
+  test("ArrowUp leaves a group past its label, and wraps into the last group", async ({ page }) => {
+    await openWith(page, "ArrowDown");
+    await page.keyboard.press("ArrowUp");
+    await expect(page.getByTestId("radio-b2")).toBeFocused();
+    await page.keyboard.press("ArrowUp");
+    await page.keyboard.press("ArrowUp");
+    await expect(page.getByTestId("radio-c2")).toBeFocused();
+  });
+
+  test("Home and End inside a group reach the ends of the whole menu", async ({ page }) => {
+    await openWith(page, "ArrowDown");
+    await page.keyboard.press("ArrowDown");
+    await page.keyboard.press("End");
+    await expect(page.getByTestId("radio-b2")).toBeFocused();
+    await page.keyboard.press("ArrowUp");
+    await page.keyboard.press("Home");
+    await expect(page.getByTestId("radio-a1")).toBeFocused();
+  });
+
+  test("typeahead reaches into a group and out of it", async ({ page }) => {
+    await openWith(page, "ArrowDown");
+    await page.keyboard.press("b");
+    await expect(page.getByTestId("radio-b2")).toBeFocused();
+    await page.keyboard.press("c");
+    await expect(page.getByTestId("item-cut")).toBeFocused();
+    await page.keyboard.press("m");
+    await expect(page.getByTestId("radio-a2")).toBeFocused();
+  });
+
+  test("a radio in a group unchecks only its group", async ({ page }) => {
+    await page.getByTestId("trigger").click();
+    await page.getByTestId("radio-b2").click();
+    await expect(page.getByTestId("radio-b2")).toHaveAttribute("aria-checked", "true");
+    await expect(page.getByTestId("radio-b1")).toHaveAttribute("aria-checked", "false");
+    await expect(page.getByTestId("radio-c1")).toHaveAttribute("aria-checked", "true");
+    await expect(page.getByTestId("radio-a1")).toHaveAttribute("aria-checked", "true");
+  });
+
+  test("Space on a radio in a group unchecks only its group", async ({ page }) => {
+    await openWith(page, "ArrowDown");
+    await page.keyboard.press("ArrowDown");
+    await page.keyboard.press(" ");
+    await expect(page.getByTestId("radio-a2")).toHaveAttribute("aria-checked", "true");
+    await expect(page.getByTestId("radio-a1")).toHaveAttribute("aria-checked", "false");
+    await expect(page.getByTestId("radio-c1")).toHaveAttribute("aria-checked", "true");
+    await expect(page.getByTestId("radio-b1")).toHaveAttribute("aria-checked", "true");
+  });
+
+  test("an ungrouped run next to a group stays its own set", async ({ page }) => {
+    await page.getByTestId("trigger").click();
+    await page.getByTestId("radio-c2").click();
+    await expect(page.getByTestId("radio-c2")).toHaveAttribute("aria-checked", "true");
+    await expect(page.getByTestId("radio-c1")).toHaveAttribute("aria-checked", "false");
+    await expect(page.getByTestId("radio-b1")).toHaveAttribute("aria-checked", "true");
+    await expect(page.getByTestId("radio-a1")).toHaveAttribute("aria-checked", "true");
+  });
+
+  test("hovering a group's label keeps the highlight on the last item", async ({ page }) => {
+    await page.getByTestId("trigger").click();
+    await page.getByTestId("radio-a2").hover();
+    await expect(page.getByTestId("radio-a2")).toBeFocused();
+    await page.getByRole("group", { name: "Size", exact: true }).getByText("Size").hover();
+    await expect(page.getByTestId("radio-a2")).toBeFocused();
+    await expect(page.getByTestId("list")).toBeVisible();
   });
 });
 
@@ -2435,6 +2719,21 @@ test.describe("Dynamic", () => {
     await expect(page.getByTestId("list")).not.toBeVisible();
     await page.keyboard.press("Escape");
   });
+
+  test("ArrowDown after the highlighted item is removed focuses the first item", async ({
+    page,
+    renderer,
+  }) => {
+    test.skip(renderer !== "html", "Removes a node the renderer owns");
+    await page.goto("/html/menu/basic");
+    await openRootViaKeyboard(page);
+    await page.keyboard.press("ArrowDown");
+    await expect(page.getByTestId("root-item-2")).toBeFocused();
+    await page.getByTestId("root-item-2").evaluate((el) => el.parentElement?.remove());
+    await page.keyboard.press("ArrowDown");
+    await expect(page.getByTestId("root-item-1")).toBeFocused();
+    await expect(page.getByTestId("root-list")).toBeVisible();
+  });
 });
 
 test.describe("Structure independence", () => {
@@ -2572,14 +2871,96 @@ test.describe("Positioning", () => {
     const vars = await page
       .getByTestId("root-list")
       .evaluate((el) => [
-        el.style.getPropertyValue("--top"),
-        el.style.getPropertyValue("--right"),
-        el.style.getPropertyValue("--bottom"),
-        el.style.getPropertyValue("--left"),
-        el.style.getPropertyValue("--width"),
-        el.style.getPropertyValue("--height"),
+        el.style.getPropertyValue("--mc-trigger-top"),
+        el.style.getPropertyValue("--mc-trigger-right"),
+        el.style.getPropertyValue("--mc-trigger-bottom"),
+        el.style.getPropertyValue("--mc-trigger-left"),
+        el.style.getPropertyValue("--mc-content-width"),
+        el.style.getPropertyValue("--mc-content-height"),
+        el.style.getPropertyValue("--mc-available-height"),
       ]);
     for (const value of vars) expect(value).toMatch(/^-?\d+(\.\d+)?px$/);
+  });
+
+  test("names the default side, below, when the menu fits there", async ({ page, renderer }) => {
+    await page.setViewportSize({ width: 1600, height: 1600 });
+    await page.goto(`/${renderer}/menu/basic`);
+    await pinTrigger(page, { left: "48vw", top: "48vh" });
+    await openRoot(page);
+    await expect(page.getByTestId("root-list")).toHaveAttribute("data-mc-y", "bottom");
+    await expect(page.getByTestId("root-list")).not.toHaveAttribute("data-mc-x");
+  });
+
+  test("flips above when the menu does not fit below", async ({ page, renderer }) => {
+    await page.setViewportSize({ width: 800, height: 600 });
+    await page.goto(`/${renderer}/menu/basic`);
+    await pinTrigger(page, { right: "0px", bottom: "0px" });
+    await openRoot(page);
+    await expect(page.getByTestId("root-list")).toHaveAttribute("data-mc-y", "top");
+    await expect(page.getByTestId("root-list")).not.toHaveAttribute("data-mc-x");
+  });
+
+  test("spec CSS lines up a menu's items with its trigger by default", async ({
+    page,
+    renderer,
+  }) => {
+    await page.setViewportSize({ width: 800, height: 600 });
+    await page.goto(`/${renderer}/menu/basic`);
+    await loadSpecCss(page, "menu");
+    await pinTrigger(page, { left: "300px", top: "100px" });
+    await openRoot(page);
+    const trigger = await page.getByTestId("root-trigger").boundingBox();
+    const item = await page.getByTestId("root-item-1").boundingBox();
+    if (!trigger || !item) throw new Error("missing bounding box");
+    expect(Math.abs(item.x - trigger.x)).toBeLessThan(1);
+  });
+
+  test("`data-mc-side` opens a menu beside its trigger", async ({ page, renderer }) => {
+    await page.setViewportSize({ width: 800, height: 600 });
+    await page.goto(`/${renderer}/menu/basic`);
+    await pinTrigger(page, { left: "100px", top: "100px" });
+    await page.getByTestId("root-list").evaluate((el) => el.setAttribute("data-mc-side", "right"));
+    await openRoot(page);
+    await expect(page.getByTestId("root-list")).toHaveAttribute("data-mc-x", "right");
+    await expect(page.getByTestId("root-list")).not.toHaveAttribute("data-mc-y");
+  });
+
+  test("names the left side for a submenu with no room on its right", async ({
+    page,
+    renderer,
+  }) => {
+    await page.setViewportSize({ width: 800, height: 600 });
+    await page.goto(`/${renderer}/menu/basic`);
+    await pinTrigger(page, { right: "0px", top: "0px" });
+    await openRoot(page);
+    await page.getByTestId("root-submenu-trigger").focus();
+    await page.keyboard.press("ArrowRight");
+    await expect(page.getByTestId("root-submenu-list")).toBeVisible();
+    await expect(page.getByTestId("root-submenu-list")).toHaveAttribute("data-mc-x", "left");
+  });
+
+  test("spec CSS opens a submenu to the left in RTL", async ({ page, renderer }) => {
+    await page.goto(`/${renderer}/menu/basic`);
+    await loadSpecCss(page, "menu");
+    await setRtl(page);
+    await pinTrigger(page, { left: "40vw", top: "10vh" });
+    await openRoot(page);
+    await openSubmenuViaHover(page);
+    await expect(page.getByTestId("root-submenu-list")).toHaveAttribute("data-mc-x", "left");
+    const submenu = await page.getByTestId("root-submenu-list").boundingBox();
+    const trigger = await page.getByTestId("root-submenu-trigger").boundingBox();
+    if (!submenu || !trigger) throw new Error("missing bounding box");
+    expect(submenu.x + submenu.width).toBeLessThanOrEqual(trigger.x + 1);
+  });
+
+  test("flips back below once a resize makes room there", async ({ page, renderer }) => {
+    await page.setViewportSize({ width: 800, height: 300 });
+    await page.goto(`/${renderer}/menu/basic`);
+    await pinTrigger(page, { left: "100px", top: "230px" });
+    await openRoot(page);
+    await expect(page.getByTestId("root-list")).toHaveAttribute("data-mc-y", "top");
+    await page.setViewportSize({ width: 800, height: 1600 });
+    await expect(page.getByTestId("root-list")).toHaveAttribute("data-mc-y", "bottom");
   });
 
   test("viewport resize keeps the menu open and republishes the trigger rect", async ({
@@ -2592,10 +2973,358 @@ test.describe("Positioning", () => {
     });
     await openRoot(page);
     const left = () =>
-      page.getByTestId("root-list").evaluate((el) => el.style.getPropertyValue("--left"));
+      page
+        .getByTestId("root-list")
+        .evaluate((el) => el.style.getPropertyValue("--mc-trigger-left"));
     const before = await left();
     await page.setViewportSize({ width: 800, height: 400 });
     await expect(page.getByTestId("root-list")).toBeVisible();
     await expect.poll(left).not.toBe(before);
+  });
+});
+
+test.describe("Fitting the viewport (spec CSS)", () => {
+  const box = async (page: Page, testId: string) => {
+    const rect = await page.getByTestId(testId).boundingBox();
+    if (!rect) throw new Error(`missing bounding box for ${testId}`);
+    return rect;
+  };
+
+  const scrolls = (page: Page, testId: string) =>
+    page.getByTestId(testId).evaluate((el) => el.scrollHeight > el.clientHeight);
+
+  const settle = (page: Page) =>
+    page.evaluate(
+      () => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))),
+    );
+
+  /** Menus styled the way a project styles them: rows as blocks, and a
+   *  padding with the matching `--_inset` and `scroll-padding-block`
+   *  (styling.md, Corners), so a row scrolled into view keeps it. */
+  const padMenus = (page: Page) =>
+    page.addStyleTag({
+      content: `[id^="mcc:menu:"] { --_inset: 4px; padding: var(--_inset); scroll-padding-block: var(--_inset); }
+        [id^="mcc:menu:"] [role^="menuitem"] { display: block; width: 100%; }`,
+    });
+
+  test("publishes the room on the side the menu opens", async ({ page, renderer }) => {
+    await page.setViewportSize({ width: 800, height: 600 });
+    await page.goto(`/${renderer}/menu/basic`);
+    await pinTrigger(page, { left: "40vw", top: "100px" });
+    await openRoot(page);
+    const room = () =>
+      page
+        .getByTestId("root-list")
+        .evaluate((el) => parseFloat(el.style.getPropertyValue("--mc-available-height")));
+    const trigger = await box(page, "root-trigger");
+    expect(await room()).toBeCloseTo(600 - trigger.y - trigger.height, 0);
+    await page.keyboard.press("Escape");
+    await pinTrigger(page, { top: "auto", bottom: "0px" });
+    await openRoot(page);
+    await expect(page.getByTestId("root-list")).toHaveAttribute("data-mc-y", "top");
+    expect(await room()).toBeCloseTo((await box(page, "root-trigger")).y, 0);
+  });
+
+  test("flips a menu above a trigger at the bottom edge, flush with it", async ({
+    page,
+    renderer,
+  }) => {
+    await page.setViewportSize({ width: 800, height: 600 });
+    await page.goto(`/${renderer}/menu/basic`);
+    await loadSpecCss(page, "menu");
+    await pinTrigger(page, { left: "40vw", bottom: "0px" });
+    await openRoot(page);
+    await expect(page.getByTestId("root-list")).toHaveAttribute("data-mc-y", "top");
+    const list = await box(page, "root-list");
+    const trigger = await box(page, "root-trigger");
+    expect(list.y).toBeGreaterThanOrEqual(0);
+    expect(trigger.y - (list.y + list.height)).toBeGreaterThanOrEqual(0);
+    expect(trigger.y - (list.y + list.height)).toBeLessThanOrEqual(6);
+    expect(await scrolls(page, "root-list")).toBe(false);
+  });
+
+  test("caps a menu too tall for either side to the viewport, and it scrolls", async ({
+    page,
+    renderer,
+  }) => {
+    await page.setViewportSize({ width: 320, height: 240 });
+    await page.goto(`/${renderer}/menu/tall`);
+    await loadSpecCss(page, "menu");
+    await openRoot(page);
+    const list = await box(page, "root-list");
+    expect(list.y).toBeGreaterThanOrEqual(0);
+    expect(list.y + list.height).toBeLessThanOrEqual(240);
+    expect(list.x).toBeGreaterThanOrEqual(0);
+    expect(list.x + list.width).toBeLessThanOrEqual(320);
+    expect(await scrolls(page, "root-list")).toBe(true);
+  });
+
+  test("caps a menu flipped above its trigger, and keeps it flush", async ({ page, renderer }) => {
+    await page.setViewportSize({ width: 320, height: 240 });
+    await page.goto(`/${renderer}/menu/tall`);
+    await loadSpecCss(page, "menu");
+    await pinTrigger(page, { top: "auto", bottom: "8px" });
+    await openRoot(page);
+    await expect(page.getByTestId("root-list")).toHaveAttribute("data-mc-y", "top");
+    const list = await box(page, "root-list");
+    const trigger = await box(page, "root-trigger");
+    expect(list.y).toBeGreaterThanOrEqual(0);
+    expect(trigger.y - (list.y + list.height)).toBeGreaterThanOrEqual(0);
+    expect(trigger.y - (list.y + list.height)).toBeLessThanOrEqual(6);
+    expect(await scrolls(page, "root-list")).toBe(true);
+  });
+
+  test("End and Home scroll the focused item into view in a capped menu", async ({
+    page,
+    renderer,
+  }) => {
+    await page.setViewportSize({ width: 320, height: 240 });
+    await page.goto(`/${renderer}/menu/tall`);
+    await loadSpecCss(page, "menu");
+    await padMenus(page);
+    await openRootViaKeyboard(page);
+    const inView = async (testId: string) => {
+      const item = await box(page, testId);
+      const list = await box(page, "root-list");
+      return item.y >= list.y - 1 && item.y + item.height <= list.y + list.height + 1;
+    };
+    const scrollTop = () => page.getByTestId("root-list").evaluate((el) => el.scrollTop);
+    const bottom = () =>
+      page.getByTestId("root-list").evaluate((el) => el.scrollHeight - el.clientHeight);
+    await page.keyboard.press("End");
+    await expect(page.getByTestId("root-item-24")).toBeFocused();
+    expect(await inView("root-item-24")).toBe(true);
+    expect(Math.abs((await scrollTop()) - (await bottom()))).toBeLessThanOrEqual(1);
+    await page.keyboard.press("Home");
+    await expect(page.getByTestId("root-submenu-trigger")).toBeFocused();
+    expect(await inView("root-submenu-trigger")).toBe(true);
+    expect(await scrollTop()).toBeLessThanOrEqual(1);
+    await page.keyboard.press("ArrowUp");
+    await expect(page.getByTestId("root-item-24")).toBeFocused();
+    expect(await inView("root-item-24")).toBe(true);
+  });
+
+  const focusedRow = (page: Page) =>
+    page.getByTestId("root-list").evaluate((el) => {
+      const row = document.activeElement?.getBoundingClientRect();
+      const box = el.getBoundingClientRect();
+      return {
+        below: box.bottom - (row?.bottom ?? 0),
+        padding: parseFloat(getComputedStyle(el).scrollPaddingBlockEnd),
+        height: row?.height ?? 0,
+        scrollTop: el.scrollTop,
+      };
+    });
+
+  test("ArrowDown past the bottom of a capped menu scrolls it one row, keeping the inset", async ({
+    page,
+    renderer,
+  }) => {
+    await page.setViewportSize({ width: 320, height: 240 });
+    await page.goto(`/${renderer}/menu/tall`);
+    await loadSpecCss(page, "menu");
+    await padMenus(page);
+    await openRootViaKeyboard(page);
+    let row = await focusedRow(page);
+    for (let i = 0; i < 24 && row.scrollTop === 0; i++) {
+      await page.keyboard.press("ArrowDown");
+      row = await focusedRow(page);
+    }
+    expect(row.scrollTop).toBeGreaterThan(0);
+    expect(row.scrollTop).toBeLessThanOrEqual(row.height + 2);
+    expect(row.padding).toBeGreaterThan(0);
+    expect(Math.abs(row.below - row.padding)).toBeLessThanOrEqual(1);
+  });
+
+  test("typeahead scrolls an off-screen item just into view", async ({ page, renderer }) => {
+    await page.setViewportSize({ width: 320, height: 240 });
+    await page.goto(`/${renderer}/menu/tall`);
+    await loadSpecCss(page, "menu");
+    await padMenus(page);
+    await openRootViaKeyboard(page);
+    await page.keyboard.press("z");
+    await expect(page.getByTestId("root-item-18")).toBeFocused();
+    const row = await focusedRow(page);
+    expect(Math.abs(row.below - row.padding)).toBeLessThanOrEqual(1);
+  });
+
+  test("hovering a row half out of view never scrolls a capped menu", async ({
+    page,
+    renderer,
+  }) => {
+    await page.setViewportSize({ width: 320, height: 240 });
+    await page.goto(`/${renderer}/menu/tall`);
+    await loadSpecCss(page, "menu");
+    await openRoot(page);
+    const cut = await page.getByTestId("root-list").evaluate((el) => {
+      const box = el.getBoundingClientRect();
+      for (const row of el.querySelectorAll<HTMLElement>('[role="menuitem"]')) {
+        const rect = row.getBoundingClientRect();
+        if (rect.bottom > box.bottom && rect.top < box.bottom - 2) {
+          return { id: row.dataset.testid ?? "", x: rect.x + rect.width / 2, y: rect.top + 1 };
+        }
+      }
+      return null;
+    });
+    if (!cut) throw new Error("no row crosses the bottom edge");
+    await page.mouse.move(cut.x, cut.y);
+    await expect(page.getByTestId(cut.id)).toHaveAttribute("data-mc-highlighted", "");
+    await settle(page);
+    expect(await page.getByTestId("root-list").evaluate((el) => el.scrollTop)).toBe(0);
+  });
+
+  test("a wheel past the end of a capped menu scrolls neither the page nor closes it", async ({
+    page,
+    renderer,
+    browserName,
+  }) => {
+    test.skip(
+      browserName === "firefox",
+      "Playwright's synthesized wheel in Firefox ignores overscroll-behavior, even on a static scroller",
+    );
+    await page.setViewportSize({ width: 320, height: 240 });
+    await page.goto(`/${renderer}/menu/tall`);
+    await loadSpecCss(page, "menu");
+    await openRoot(page);
+    await page.getByTestId("root-list").evaluate((el) => {
+      el.scrollTop = el.scrollHeight;
+    });
+    await settle(page);
+    const list = await box(page, "root-list");
+    await page.mouse.move(list.x + list.width / 2, list.y + list.height / 2);
+    await page.mouse.wheel(0, 400);
+    await settle(page);
+    await expect(page.getByTestId("root-list")).toBeVisible();
+    expect(await page.evaluate(() => scrollY)).toBe(0);
+  });
+
+  test("a menu capped on one open is measured at full height when reopened", async ({
+    page,
+    renderer,
+  }) => {
+    await page.setViewportSize({ width: 320, height: 240 });
+    await page.goto(`/${renderer}/menu/tall`);
+    await loadSpecCss(page, "menu");
+    await openRoot(page);
+    expect(await scrolls(page, "root-list")).toBe(true);
+    await page.keyboard.press("Escape");
+    await expect(page.getByTestId("root-list")).toBeHidden();
+    await page.setViewportSize({ width: 800, height: 1400 });
+    await pinTrigger(page, { top: "auto", bottom: "200px" });
+    await openRoot(page);
+    await expect(page.getByTestId("root-list")).toHaveAttribute("data-mc-y", "top");
+    const list = await box(page, "root-list");
+    expect(list.y).toBeGreaterThanOrEqual(0);
+    expect(list.y + list.height).toBeLessThanOrEqual(1400);
+    expect(await scrolls(page, "root-list")).toBe(false);
+  });
+
+  test("a submenu taller than the viewport stays inside it and scrolls", async ({
+    page,
+    renderer,
+  }) => {
+    await page.setViewportSize({ width: 480, height: 240 });
+    await page.goto(`/${renderer}/menu/tall`);
+    await loadSpecCss(page, "menu");
+    await pinTrigger(page, { left: "8px", top: "8px" });
+    await openRoot(page);
+    await page.getByTestId("root-submenu-trigger").focus();
+    await page.keyboard.press("ArrowRight");
+    await expect(page.getByTestId("root-submenu-list")).toBeVisible();
+    const submenu = await box(page, "root-submenu-list");
+    expect(submenu.y).toBeGreaterThanOrEqual(0);
+    expect(submenu.y + submenu.height).toBeLessThanOrEqual(240);
+    expect(await scrolls(page, "root-submenu-list")).toBe(true);
+  });
+
+  test("a submenu that fits moves up to stay inside the viewport", async ({ page, renderer }) => {
+    await page.setViewportSize({ width: 800, height: 400 });
+    await page.goto(`/${renderer}/menu/basic`);
+    await loadSpecCss(page, "menu");
+    await pinTrigger(page, { left: "8px", top: "auto", bottom: "120px" });
+    await openRoot(page);
+    await openSubmenuViaHover(page);
+    const submenu = await box(page, "root-submenu-list");
+    expect(submenu.y).toBeGreaterThanOrEqual(0);
+    expect(submenu.y + submenu.height).toBeLessThanOrEqual(400);
+    expect(await scrolls(page, "root-submenu-list")).toBe(false);
+  });
+});
+
+test.describe("Submenu direction (spec CSS)", () => {
+  const box = async (page: Page, testId: string) => {
+    const rect = await page.getByTestId(testId).boundingBox();
+    if (!rect) throw new Error(`missing bounding box for ${testId}`);
+    return rect;
+  };
+
+  /** Opens the root and `levels` submenus from the keyboard (ArrowLeft
+   *  opens a submenu on a right-to-left page). */
+  const openCascade = async (page: Page, levels: number, key = "ArrowRight") => {
+    await openRootViaKeyboard(page);
+    for (let level = 1; level <= levels; level++) {
+      await page.keyboard.press(key);
+      await expect(page.getByTestId(`l${level}-list`)).toBeVisible();
+    }
+  };
+
+  const side = async (page: Page, child: string, parent: string) => {
+    const a = await box(page, child);
+    const b = await box(page, parent);
+    const center = a.x + a.width / 2;
+    return center < b.x ? "left" : center > b.x + b.width ? "right" : "over";
+  };
+
+  test("a submenu that fits either side keeps its parent's direction", async ({
+    page,
+    renderer,
+  }) => {
+    await page.setViewportSize({ width: 1200, height: 600 });
+    await page.goto(`/${renderer}/menu/cascade`);
+    await loadSpecCss(page, "menu");
+    await pinTrigger(page, { left: "auto", right: "8px", top: "8px" });
+    await openCascade(page, 3);
+    await expect(page.getByTestId("l1-list")).toHaveAttribute("data-mc-x", "left");
+    expect(await side(page, "l1-list", "root-list")).toBe("left");
+    await expect(page.getByTestId("l2-list")).toHaveAttribute("data-mc-x", "left");
+    expect(await side(page, "l2-list", "l1-list")).toBe("left");
+    await expect(page.getByTestId("l3-list")).toHaveAttribute("data-mc-x", "left");
+    expect(await side(page, "l3-list", "l2-list")).toBe("left");
+  });
+
+  test("a submenu that turns passes its new direction on", async ({ page, renderer }) => {
+    await page.setViewportSize({ width: 640, height: 600 });
+    await page.goto(`/${renderer}/menu/cascade`);
+    await loadSpecCss(page, "menu");
+    // Rows as wide as their menu, and menus wide enough that the third
+    // level runs out of room on the left.
+    await page.addStyleTag({
+      content: `[id^="mcc:menu:"] { min-width: 11em; }
+        [id^="mcc:menu:"] [role^="menuitem"] { display: block; width: 100%; }`,
+    });
+    await pinTrigger(page, { left: "auto", right: "8px", top: "8px" });
+    await openCascade(page, 4);
+    expect(await side(page, "l1-list", "root-list")).toBe("left");
+    await expect(page.getByTestId("l2-list")).toHaveAttribute("data-mc-x", "left");
+    expect(await side(page, "l2-list", "l1-list")).toBe("left");
+    await expect(page.getByTestId("l3-list")).toHaveAttribute("data-mc-x", "right");
+    expect(await side(page, "l3-list", "l2-list")).toBe("right");
+    await expect(page.getByTestId("l4-list")).toHaveAttribute("data-mc-x", "right");
+    expect(await side(page, "l4-list", "l3-list")).toBe("right");
+  });
+
+  test("a right-to-left page opens submenus to the left, level after level", async ({
+    page,
+    renderer,
+  }) => {
+    await page.setViewportSize({ width: 1200, height: 600 });
+    await page.goto(`/${renderer}/menu/cascade`);
+    await loadSpecCss(page, "menu");
+    await setRtl(page);
+    await pinTrigger(page, { left: "600px", top: "8px" });
+    await openCascade(page, 2, "ArrowLeft");
+    await expect(page.getByTestId("l1-list")).toHaveAttribute("data-mc-x", "left");
+    expect(await side(page, "l1-list", "root-list")).toBe("left");
+    expect(await side(page, "l2-list", "l1-list")).toBe("left");
   });
 });

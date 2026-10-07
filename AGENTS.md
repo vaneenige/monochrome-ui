@@ -3,23 +3,25 @@
 Instructions for working on monochrome: an accessible, headless
 UI component library with no runtime dependencies. Eight
 components (Accordion, Collapsible, Dialog, Menu, Menubar,
-Popover, Tabs, Tooltip), plus an optional router and thin
-React and Vue wrappers. The core is framework-agnostic and
+Popover, Tabs, Tooltip), plus an optional router and the React
+and Vue component templates that `npx monochrome add` copies
+into projects (`templates/`). The core is framework-agnostic and
 works on plain HTML; import it once and every correctly-
 structured component on the page becomes interactive.
 
 ## Read first
 
 - `PRINCIPLES.md`: the six north stars (DOM is the source of
-  truth, event delegation on `window` only, zero timers, zero
+  truth, event delegation on `window` only, zero timers (one paint
+  yield in the router), zero
   runtime dependencies, Baseline 2024, one file per component)
   and the shape choices that follow from them. Read it before
   touching `src/`. Breaking a north star is never a fix.
 - `docs/`: how each mechanism works. Overlay files are
   `menu.md`, `popover.md`, `tooltip.md`, `dialog.md`. Shared
   helpers plus Accordion, Tabs, and Collapsible live in
-  `dom.md`. Router in `router.md`. Wrappers in `wrappers.md`.
-  The core and router carry no comments; these files are
+  `dom.md`. Router in `router.md`. React and Vue parts in
+  `parts.md`. The core and router carry no comments; these files are
   their comments. Read the one for the component you are
   debugging, skip the rest.
 - This file: how to work in the repo. Rules only.
@@ -36,20 +38,63 @@ Every change has exactly one home. Pick it before writing prose.
   behaviour: `docs/<component>.md`, inside the paragraph that
   owns that mechanism. Accordion, Tabs, Collapsible, and shared
   helpers live in `docs/dom.md`.
-- Wrapper-only behaviour (React, Vue): `docs/wrappers.md`.
+- Behaviour of the parts beyond markup: `docs/parts.md`.
+- React parts: `templates/react/<component>.tsx` (JSX). Vue parts:
+  `templates/vue/<component>/`, one single-file component per part,
+  a `context.ts` for what they share, and an `index.ts` that loads
+  the core and names the parts. Both are listed in
+  `templates/manifest.json`. Users own their copies, so they stand
+  alone: each component imports its core as `monochrome/<component>`
+  and inlines its helpers. Imports between template files are
+  relative and extensionless (`./menu`, `../menu/context`), the one
+  exception to the `.js` rule. The React and Vue fixtures render
+  these files (`@/components/ui`). The package has no framework
+  export.
+- Every part carries `data-slot` (after the props spread), a
+  styling hook, and passes a class to its element.
+- No CSS ships: not in `dist/`, not from `add`. Each spec's Styling
+  section is how a project styles the component (below).
+- `templates/manifest.json` is the one list of components: the
+  build, the CLI, the tests, and the website read it. Each entry
+  names what it requires, whether its spec has Required CSS
+  (`placement`, checked by the build), and its own files per
+  framework.
+- `build.ts` turns the templates into the files `add` copies:
+  `dist/files/react/`, `dist/files/vue/`, `examples/`, and a
+  `manifest.json` (`scripts/files.ts`). Every `.tsx` part and
+  example gets a type-stripped `.jsx` twin, which `add` writes in a
+  project without a `tsconfig*.json`; TypeScript the stripper
+  misses fails the build. The Vue parts ship as written
+  (`lang="ts"`, which Vue's tooling compiles in any project).
+  The CLI never generates; it copies. Each file's first line names
+  the version it came from. `monochrome.json` holds only settings
+  (framework and the components folder); there is no `update`
+  command yet.
+- Frameworks: `cli/frameworks.ts` has one entry per framework
+  `add` writes for. `html` (the default without React or Vue)
+  prints the spec's Anatomy markup; `react` and `vue` write the
+  parts. A new framework is one entry there, its files in
+  `templates/<id>/` listed in the manifest, an example per
+  component in `templates/<id>/examples/`, a build step in
+  `scripts/files.ts`, a Playwright project with its fixtures, and
+  the same CLI tests run for it.
+- `add` and `init` keep the core in lockstep: they install
+  `monochrome` at the CLI's own version when the project lacks it,
+  and stop before writing when the project resolves another version
+  (`cli/install.ts`).
 - Router behaviour: `docs/router.md`.
 - How code is written (style, naming, order): this file ›
   Code style, as a rule.
 - Toolchain, build, gate: this file › Build pipeline.
 - Test naming or structure: this file › Test naming.
-- What a component does for consumers: `README.md`.
+- What a component does for consumers: `README.md` for the
+  overview, `spec/<component>.md` for the markup contract.
 
 Writing a mechanism paragraph in `docs/`:
 
 - One mechanism per paragraph, with a bold lead that names it.
   First sentence states the behaviour, then the why, then the
-  edge cases. A paragraph past fifteen lines is two mechanisms;
-  split it.
+  edge cases.
 - Edit the paragraph that owns the mechanism. Never append a
   sentence to the nearest paragraph because it was open.
 - Every fact once. When a second paragraph needs it, cross-
@@ -65,10 +110,78 @@ Writing in this file:
 
 - Rules, not rationale. If a rule needs a why, the why is a
   mechanism (`docs/`) or a principle (`PRINCIPLES.md`); link it.
-- Two lines per rule where possible, at most one identifier as
-  an example. Example lists rot on the next rename.
-- Under 350 lines. When a section outgrows that, something in it
-  is a mechanism and belongs in `docs/`.
+- At most one identifier as an example. Example lists rot on the
+  next rename.
+
+## Agent layer: `spec/`, `skills/`, `cli/`, `CHANGELOG.md`
+
+Consumer-facing files that ship in the package next to `dist/`.
+None of them is imported by `src/`, and none may be.
+
+- `spec/`: the consumer markup contract, one file per component
+  plus `conventions`, `styling`, `router`, `choosing`. It ships in
+  the package for agents to read, and is the single source for the
+  Anatomy markup `add` prints and for the website, whose demos wear
+  each spec's Styling CSS. It is framework-free: the framework
+  examples `add` prints live with their parts, in
+  `templates/<framework>/examples/`.
+- Keep `spec/` in sync with `src/`: a behaviour change updates the
+  spec paragraph, table row, or snippet in the same commit, and
+  every claim in it is checked against the code or a test.
+- Keep component files in the fixed section order (Anatomy, Parts,
+  Contract, Keyboard, optional Pointer and Dismissal, Styling,
+  Accessibility, Design choices, Common mistakes); the CLI
+  and site read sections by heading. Design choices lists the
+  deliberate deviations from APG and the opinions behind the
+  behaviour, each with its reason, so nobody "fixes" them; choices
+  every component shares live in `conventions.md`.
+- `spec/` is compiled as MDX: YAML frontmatter (`title`,
+  `description`) only, no HTML comments, no raw `<`, `>`, `{`, `}`
+  outside code, no inline code broken across lines, links as
+  `[Popover](popover.md)`.
+- `skills/monochrome/SKILL.md`: the agent skill.
+  Opt-in (`npx skills add`); `init` never writes it. `init` only
+  upserts a short marked block in the project's `AGENTS.md`.
+- `cli/`: the `npx monochrome` CLI, bundled by `build.ts` into
+  `dist/cli.js` for Node 20: `init`, `add`, `docs` (prints a
+  `spec/` page), and `changelog` (prints `CHANGELOG.md` entries
+  by version). Results go to stdout, progress to stderr; `init`
+  and `add` take `--json` (one JSON document on stdout, the
+  result or the error) and `--dry-run`. Zero installed
+  dependencies: a helper is a devDependency inlined by the bundle.
+  No telemetry. The React examples typecheck against the templates
+  (`tsconfig.json` maps `@/components/ui/*`); the Vue templates and
+  examples are covered by the Vue fixtures instead. There is no checker:
+  agents verify rendered HTML against `spec/conventions.md`
+  (Verify) and each component's Contract and Common mistakes, so a
+  contract change updates those in the same commit.
+  `tests/cli/` runs the built `dist/cli.js` in throwaway projects
+  with a fake package manager on PATH: `bun run test:cli`, after a
+  build.
+- `CHANGELOG.md`: every release, newest first. It ships in the
+  package for `npx monochrome changelog`, and the website renders
+  it at /docs/changelog, so it follows the `spec/` MDX rules
+  minus frontmatter. A user-visible change adds a bullet under
+  `## Unreleased` in the same commit, in the fixed subsection
+  order: Upgrade, Breaking, Added, Changed, Fixed, Removed (empty
+  ones left out). A change that makes consumers edit code gets an
+  Upgrade step with before/after code; write each step so an agent
+  can apply it without reading the diff. Headings stay
+  `## <version> (<date>)`: the CLI reads versions from them. The
+  release workflow renames Unreleased to the version and date, and
+  stops before publishing when it is missing or empty.
+- Styling: monochrome ships no CSS. A component's `## Styling`
+  section is its how-to-style doc: the hooks it exposes, then for
+  Menu, Popover, and Tooltip a `### Required` fence (placement and
+  the fixes for the core's own side effects, nothing of a look, in
+  `@layer components`, copied into projects as it is), then an
+  `### Example` fence that styles every state in plain CSS for
+  projects to adapt. Required is the only CSS a component needs to
+  work: anything a project could style its own way belongs in
+  Example. Size in `em`; derived values (offset, inset, height cap)
+  are private `--_*` properties on the surface. Never set
+  `color-scheme` (the page does). The website's demos and the
+  placement tests wear both fences, read from the spec.
 
 ## Code style
 
@@ -78,7 +191,7 @@ in `docs/`.
 ### Formatting
 
 - oxfmt defaults (`.oxfmtrc.json`, no overrides beyond ignoring
-  `.html`/`.vue`/`.css`): 2-space indent, semicolons, double quotes,
+  `.html`/`.css`): 2-space indent, semicolons, double quotes,
   80-char line width. oxlint (`.oxlintrc.json`) runs the
   `correctness` category with the `typescript`, `unicorn`, and
   `oxc` plugins. `bun run lint` runs
@@ -88,11 +201,12 @@ in `docs/`.
 
 ### Functions
 
-- Arrow functions in the core and router. React wrappers use
-  `function` declarations for components (React convention, better
-  stack traces). Vue wrappers use `defineComponent` with
-  method-shorthand `setup`. Menu's item components come
-  from one factory in both wrappers (`docs/wrappers.md`).
+- Arrow functions in the core and router. React templates use
+  `function` declarations and JSX for components (React convention,
+  better stack traces). Menu's item components share one `useRow`
+  helper (`docs/parts.md`). Vue templates are single-file
+  components with `<script setup lang="ts">`; menu's items share
+  one `Row.vue`.
 - Enum-typed mode parameters instead of option objects when
   the set is small: `menu(trigger, mode: Focus)`.
 - No optional parameters that every caller supplies, and no
@@ -159,16 +273,15 @@ in `docs/`.
   `isMenuItem`, `canHandle`). Narrow once at the listener entry;
   pass the narrowed value down.
 - No `as`, `any`, or non-null `!` assertions in the core or
-  router. Narrow with runtime checks. (Vue wrappers may use `as
-PropType<...>` where Vue's prop typing requires it.)
+  router. Narrow with runtime checks.
 
 ### Events
 
 - `addEventListener` on `window` only. Listeners are never
   removed.
-- Custom events (`mc:navigate`) for cross-boundary signals the
-  wrappers need. No callback props or event-emitter exports from
-  the core.
+- Custom events (`mc:navigate`) for cross-boundary signals page
+  code needs. No callback props or event-emitter exports from the
+  core.
 - `void` on fire-and-forget promise expressions.
 
 ### Naming
@@ -229,9 +342,10 @@ Fixed, non-alphabetical orders that stay fixed:
 - `switch` cases on keys: `Enter`, `" "`, `Tab`, `ArrowDown`,
   `ArrowUp`, `ArrowRight`, `ArrowLeft`, `Home`, `End`, then
   `default`. Skip keys the component does not handle.
-- CSS custom properties: trigger rect in TRBL order (`--top`,
-  `--right`, `--bottom`, `--left`), then content size
-  (`--width`, `--height`).
+- CSS custom properties: trigger rect in TRBL order
+  (`--mc-trigger-top`, `--mc-trigger-right`, `--mc-trigger-bottom`,
+  `--mc-trigger-left`), then content size (`--mc-content-width`,
+  `--mc-content-height`), then `--mc-available-height`.
 - `Focus` enum: `Trigger` first (`0`), then semantic order.
 
 ## Prose style
@@ -257,9 +371,11 @@ descriptions.
   lives in `docs/` (Where things go) and rationale in
   `PRINCIPLES.md`, never in the source. When a mechanism needs
   explaining, explain it there.
-- `src/react/*`, `src/vue/*`: **no comments** except
-  `// oxlint-disable-next-line` pragmas where required. Each file is
-  small and self-evident.
+- `templates/react/*`: **no comments.** Projects own these files
+  and keep them as their own code; the only comment is the header
+  the build stamps (`// monochrome@<version> <file>: yours to
+  edit.`). Why a part, helper, or import does more than its markup
+  shows goes in `docs/parts.md`.
 - Tests: no comments except when the _why_ of a setup step would
   surprise the next reader (race conditions, sentinel globals, etc.).
 
@@ -269,9 +385,8 @@ descriptions.
 rolldown, emits `.d.ts` via `tsc`, and rewrites `package.json`'s
 `versionMeta` from the current source: `gzipSize` is the combined
 core (headline / badge), `gzipSizes` has one entry per export
-(each component plus `index` and `router`), each an object with
-a gzip number per published flavour (`core` / `react` / `vue`;
-`router` is core-only). The numbers are generated, never
+(each component plus `index` and `router`), each `{ core }`: the
+gzip bytes that entry pulls in. The numbers are generated, never
 hand-edited. Dist bytes match a Node build of the same tree;
 `gzipSync` numbers can differ by a few bytes from Node's zlib,
 so the gate always restamps from Bun.
@@ -304,8 +419,9 @@ exists, never how it behaves, and the suite runs current
 browsers rather than old ones: a support claim is checked by
 reading the code, a regression by running what people are on.
 
-`bun run test` is Chrome (`html`, `react`, `vue`).
-`bun run test:all` is the five-project matrix CI runs on
+`bun run test` is Chrome (`html`, `react`).
+`bun run test:cli` is the CLI suite (Node, no browser).
+`bun run test:all` is the four-project matrix CI runs on
 the PR: Chrome, Safari, and Firefox. `bun run test:install`
 fetches Chrome; `test:install:all` fetches all three. Do not
 postinstall browsers. `prepare` sets hooks only in a git

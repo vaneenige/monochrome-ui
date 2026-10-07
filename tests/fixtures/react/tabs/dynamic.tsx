@@ -1,4 +1,4 @@
-import { Tabs } from "monochrome/react";
+import { Tabs } from "@/components/ui";
 import { useState } from "react";
 import { createRoot } from "react-dom/client";
 

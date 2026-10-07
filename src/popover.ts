@@ -1,4 +1,4 @@
-import { findAncestor, getLinked, getTarget, hasDocument, isElement, position } from "./dom.js";
+import { findAncestor, getControls, getTarget, hasDocument, isElement, position } from "./dom.js";
 
 enum Prefix {
   ContentPopover = "mcc:popover:",
@@ -10,19 +10,19 @@ if (hasDocument) {
 
   const popover = (trigger: HTMLElement, show: boolean) => {
     if ((trigger.ariaExpanded === "true") === show) return;
-    const content = getLinked(trigger, "aria-controls");
+    const content = getControls(trigger);
     if (content) {
       if (show) {
         if (popoverShown && popoverShown !== trigger) popover(popoverShown, false);
         content.showPopover();
-        position(trigger, content);
+        position(trigger, content, "bottom");
         popoverShown = trigger;
       } else {
         content.hidePopover();
-        if (popoverShown === trigger) popoverShown = null;
       }
       trigger.ariaExpanded = `${show}`;
     }
+    if (!show && popoverShown === trigger) popoverShown = null;
   };
 
   addEventListener("pointerdown", (event: PointerEvent) => {
@@ -41,7 +41,7 @@ if (hasDocument) {
       if (isOpen) {
         trigger.focus();
       } else {
-        getLinked(trigger, "aria-controls")?.focus();
+        getControls(trigger)?.focus();
       }
     }
   });
@@ -49,10 +49,11 @@ if (hasDocument) {
   addEventListener("keydown", (event: KeyboardEvent) => {
     if (event.key === "Escape" && popoverShown && !event.defaultPrevented) {
       const trigger = popoverShown;
-      const content = getLinked(trigger, "aria-controls");
+      const content = getControls(trigger);
       let el = getTarget(event);
-      while (el && el !== content && !el.popover) el = el.parentElement;
-      if (el === content || !el) {
+      while (el && el !== content && !el.popover && !(el instanceof HTMLDialogElement))
+        el = el.parentElement;
+      if (content && (el === content || !content.contains(el))) {
         popover(trigger, false);
         trigger.focus();
         event.preventDefault();
@@ -63,10 +64,7 @@ if (hasDocument) {
   addEventListener(
     "scroll",
     (event) => {
-      if (
-        popoverShown &&
-        !(isElement(event.target) && findAncestor(event.target, Prefix.ContentPopover))
-      ) {
+      if (popoverShown && !findAncestor(getTarget(event), Prefix.ContentPopover)) {
         popover(popoverShown, false);
       }
     },
@@ -74,18 +72,16 @@ if (hasDocument) {
   );
 
   addEventListener("resize", () => {
-    if (popoverShown) {
-      const content = getLinked(popoverShown, "aria-controls");
-      if (content) position(popoverShown, content);
-    }
+    if (popoverShown) position(popoverShown, getControls(popoverShown), "bottom");
   });
 
   addEventListener("focusout", (event: FocusEvent) => {
     if (
       popoverShown &&
       isElement(event.relatedTarget) &&
-      popoverShown !== event.relatedTarget &&
-      !getLinked(popoverShown, "aria-controls")?.contains(event.relatedTarget)
+      event.relatedTarget !== popoverShown &&
+      !(event.relatedTarget.tabIndex < 0 && event.relatedTarget.contains(popoverShown)) &&
+      !getControls(popoverShown)?.contains(event.relatedTarget)
     ) {
       popover(popoverShown, false);
     }

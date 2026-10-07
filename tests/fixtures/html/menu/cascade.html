@@ -1,0 +1,28 @@
+<button data-testid="root-trigger" type="button" id="mct:menu:cascade" aria-controls="mcc:menu:cascade" aria-expanded="false" aria-haspopup="menu" tabindex="0" role="button">Cascade</button>
+<ul data-testid="root-list" role="menu" id="mcc:menu:cascade" aria-labelledby="mct:menu:cascade" popover="manual">
+  <li role="none">
+    <button data-testid="l1-trigger" type="button" id="mct:menu:cascade-1" aria-controls="mcc:menu:cascade-1" aria-expanded="false" aria-haspopup="menu" role="menuitem" tabindex="-1">Level 1</button>
+    <ul data-testid="l1-list" role="menu" id="mcc:menu:cascade-1" aria-labelledby="mct:menu:cascade-1" popover="manual">
+      <li role="none">
+        <button data-testid="l2-trigger" type="button" id="mct:menu:cascade-2" aria-controls="mcc:menu:cascade-2" aria-expanded="false" aria-haspopup="menu" role="menuitem" tabindex="-1">Level 2</button>
+        <ul data-testid="l2-list" role="menu" id="mcc:menu:cascade-2" aria-labelledby="mct:menu:cascade-2" popover="manual">
+          <li role="none">
+            <button data-testid="l3-trigger" type="button" id="mct:menu:cascade-3" aria-controls="mcc:menu:cascade-3" aria-expanded="false" aria-haspopup="menu" role="menuitem" tabindex="-1">Level 3</button>
+            <ul data-testid="l3-list" role="menu" id="mcc:menu:cascade-3" aria-labelledby="mct:menu:cascade-3" popover="manual">
+              <li role="none">
+                <button data-testid="l4-trigger" type="button" id="mct:menu:cascade-4" aria-controls="mcc:menu:cascade-4" aria-expanded="false" aria-haspopup="menu" role="menuitem" tabindex="-1">Level 4</button>
+                <ul data-testid="l4-list" role="menu" id="mcc:menu:cascade-4" aria-labelledby="mct:menu:cascade-4" popover="manual">
+                  <li role="none"><button type="button" role="menuitem" tabindex="-1">Level 4 item</button></li>
+                </ul>
+              </li>
+              <li role="none"><button type="button" role="menuitem" tabindex="-1">Level 3 item</button></li>
+            </ul>
+          </li>
+          <li role="none"><button type="button" role="menuitem" tabindex="-1">Level 2 item</button></li>
+        </ul>
+      </li>
+      <li role="none"><button type="button" role="menuitem" tabindex="-1">Level 1 item</button></li>
+    </ul>
+  </li>
+  <li role="none"><button type="button" role="menuitem" tabindex="-1">Root item</button></li>
+</ul>

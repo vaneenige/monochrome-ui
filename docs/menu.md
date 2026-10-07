@@ -2,7 +2,7 @@
 
 How `src/menu.ts` works. Shared mechanisms (roving boundary, RTL
 key mirror, positioning, resize and scroll) live in `docs/dom.md`;
-the authored first menubar tab stop lives in `docs/wrappers.md`.
+the authored first menubar tab stop lives in `docs/parts.md`.
 
 ## State
 
@@ -50,7 +50,7 @@ listener reads the scroll as a dismissal. A touch open passes
 the open focuses it with `preventScroll` and paints it when it
 is a menuitem. A mouse open that leaves focus on `body` is
 retargeted on the next key (see "Retarget from the surface or
-`body`").
+an ancestor").
 
 **Walks break on `mct:menu:` before activation.** The `click`
 walk stops at `mct:menu:` (and `mcc:menu:`) before it tests for
@@ -60,14 +60,21 @@ trigger that is also a link never activates as an item.
 
 **Hover focuses and paints.** `pointermove` focuses the enabled
 item under the pointer (React Aria / Base UI) so Arrow keys
-continue from there; `data-highlighted` follows that item through
+continue from there; `data-mc-highlighted` follows that item through
 `menuHighlight`, whose focus is `preventScroll`: the pointer is
 already on the item, so there is nothing to bring into view, and
 a scroll would dismiss the menu it just highlighted. Keyboard
-roving focuses the item itself before it highlights, so an item
-outside a scrollable list still scrolls into view. Leaving
+roving (arrows, Home, End, typeahead, and an open onto the first
+or last item) focuses with `preventScroll` too, then calls
+`scrollIntoView({ block: "nearest" })` on the item once it holds
+focus: a capped menu scrolls just far enough to show it, the same
+in every browser (native focus scrolling aligns as each browser
+likes, and Chromium centers an item it jumps to), and not at all
+when it is already in view. A menu's
+`scroll-padding-block` keeps the row at its resting inset.
+Leaving
 the menu, or hovering a disabled item, label, or separator, leaves
-`data-highlighted` on the last item so keyboard still has a
+`data-mc-highlighted` on the last item so keyboard still has a
 visible current item. Hovering a submenu trigger opens its
 submenu with `Focus.None`; hovering any other item closes an open
 submenu; hovering a sibling menubar trigger switches the open
@@ -108,13 +115,18 @@ any other keystroke on the page costs two checks and a switch.
 `shouldPreventDefault` is set by the cases and applied once at the
 tail.
 
-**Retarget from the surface or `body`.** `showPopover` can leave
-focus on the content node, and a click on a label or separator
-inside the menu blurs the item to `body`. When a menu is open and
-`keydown` fires from a `mcc:menu:` surface or from `body`, the
-target is retargeted to the painted item or the stack top and
-focused, so the switch always sees a live element. Opening a root
-menu clears a `data-highlighted` left on a menubar trigger by an
+**Retarget from the surface or an ancestor.** `showPopover` can
+leave focus on the content node, and a click on a label or
+separator inside the menu blurs the item to `body`. Safari does
+not focus a clicked button, so a mouse open leaves focus on the
+nearest focusable ancestor of the trigger: `body`, or a popover
+content, a `<dialog>`, or the router's `main` around it. When a
+menu is open and `keydown` fires from a `mcc:menu:` surface or
+from any element other than the root trigger that contains it,
+the target is retargeted to the painted item, or to the stack top
+when that item left the document, and focused, so the switch
+always sees a live element in the open menu. Opening a root menu
+clears a `data-mc-highlighted` left on a menubar trigger by an
 earlier Escape or bar roving, unless it is the trigger being
 opened, so that retarget never picks an item from a closed
 session.
@@ -136,8 +148,19 @@ does: user `onclick` handlers fire, and a menuitem that is also
 another component's trigger (a `mct:dialog-open:` item) works
 without Menu naming that component. Menu's `click` walk only
 activates href items, so that `click()` does not run
-`menuActivate` twice. Checkbox and radio items leave the menu
-open.
+`menuActivate` twice.
+
+**Activation closes unless kept open.** Every activation path
+ends in `menuActivate`: `pointerup`, the href `click` walk, and
+Enter or Space in `keydown`. It toggles a checkbox or sweeps a
+radio set, then calls `menuCloseAll` for every role, unless the
+item has `data-mc-keep-open` or the caller passed `keptOpen`.
+Only `keydown` passes it, for Space on a checkbox or radio item
+(`role !== "menuitem"`: triggers never reach that branch), which
+is APG's "Space changes the state without closing". The attribute
+is read by presence at activation, so markup can add or drop it
+while the menu is open. On the keyboard the menu closes before
+the `click()` above, so an `onclick` handler sees it closed.
 
 **Href items.** Enter on an href menuitem is the exception: no
 `preventDefault`, so the synthesized `click` navigates and the
@@ -192,13 +215,15 @@ leave from there; that one scripted focus predates the moving
 stop and exists because closing the menu has to move focus out
 of it anyway. Tabbing back in lands on the item the reader left
 from, as in Tabs and toolbars; the authored `tabindex="0"` is
-only where the first visit starts (see `docs/wrappers.md`).
+only where the first visit starts (see `docs/parts.md`).
 
 **Single-letter typeahead, on purpose.** A printable key (any
 single character except Space, in any script) moves focus to
 the next enabled item whose text starts with that character;
-pressing it again cycles. `shouldMatchLetter` carries the letter
-into the roving walk for that keydown only.
+pressing it again cycles. A Ctrl or Meta chord is a shortcut,
+not a letter, and never reaches the walk: `keydown` returns on
+any chord first (see `docs/dom.md`). `shouldMatchLetter`
+carries the letter into the roving walk for that keydown only.
 
 **No prefix buffer.** Multi-character typeahead needs a window
 ("keys within 500 ms belong together"), and inside that window
@@ -213,17 +238,33 @@ optional; the multi-character form belongs to the listbox
 pattern. Menus are short, and repeat-to-cycle covers shared
 first letters.
 
+**Groups are walked through.** `menuNext` and `menuPrevious` are
+Menu's own navigators, not `roving` from `src/dom.ts`: `menuStep`
+takes the next or previous sibling, and past either end of a
+`role="group"` list it steps on from the group's wrapper `li`
+instead of wrapping inside the group, so only the menu list
+itself wraps. `menuRoving` enters a group through its wrapper, at
+the first child going forward and the last going back, so a group
+is never a stop; an empty one is passed over like a label. Home
+and End start from the menu list (`inPopover`), not the item's own
+list, so they reach the whole menu from inside a group. Every key
+walk goes through these two navigators, so arrows, Home, End,
+typeahead, and the disabled and hidden skips behave the same in a
+group as outside one.
+
 **Radio sweep reuses the navigation walker.** Activating a
-`menuitemradio` must clear `aria-checked` on every adjacent radio
-up to the group boundary. Instead of writing a dedicated sweep,
-`menuActivate` sets three flags (`shouldResetRadio`,
-`radioHeadDone`, `radioTailChain`) and calls the same `menuNext`
-used for ArrowDown. `menuRoving` notices the non-null driver
-state and switches into sweep mode: clear radios in the "head"
-half, buffer them past the wrap, flush the tail once the
-activated item is reached. One engine, three behaviours (plain
-roving, typeahead, radio sweep), selected by which flag is
-non-null.
+`menuitemradio` must clear `aria-checked` on every radio in its
+run. Instead of writing a dedicated sweep, `menuActivate` sets
+three flags (`shouldResetRadio`, `radioHeadDone`,
+`radioTailChain`) and calls the same `menuNext` used for
+ArrowDown. `menuRoving` notices the non-null driver state and
+switches into sweep mode: clear radios in the "head" half, buffer
+them past the wrap, flush the tail once the activated item is
+reached. One engine, three behaviours (plain roving, typeahead,
+radio sweep), selected by which flag is non-null. During the sweep
+`menuStep` wraps inside a group and `menuRoving` never enters one,
+so a group's radios are one set and a group's wrapper ends an
+ungrouped run.
 
 ## Focus and nesting
 
@@ -235,19 +276,21 @@ focus stays with the browser's mousedown. With no highlight, a
 mouse open leaves focus to the browser. A `Focus.None` close
 focuses the trigger when the active element is inside the
 content, so `hidePopover` never drops a focused node that lives
-in the menu. Every focus this file moves uses `preventScroll`,
-except keyboard roving (see "Hover focuses and paints"): a
+in the menu. Every focus this file moves uses `preventScroll`: a
 sticky-header trigger inside `scroll-padding-top` cannot scroll
 the document, and a scroll that dismissed a menu is not undone.
+Keyboard roving then scrolls the item into view itself (see "Hover
+focuses and paints").
 `menuHighlight` focuses even when the painted item did not
 change, so a later move on the same trigger repairs stolen focus.
 
-**Painting on close.** Close only clears `data-highlighted` when
-the painted item lives in that menu's content, so the next parent
-item keeps its highlight. A `Focus.Trigger` close (ArrowLeft /
-Escape) paints the menuitem trigger, so leaving a submenu is not
-an empty slot. `Focus.None` does not, so a sibling hover is not
-overwritten.
+**Painting on close.** Close only clears `data-mc-highlighted` when
+the painted item lives in that menu's content, or is the closed
+trigger itself (a bar item left by Tab or an outside press), so
+the next parent item keeps its highlight. A `Focus.Trigger` close
+(ArrowLeft / Escape) paints the menuitem trigger, so leaving a
+submenu is not an empty slot. `Focus.None` does not, so a sibling
+hover is not overwritten.
 
 **Sibling submenu replace.** Opening a menu closes every stack
 entry whose content does not contain the new trigger (`menuTrim`).
@@ -261,9 +304,13 @@ parent therefore closes it; ArrowRight still enters.
 **Menubar by role.** `menubarItem` walks up to the element whose
 parent is `role="menubar"`: the bar-level wrapper that ArrowRight
 / ArrowLeft rove. Hover-switch compares the menubars of the two
-wrappers instead of assuming trigger, wrapper, menubar depth. In
-`keydown` the walk starts from the open root trigger when a menu
-is open, so a menubar popover rendered outside the bar still
-steps; it falls back to the focused item. A standalone menu has
-no menubar ancestor, so ArrowRight / ArrowLeft on its items are
-inert without walking unrelated siblings.
+wrappers instead of assuming trigger, wrapper, menubar depth. A
+plain bar item (a `menuitem` whose wrapper's parent is the
+menubar) joins the hover trigger path as a trigger does, so
+hovering it while a bar menu is open closes that menu, with
+nothing to open in its place. In `keydown` the walk starts from
+the open root trigger when a menu is open, so a menubar popover
+rendered outside the bar still steps; it falls back to the
+focused item. A standalone menu has no menubar ancestor, so
+ArrowRight / ArrowLeft on its items are inert without walking
+unrelated siblings.

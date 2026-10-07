@@ -1,4 +1,4 @@
-import { Menu } from "monochrome/react";
+import { Menu } from "@/components/ui";
 
 export default () => (
   <>
@@ -24,14 +24,14 @@ export default () => (
           </Menu.Item>
           <Menu.Separator data-testid="root-separator" style={{ height: 8 }} />
           <Menu.Label data-testid="root-label">Section</Menu.Label>
-          <Menu.Group>
+          <Menu.Sub>
             <Menu.Trigger data-testid="root-submenu-trigger">Submenu Trigger</Menu.Trigger>
             <Menu.Popover data-testid="root-submenu-list">
               <Menu.Item data-testid="root-submenu-item-1">Submenu Item 1</Menu.Item>
               <Menu.Item data-testid="root-submenu-item-2">Submenu Item 2</Menu.Item>
               <Menu.Item data-testid="root-submenu-item-3">Submenu Item 3</Menu.Item>
             </Menu.Popover>
-          </Menu.Group>
+          </Menu.Sub>
         </Menu.Popover>
       </Menu.Root>
       <button type="button" data-testid="focus-after">

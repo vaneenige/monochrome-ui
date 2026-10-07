@@ -1,12 +1,12 @@
 # Router
 
 `import "monochrome/router"`. Same-origin Navigation API
-intercept: fetch the next page, swap `data-area` regions
-whose `data-key` differs, set the title, focus the swapped
+intercept: fetch the next page, swap `data-mc-area` regions
+whose `data-mc-key` differs, set the title, focus the swapped
 area, fire `mc:navigate`. No `window.navigation`: full page
 loads.
 
-Needs `data-area="root"`. Matching area names and root keys
+Needs `data-mc-area="root"`. Matching area names and root keys
 keep the current root. Stale work skips the swap. Failure
 reloads.
 
@@ -82,8 +82,38 @@ current path (no fetch).
 Not: reload, fragment jumps, hash Back/Forward, downloads,
 forms, `rel="external"`, cross-origin, new-tab, no root.
 
-Scroll, fragments, and refresh are the browser's.
+Back/Forward scroll restoration and refresh are the browser's.
 `history.scrollRestoration` stays `"auto"`.
+
+**A push or replace scrolls by hand.** The intercept takes
+`scroll: "manual"`, and `settleScroll` runs after the swap, before
+`mc:navigate`: to the URL's fragment if the new page has that
+element, else to the top. The browser's own reset after the
+transition is not reliable: Safari 26.4 can skip it, so a link
+clicked from a scrolled page lands on the new page at the old
+offset, with a fixed header inside the swapped root painted
+offscreen. Asking the event to scroll early does not help either:
+on a traverse WebKit then restores the offset of the entry being
+left. Back/Forward keeps the browser's restoration, which WebKit
+gets right.
+
+**The click paints before the swap.** A prefetched page resolves
+at once, so without a pause the parse, the swap and every
+`mc:navigate` listener would run before the click's first paint
+and count toward it (Interaction to Next Paint). On a slow phone
+that work is the whole interaction. The handler awaits
+`afterPaint` after the fetch, a timeout queued from
+`requestAnimationFrame` that runs once that frame is drawn, then
+checks for abort and swaps. A page still loading costs nothing
+extra: the browser paints while the fetch is pending.
+
+The pause pays off only when that frame draws something. Chrome
+ends an interaction at the next frame that paints, and a click
+that changes nothing on screen (a link whose hover style is
+already on) waits for the swap's frame instead: one frame later
+than a swap without the pause. So the page gives the clicked link
+a visible state on the click, such as the current-page mark in a
+sidebar or an `:active` style; the spec says so.
 
 **Anchor resolution.** The navigate event names the element the
 navigation started from, and the filters above run on the nearest
@@ -100,6 +130,22 @@ Hover and focus prefetch resolve the same way, from
 (2022-09-02), which is the trade `browserslist` records. A
 navigation no element started, from a script or a form, names
 nothing and is left alone.
+
+**A link in an open dialog closes it.** When the navigation
+starts, the listener walks up from `sourceElement` to the nearest
+`<dialog>` and, if it is open, keeps it as `routerDialog`. Once
+the fetch succeeds, and before the swap, the handler calls
+`close()` on it. A search or navigation dialog outside the swapped
+areas would otherwise stay open, modal, over the new page. The
+close waits for the fetch, so a navigation that is aborted, or
+whose fetch fails and falls back to a full load, leaves the dialog
+as it was, and a link to the current path (no fetch) never closes
+it. A `close` listener on `window` (capture: the event does not
+bubble) drops `routerDialog` when that dialog closes first, so a
+page that closes it on the click, or a reader who closes and
+reopens it while the page loads, keeps the dialog they reopened.
+Only the dialog holding the link closes; the router names no
+other surface.
 
 ## Support
 

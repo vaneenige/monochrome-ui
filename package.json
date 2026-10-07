@@ -1,16 +1,22 @@
 {
   "name": "monochrome",
   "version": "0.17.0",
-  "description": "Accessible UI component library. Best-in-class performance. HTML-first, React and Vue supported.",
+  "description": "The framework-agnostic UI library for agents. Accessible, HTML-first components with no hydration.",
   "author": "Colin van Eenige",
   "license": "MIT",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/vaneenige/monochrome-ui.git"
   },
-  "homepage": "https://github.com/vaneenige/monochrome-ui#readme",
+  "homepage": "https://monochrome-ui.com",
   "bugs": "https://github.com/vaneenige/monochrome-ui/issues",
   "keywords": [
+    "ai",
+    "agents",
+    "llm",
+    "generative-ui",
+    "cli",
+    "agent-skills",
     "accessible",
     "a11y",
     "aria",
@@ -26,7 +32,6 @@
     "keyboard-navigation",
     "html",
     "react",
-    "vue",
     "typescript",
     "accordion",
     "collapsible",
@@ -39,6 +44,14 @@
   ],
   "packageManager": "bun@1.4.2",
   "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "unpkg": "./dist/index.js",
+  "jsdelivr": "./dist/index.js",
+  "bin": {
+    "monochrome": "./dist/cli.js"
+  },
   "sideEffects": [
     "./src/index.ts",
     "./src/accordion.ts",
@@ -111,51 +124,32 @@
     "./tooltip": {
       "types": "./dist/tooltip.d.ts",
       "default": "./dist/tooltip.js"
-    },
-    "./react": {
-      "types": "./dist/react/index.d.ts",
-      "default": "./dist/react/index.js"
-    },
-    "./vue": {
-      "types": "./dist/vue/index.d.ts",
-      "default": "./dist/vue/index.js"
     }
   },
   "files": [
-    "dist"
+    "dist",
+    "spec",
+    "skills",
+    "CHANGELOG.md"
   ],
   "scripts": {
     "build": "NODE_ENV=production bun build.ts",
     "test": "bun --bun playwright test --project=html --project=react --project=vue",
     "test:all": "bun --bun playwright test",
+    "test:cli": "bun test tests/cli",
     "test:install": "bunx playwright install chromium",
     "test:install:all": "bunx playwright install chromium webkit firefox",
-    "lint": "oxlint src tests scripts build.ts && oxfmt --check src tests scripts build.ts",
-    "lint:fix": "oxlint --fix src tests scripts build.ts && oxfmt src tests scripts build.ts",
-    "format": "oxfmt src tests scripts build.ts",
+    "lint": "oxlint src tests scripts cli build.ts templates && oxfmt --check src tests scripts cli build.ts templates",
+    "lint:fix": "oxlint --fix src tests scripts cli build.ts templates && oxfmt src tests scripts cli build.ts templates",
+    "format": "oxfmt src tests scripts cli build.ts templates",
     "typecheck": "tsc --noEmit",
     "prepare": "sh scripts/git-hooks/install",
-    "prepublishOnly": "bun run lint && bun run build && bun run typecheck",
+    "prepublishOnly": "bun run lint && bun run build && bun run typecheck && bun run test:cli",
     "support": "bun scripts/support.ts"
-  },
-  "peerDependencies": {
-    "react": ">=19",
-    "react-dom": ">=19",
-    "vue": ">=3.5"
-  },
-  "peerDependenciesMeta": {
-    "react": {
-      "optional": true
-    },
-    "react-dom": {
-      "optional": true
-    },
-    "vue": {
-      "optional": true
-    }
   },
   "devDependencies": {
     "@axe-core/playwright": "4.13.0",
+    "@babel/core": "7.29.7",
     "@mdn/browser-compat-data": "8.1.2",
     "@playwright/test": "1.63.0",
     "@types/node": "26.4.1",
@@ -175,55 +169,37 @@
     "playwright-core": "1.63.0"
   },
   "versionMeta": {
-    "gzipSize": 3430,
+    "gzipSize": 3934,
     "gzipSizes": {
       "accordion": {
-        "core": 998,
-        "react": 473,
-        "vue": 668
+        "core": 1153
       },
       "collapsible": {
-        "core": 662,
-        "react": 432,
-        "vue": 608
+        "core": 826
       },
       "dialog": {
-        "core": 792,
-        "react": 528,
-        "vue": 726
+        "core": 992
       },
       "index": {
-        "core": 3430,
-        "react": 1900,
-        "vue": 2054
+        "core": 3934
       },
       "menu": {
-        "core": 2408,
-        "react": 689,
-        "vue": 871
+        "core": 2785
       },
       "menubar": {
-        "core": 2408,
-        "react": 794,
-        "vue": 957
+        "core": 2785
       },
       "popover": {
-        "core": 1007,
-        "react": 506,
-        "vue": 710
+        "core": 1185
       },
       "router": {
-        "core": 1322
+        "core": 1549
       },
       "tabs": {
-        "core": 1009,
-        "react": 553,
-        "vue": 796
+        "core": 1170
       },
       "tooltip": {
-        "core": 1007,
-        "react": 359,
-        "vue": 512
+        "core": 1155
       }
     }
   }

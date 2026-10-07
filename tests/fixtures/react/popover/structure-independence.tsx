@@ -1,4 +1,4 @@
-import { Popover } from "monochrome/react";
+import { Popover } from "@/components/ui";
 
 export default () => (
   <Popover.Root>

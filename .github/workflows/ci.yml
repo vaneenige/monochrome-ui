@@ -33,6 +33,8 @@ jobs:
 
       - run: bun run typecheck
 
+      - run: bun run test:cli
+
       - run: git diff --exit-code package.json
 
       - uses: actions/upload-artifact@v7.0.1
