@@ -169,6 +169,15 @@ test.describe("Accordion", () => {
       await expect(page.getByTestId("single-trigger-3")).toBeFocused();
     });
 
+    test("ArrowDown skips a hidden item", async ({ page }) => {
+      await page.getByTestId("single-trigger-2").evaluate((el) => {
+        el.parentElement?.parentElement?.setAttribute("hidden", "");
+      });
+      await page.getByTestId("single-trigger-1").focus();
+      await page.keyboard.press("ArrowDown");
+      await expect(page.getByTestId("single-trigger-3")).toBeFocused();
+    });
+
     test("ArrowLeft / ArrowRight are inert on the trigger", async ({ page }) => {
       const trigger = page.getByTestId("single-trigger-2");
       await trigger.focus();

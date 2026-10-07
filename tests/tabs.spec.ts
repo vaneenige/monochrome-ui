@@ -123,6 +123,13 @@ test.describe("Tabs", () => {
         await expect(page.getByTestId(layout.tabs[2])).toBeFocused();
       });
 
+      test(`${layout.next} skips a hidden tab`, async ({ page }) => {
+        await page.getByTestId(layout.tabs[1]).evaluate((el) => el.setAttribute("hidden", ""));
+        await page.getByTestId(layout.tabs[0]).focus();
+        await page.keyboard.press(layout.next);
+        await expect(page.getByTestId(layout.tabs[2])).toBeFocused();
+      });
+
       test(`${layout.inertNext} / ${layout.inertPrevious} are inert`, async ({ page }) => {
         await page.getByTestId(layout.tabs[0]).focus();
         await page.keyboard.press(layout.inertNext);

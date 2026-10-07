@@ -28,7 +28,7 @@ if (hasDocument) {
       if (isTrigger(node, Prefix.TriggerTabs) && node.ariaDisabled !== "true") {
         shouldPreventDefault = true;
         node.focus();
-        return node;
+        if (document.activeElement === node) return node;
       }
     }
     return fallback(node);

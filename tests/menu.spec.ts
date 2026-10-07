@@ -248,6 +248,14 @@ test.describe("Menu", () => {
       await expect(page.getByTestId("root-submenu-trigger")).toBeFocused();
     });
 
+    test("ArrowDown skips a hidden item", async ({ page }) => {
+      await page.getByTestId("root-item-2").evaluate((el) => {
+        el.parentElement?.setAttribute("hidden", "");
+      });
+      await page.keyboard.press("ArrowDown");
+      await expect(page.getByTestId("root-item-3")).toBeFocused();
+    });
+
     test("ArrowLeft / ArrowRight on a regular item are inert (no submenu)", async ({ page }) => {
       await page.getByTestId("root-item-1").press("ArrowLeft");
       await expect(page.getByTestId("root-item-1")).toBeFocused();

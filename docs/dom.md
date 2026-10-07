@@ -41,17 +41,28 @@ walks where one pass mixes prefixes with roles; see
 `docs/menu.md`.
 
 **Roving-boundary sentinel.** `rovingBoundary` remembers the first
-candidate the walker rejected; if we ever see it again we give
+candidate the walker visits; if we ever see it again we give
 up and set `shouldPreventDefault` so the key does not scroll. A
 generic sibling walker can't distinguish "walked past the end
 and wrapped" from "kept going past the start", and on an
 all-disabled list the naive walker loops forever. One pointer,
-zero counters, zero extra passes. The boundary is cleared at the
-top of every listener that drives a walk: `keydown` in Accordion,
-Tabs, and Menu, and Menu's `pointerup` (the radio sweep).
-Accordion and Tabs bail out of `keydown` on an Alt / Ctrl /
-Meta modifier so browser shortcuts such as back and forward
-pass through untouched.
+zero counters, zero extra passes. A candidate counts only when it
+takes focus: each roving callback calls `focus()` and accepts the
+candidate once it is `document.activeElement`, so a hidden one
+(`hidden`, `display: none`) is skipped like a disabled one
+instead of ending the walk with focus still behind it, where
+every later key would find it again. The boundary is cleared at
+the top of every listener that drives a walk: `keydown` in
+Accordion, Tabs, and Menu, and Menu's `pointerup` (the radio
+sweep).
+
+**Accordion, Menu, and Tabs bail on chords.** Each `keydown`
+listener returns before its switch when Alt, Ctrl, or Meta is
+held, so browser and system shortcuts pass through untouched:
+Alt+ArrowLeft and Alt+ArrowRight (Back and Forward on Windows
+and Linux) would otherwise rove a menubar. Shift is not a chord:
+Shift+Tab still leaves a menu, and typeahead matches the shifted
+character (see `docs/menu.md`).
 
 **RTL by mirroring the key, once.** Menu and Tabs pass `event.key`
 through `spatialKey`, which swaps ArrowLeft and ArrowRight when

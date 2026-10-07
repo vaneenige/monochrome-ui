@@ -64,8 +64,15 @@ continue from there; `data-highlighted` follows that item through
 `menuHighlight`, whose focus is `preventScroll`: the pointer is
 already on the item, so there is nothing to bring into view, and
 a scroll would dismiss the menu it just highlighted. Keyboard
-roving focuses the item itself before it highlights, so an item
-outside a scrollable list still scrolls into view. Leaving
+roving (arrows, Home, End, typeahead, and an open onto the first
+or last item) focuses with `preventScroll` too, then calls
+`scrollIntoView({ block: "nearest" })` on the item once it holds
+focus: a capped menu scrolls just far enough to show it, the same
+in every browser (native focus scrolling aligns as each browser
+likes, and Chromium centers an item it jumps to), and not at all
+when it is already in view. A menu's
+`scroll-padding-block` keeps the row at its resting inset.
+Leaving
 the menu, or hovering a disabled item, label, or separator, leaves
 `data-highlighted` on the last item so keyboard still has a
 visible current item. Hovering a submenu trigger opens its
@@ -235,10 +242,11 @@ focus stays with the browser's mousedown. With no highlight, a
 mouse open leaves focus to the browser. A `Focus.None` close
 focuses the trigger when the active element is inside the
 content, so `hidePopover` never drops a focused node that lives
-in the menu. Every focus this file moves uses `preventScroll`,
-except keyboard roving (see "Hover focuses and paints"): a
+in the menu. Every focus this file moves uses `preventScroll`: a
 sticky-header trigger inside `scroll-padding-top` cannot scroll
 the document, and a scroll that dismissed a menu is not undone.
+Keyboard roving then scrolls the item into view itself (see "Hover
+focuses and paints").
 `menuHighlight` focuses even when the painted item did not
 change, so a later move on the same trigger repairs stolen focus.
 

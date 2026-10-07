@@ -89,9 +89,12 @@ if (hasDocument) {
           menuitem.textContent?.trim().toLowerCase().startsWith(shouldMatchLetter))
       ) {
         shouldPreventDefault = true;
-        menuitem.focus();
-        menuHighlight(menuitem);
-        return menuitem;
+        menuitem.focus({ preventScroll: true });
+        if (document.activeElement === menuitem) {
+          menuHighlight(menuitem);
+          menuitem.scrollIntoView({ block: "nearest" });
+          return menuitem;
+        }
       }
       return fallback(node);
     }

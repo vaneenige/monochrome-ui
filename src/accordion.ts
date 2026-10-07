@@ -20,10 +20,11 @@ if (hasDocument) {
 
   const accordionTrigger = (item: Element | null | undefined) => {
     let el = item?.firstElementChild;
-    while (el && !isTrigger(el, Prefix.TriggerAccordion)) {
+    while (el) {
+      if (isTrigger(el, Prefix.TriggerAccordion)) return el;
       el = el.firstElementChild;
     }
-    return isTrigger(el, Prefix.TriggerAccordion) ? el : null;
+    return null;
   };
 
   const accordionItem = (el: HTMLElement | null | undefined) => {
@@ -44,7 +45,7 @@ if (hasDocument) {
       if (trigger && trigger.ariaDisabled !== "true") {
         shouldPreventDefault = true;
         trigger.focus();
-        return trigger;
+        if (document.activeElement === trigger) return trigger;
       }
     }
     return fallback(node);
