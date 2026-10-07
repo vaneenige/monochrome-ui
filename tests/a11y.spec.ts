@@ -61,6 +61,11 @@ test.describe("Accessibility (axe)", () => {
       list: "list",
     },
     {
+      name: "menu/groups",
+      trigger: "trigger",
+      list: "list",
+    },
+    {
       name: "menu/siblings",
       trigger: "trigger",
       list: "list",

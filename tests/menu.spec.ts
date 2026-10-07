@@ -269,7 +269,7 @@ test.describe("Menu", () => {
       await page.keyboard.press("Escape");
       await expect(page.getByTestId("root-list")).not.toBeVisible();
       await expect(page.getByTestId("root-trigger")).toBeFocused();
-      await expect(page.getByTestId("root-trigger")).not.toHaveAttribute("data-highlighted");
+      await expect(page.getByTestId("root-trigger")).not.toHaveAttribute("data-mc-highlighted");
     });
   });
 
@@ -314,7 +314,7 @@ test.describe("Menu", () => {
         await expect(page.getByTestId("root-submenu-list")).not.toBeVisible();
         await expect(page.getByTestId("root-submenu-trigger")).toBeFocused();
         await expect(page.getByTestId("root-submenu-trigger")).toHaveAttribute(
-          "data-highlighted",
+          "data-mc-highlighted",
           "",
         );
       });
@@ -324,7 +324,7 @@ test.describe("Menu", () => {
       await openSubmenuViaKeyboard(page);
       await page.getByTestId("root-submenu-item-1").press("ArrowLeft");
       await expect(page.getByTestId("root-submenu-trigger")).toHaveAttribute(
-        "data-highlighted",
+        "data-mc-highlighted",
         "",
       );
       await page.keyboard.press("ArrowRight");
@@ -338,7 +338,7 @@ test.describe("Menu", () => {
       await page.keyboard.press("ArrowDown");
       await expect(page.getByTestId("root-submenu-list")).not.toBeVisible();
       await expect(page.getByTestId("root-item-1")).toBeFocused();
-      await expect(page.getByTestId("root-item-1")).toHaveAttribute("data-highlighted", "");
+      await expect(page.getByTestId("root-item-1")).toHaveAttribute("data-mc-highlighted", "");
     });
 
     test("ArrowLeft opens and ArrowRight closes the submenu in RTL", async ({ page }) => {
@@ -351,7 +351,7 @@ test.describe("Menu", () => {
       await expect(page.getByTestId("root-submenu-list")).not.toBeVisible();
       await expect(page.getByTestId("root-submenu-trigger")).toBeFocused();
       await expect(page.getByTestId("root-submenu-trigger")).toHaveAttribute(
-        "data-highlighted",
+        "data-mc-highlighted",
         "",
       );
     });
@@ -483,6 +483,16 @@ test.describe("Menu", () => {
       await expect(page.getByTestId("root-list")).not.toBeVisible();
     });
 
+    test("press, drag to an item, release runs its click handler", async ({ page }) => {
+      await page.getByTestId("trigger").hover();
+      await page.mouse.down();
+      await expect(page.getByTestId("list")).toBeVisible();
+      await page.getByTestId("item").hover();
+      await page.mouse.up();
+      await expect(page.getByTestId("output")).toHaveText("item-clicked");
+      await expect(page.getByTestId("list")).not.toBeVisible();
+    });
+
     test("pointerup outside after opening leaves the menu open (sticky miss)", async ({ page }) => {
       await openRootViaPointer(page);
       await pointerUp(page.getByTestId("scroll-container"));
@@ -604,7 +614,7 @@ test.describe("Menu", () => {
       await expect(page.getByTestId("root-list")).toBeVisible();
       await expect(page.getByTestId("root-submenu-trigger")).toBeFocused();
       await expect(page.getByTestId("root-submenu-trigger")).toHaveAttribute(
-        "data-highlighted",
+        "data-mc-highlighted",
         "",
       );
     });
@@ -648,7 +658,7 @@ test.describe("Menu", () => {
       await page.keyboard.press("Escape");
       await expect(page.getByTestId("root-list")).not.toBeVisible();
       await expect(page.getByTestId("root-trigger")).toBeFocused();
-      await expect(page.getByTestId("root-trigger")).not.toHaveAttribute("data-highlighted");
+      await expect(page.getByTestId("root-trigger")).not.toHaveAttribute("data-mc-highlighted");
     });
 
     test("ArrowDown after a click on a label roves from the highlighted item", async ({ page }) => {
@@ -669,7 +679,7 @@ test.describe("Menu", () => {
       await expect(page.getByTestId("root-submenu-list")).not.toBeVisible();
       await expect(page.getByTestId("root-submenu-trigger")).toBeFocused();
       await expect(page.getByTestId("root-submenu-trigger")).toHaveAttribute(
-        "data-highlighted",
+        "data-mc-highlighted",
         "",
       );
     });
@@ -698,7 +708,7 @@ test.describe("Menu", () => {
       await page.keyboard.press("ArrowDown");
       await expect(page.getByTestId("root-submenu-list")).not.toBeVisible();
       await expect(page.getByTestId("root-item-1")).toBeFocused();
-      await expect(page.getByTestId("root-item-1")).toHaveAttribute("data-highlighted", "");
+      await expect(page.getByTestId("root-item-1")).toHaveAttribute("data-mc-highlighted", "");
       await expect(page.getByTestId("root-list")).toBeVisible();
     });
 
@@ -713,11 +723,11 @@ test.describe("Menu", () => {
     }) => {
       await openRoot(page);
       await page.getByTestId("root-item-1").hover();
-      await expect(page.getByTestId("root-item-1")).toHaveAttribute("data-highlighted", "");
+      await expect(page.getByTestId("root-item-1")).toHaveAttribute("data-mc-highlighted", "");
       for (const id of ["root-item-disabled", "root-label", "root-separator"] as const) {
         await page.getByTestId(id).hover();
         await expect(page.getByTestId("root-item-1")).toBeFocused();
-        await expect(page.getByTestId("root-item-1")).toHaveAttribute("data-highlighted", "");
+        await expect(page.getByTestId("root-item-1")).toHaveAttribute("data-mc-highlighted", "");
         await page.getByTestId("root-item-1").hover();
       }
     });
@@ -729,7 +739,7 @@ test.describe("Menu", () => {
       await page.getByTestId("root-item-2").hover();
       await page.mouse.move(0, 0);
       await expect(page.getByTestId("root-item-2")).toBeFocused();
-      await expect(page.getByTestId("root-item-2")).toHaveAttribute("data-highlighted", "");
+      await expect(page.getByTestId("root-item-2")).toHaveAttribute("data-mc-highlighted", "");
       await page.keyboard.press("ArrowDown");
       await expect(page.getByTestId("root-item-3")).toBeFocused();
     });
@@ -822,19 +832,21 @@ test.describe("Menu", () => {
   });
 
   test.describe("Focus management (highlight)", () => {
-    test("keyboard roving sets `data-highlighted` on the focused item", async ({ page }) => {
+    test("keyboard roving sets `data-mc-highlighted` on the focused item", async ({ page }) => {
       await openRootViaKeyboard(page);
-      await expect(page.getByTestId("root-item-1")).toHaveAttribute("data-highlighted", "");
+      await expect(page.getByTestId("root-item-1")).toHaveAttribute("data-mc-highlighted", "");
       await page.keyboard.press("ArrowDown");
-      await expect(page.getByTestId("root-item-1")).not.toHaveAttribute("data-highlighted");
-      await expect(page.getByTestId("root-item-2")).toHaveAttribute("data-highlighted", "");
+      await expect(page.getByTestId("root-item-1")).not.toHaveAttribute("data-mc-highlighted");
+      await expect(page.getByTestId("root-item-2")).toHaveAttribute("data-mc-highlighted", "");
     });
 
-    test("pointermove sets `data-highlighted` on the item under the pointer", async ({ page }) => {
+    test("pointermove sets `data-mc-highlighted` on the item under the pointer", async ({
+      page,
+    }) => {
       await openRootViaPointer(page);
       await page.getByTestId("root-item-2").hover();
-      await expect(page.getByTestId("root-item-2")).toHaveAttribute("data-highlighted", "");
-      await expect(page.getByTestId("root-item-1")).not.toHaveAttribute("data-highlighted");
+      await expect(page.getByTestId("root-item-2")).toHaveAttribute("data-mc-highlighted", "");
+      await expect(page.getByTestId("root-item-1")).not.toHaveAttribute("data-mc-highlighted");
     });
 
     test("hover focus after a pointer open does not match `:focus-visible`", async ({
@@ -877,10 +889,10 @@ test.describe("Menu", () => {
       await expect(page.getByTestId("root-submenu-list")).toBeVisible();
       await expect(page.getByTestId("root-submenu-trigger")).toBeFocused();
       await expect(page.getByTestId("root-submenu-trigger")).toHaveAttribute(
-        "data-highlighted",
+        "data-mc-highlighted",
         "",
       );
-      await expect(page.getByTestId("root-item-1")).not.toHaveAttribute("data-highlighted");
+      await expect(page.getByTestId("root-item-1")).not.toHaveAttribute("data-mc-highlighted");
       if (browserName === "chromium") {
         expect(
           await page
@@ -896,10 +908,10 @@ test.describe("Menu", () => {
       await expect(page.getByTestId("root-submenu-list")).toBeVisible();
       await expect(page.getByTestId("root-submenu-trigger")).toBeFocused();
       await expect(page.getByTestId("root-submenu-trigger")).toHaveAttribute(
-        "data-highlighted",
+        "data-mc-highlighted",
         "",
       );
-      await expect(page.getByTestId("root-item-1")).not.toHaveAttribute("data-highlighted");
+      await expect(page.getByTestId("root-item-1")).not.toHaveAttribute("data-mc-highlighted");
     });
 
     test("hold from the trigger still highlights the item under the pointer", async ({ page }) => {
@@ -913,7 +925,7 @@ test.describe("Menu", () => {
       const itemBox = await item.boundingBox();
       if (!itemBox) throw new Error("missing bounding box");
       await page.mouse.move(itemBox.x + itemBox.width / 2, itemBox.y + itemBox.height / 2);
-      await expect(item).toHaveAttribute("data-highlighted", "");
+      await expect(item).toHaveAttribute("data-mc-highlighted", "");
       await page.mouse.up();
     });
   });
@@ -1541,7 +1553,10 @@ test.describe("Menubar", () => {
       await page.keyboard.press("Escape");
       await expect(page.getByTestId("menubar-list-1")).not.toBeVisible();
       await expect(page.getByTestId("menubar-trigger-1")).toBeFocused();
-      await expect(page.getByTestId("menubar-trigger-1")).toHaveAttribute("data-highlighted", "");
+      await expect(page.getByTestId("menubar-trigger-1")).toHaveAttribute(
+        "data-mc-highlighted",
+        "",
+      );
     });
 
     for (const key of ["ArrowLeft", "Escape"] as const) {
@@ -1553,7 +1568,7 @@ test.describe("Menubar", () => {
         await expect(page.getByTestId("menubar-list-1")).toBeVisible();
         await expect(page.getByTestId("menubar-submenu-trigger-1")).toBeFocused();
         await expect(page.getByTestId("menubar-submenu-trigger-1")).toHaveAttribute(
-          "data-highlighted",
+          "data-mc-highlighted",
           "",
         );
       });
@@ -1681,7 +1696,10 @@ test.describe("Menubar", () => {
       await page.keyboard.press("Escape");
       await expect(page.getByTestId("menubar-list-1")).not.toBeVisible();
       await expect(page.getByTestId("menubar-trigger-1")).toBeFocused();
-      await expect(page.getByTestId("menubar-trigger-1")).toHaveAttribute("data-highlighted", "");
+      await expect(page.getByTestId("menubar-trigger-1")).toHaveAttribute(
+        "data-mc-highlighted",
+        "",
+      );
     });
 
     test("ArrowDown from the menu popover ignores a trigger painted by an earlier Escape", async ({
@@ -1689,9 +1707,14 @@ test.describe("Menubar", () => {
     }) => {
       await page.getByTestId("menubar-trigger-1").click();
       await page.keyboard.press("Escape");
-      await expect(page.getByTestId("menubar-trigger-1")).toHaveAttribute("data-highlighted", "");
+      await expect(page.getByTestId("menubar-trigger-1")).toHaveAttribute(
+        "data-mc-highlighted",
+        "",
+      );
       await page.getByTestId("menubar-trigger-2").click();
-      await expect(page.getByTestId("menubar-trigger-1")).not.toHaveAttribute("data-highlighted");
+      await expect(page.getByTestId("menubar-trigger-1")).not.toHaveAttribute(
+        "data-mc-highlighted",
+      );
       await focusPopover(page, "menubar-list-2");
       await page.keyboard.press("ArrowDown");
       await expect(page.getByTestId("menubar-item-2-1")).toBeFocused();
@@ -1733,7 +1756,7 @@ test.describe("Menubar", () => {
       await expect(page.getByTestId("menubar-list-1")).toBeVisible();
       await expect(page.getByTestId("menubar-submenu-trigger-1")).toBeFocused();
       await expect(page.getByTestId("menubar-submenu-trigger-1")).toHaveAttribute(
-        "data-highlighted",
+        "data-mc-highlighted",
         "",
       );
     });
@@ -1752,7 +1775,10 @@ test.describe("Menubar", () => {
       await page.keyboard.press("Escape");
       await expect(page.getByTestId("menubar-list-2")).not.toBeVisible();
       await expect(page.getByTestId("menubar-trigger-2")).toBeFocused();
-      await expect(page.getByTestId("menubar-trigger-2")).toHaveAttribute("data-highlighted", "");
+      await expect(page.getByTestId("menubar-trigger-2")).toHaveAttribute(
+        "data-mc-highlighted",
+        "",
+      );
     });
 
     test("hovering out of a menubar menu keeps highlight; ArrowDown continues from there", async ({
@@ -1764,7 +1790,7 @@ test.describe("Menubar", () => {
       if (!box) throw new Error("missing bounding box");
       await page.mouse.move(box.x + box.width / 2, box.y + box.height + 40);
       await expect(page.getByTestId("menubar-item-1-1")).toBeFocused();
-      await expect(page.getByTestId("menubar-item-1-1")).toHaveAttribute("data-highlighted", "");
+      await expect(page.getByTestId("menubar-item-1-1")).toHaveAttribute("data-mc-highlighted", "");
       await page.keyboard.press("ArrowDown");
       await expect(page.getByTestId("menubar-item-1-1")).not.toBeFocused();
       await expect(page.getByTestId("menubar-list-1")).toBeVisible();
@@ -1924,7 +1950,7 @@ test.describe("Mouse (safety triangle)", () => {
     await expect(page.getByTestId("submenu2-list")).not.toBeVisible();
     await expect(page.getByTestId("submenu-list")).toBeVisible();
     await expect(page.getByTestId("submenu2-trigger")).toBeFocused();
-    await expect(page.getByTestId("submenu2-trigger")).toHaveAttribute("data-highlighted", "");
+    await expect(page.getByTestId("submenu2-trigger")).toHaveAttribute("data-mc-highlighted", "");
   });
 
   test("items under the triangle do not take focus", async ({ page }) => {
@@ -2099,7 +2125,7 @@ test.describe("Nested (sibling submenus)", () => {
     await expect(page.getByTestId("share-list")).toBeVisible();
     await page.keyboard.press("ArrowDown");
     await expect(page.getByTestId("export-trigger")).toBeFocused();
-    await expect(page.getByTestId("export-trigger")).toHaveAttribute("data-highlighted", "");
+    await expect(page.getByTestId("export-trigger")).toHaveAttribute("data-mc-highlighted", "");
     await expect(page.getByTestId("share-list")).not.toBeVisible();
     await expect(page.getByTestId("list")).toBeVisible();
   });
@@ -2171,7 +2197,11 @@ test.describe("Activation (checkbox and radio)", () => {
   });
 
   for (const activation of ["click", "Enter", "Space"] as const) {
-    test(`${activation} toggles a checkbox without closing the menu`, async ({ page }) => {
+    const keepOpen = activation === "Space";
+
+    test(`${activation} toggles a checkbox and ${keepOpen ? "keeps" : "closes"} the menu`, async ({
+      page,
+    }) => {
       if (activation === "click") {
         await page.getByTestId("checkbox-1").click();
       } else {
@@ -2179,10 +2209,10 @@ test.describe("Activation (checkbox and radio)", () => {
         await page.keyboard.press(activation);
       }
       await expect(page.getByTestId("checkbox-1")).toHaveAttribute("aria-checked", "true");
-      await expect(page.getByTestId("list")).toBeVisible();
+      await expect(page.getByTestId("list")).toBeVisible({ visible: keepOpen });
     });
 
-    test(`${activation} selects a radio and unchecks same-group siblings without closing the menu`, async ({
+    test(`${activation} selects a radio, unchecks its set, and ${keepOpen ? "keeps" : "closes"} the menu`, async ({
       page,
     }) => {
       if (activation === "click") {
@@ -2193,9 +2223,63 @@ test.describe("Activation (checkbox and radio)", () => {
       }
       await expect(page.getByTestId("radio-a2")).toHaveAttribute("aria-checked", "true");
       await expect(page.getByTestId("radio-a1")).toHaveAttribute("aria-checked", "false");
+      await expect(page.getByTestId("list")).toBeVisible({ visible: keepOpen });
+    });
+
+    test(`${activation} on a \`data-mc-keep-open\` item activates it and keeps the menu open`, async ({
+      page,
+    }) => {
+      if (activation === "click") {
+        await page.getByTestId("kept-item").click();
+      } else {
+        await page.getByTestId("kept-item").focus();
+        await page.keyboard.press(activation);
+      }
+      await expect(page.getByTestId("list")).toBeVisible();
+      await expect(page.getByTestId("kept-item")).toBeFocused();
+    });
+
+    test(`${activation} on a \`data-mc-keep-open\` checkbox toggles it and keeps the menu open`, async ({
+      page,
+    }) => {
+      if (activation === "click") {
+        await page.getByTestId("kept-checkbox").click();
+      } else {
+        await page.getByTestId("kept-checkbox").focus();
+        await page.keyboard.press(activation);
+      }
+      await expect(page.getByTestId("kept-checkbox")).toHaveAttribute("aria-checked", "true");
       await expect(page.getByTestId("list")).toBeVisible();
     });
   }
+
+  test("Space on a regular menuitem closes the menu", async ({ page }) => {
+    await page.getByTestId("regular-item").focus();
+    await page.keyboard.press("Space");
+    await expect(page.getByTestId("list")).not.toBeVisible();
+  });
+
+  test("Space toggles several checkboxes in one visit", async ({ page }) => {
+    await page.getByTestId("checkbox-1").focus();
+    await page.keyboard.press("Space");
+    await page.keyboard.press("ArrowDown");
+    await page.keyboard.press("Space");
+    await expect(page.getByTestId("checkbox-1")).toHaveAttribute("aria-checked", "true");
+    await expect(page.getByTestId("checkbox-2")).toHaveAttribute("aria-checked", "false");
+    await expect(page.getByTestId("checkbox-2")).toBeFocused();
+  });
+
+  test("press, drag to a checkbox, release toggles it and closes the menu", async ({ page }) => {
+    await page.keyboard.press("Escape");
+    await expect(page.getByTestId("list")).not.toBeVisible();
+    await page.getByTestId("trigger").hover();
+    await page.mouse.down();
+    await expect(page.getByTestId("list")).toBeVisible();
+    await page.getByTestId("checkbox-1").hover();
+    await page.mouse.up();
+    await expect(page.getByTestId("checkbox-1")).toHaveAttribute("aria-checked", "true");
+    await expect(page.getByTestId("list")).not.toBeVisible();
+  });
 
   test("re-clicking a checked checkbox unchecks it", async ({ page }) => {
     await page.getByTestId("checkbox-2").click();
@@ -2211,8 +2295,10 @@ test.describe("Activation (checkbox and radio)", () => {
   });
 
   test("selecting an earlier radio clears a later checked sibling", async ({ page }) => {
-    await page.getByTestId("radio-a2").click();
-    await page.getByTestId("radio-a1").click();
+    await page.getByTestId("radio-a2").focus();
+    await page.keyboard.press("Space");
+    await page.keyboard.press("ArrowUp");
+    await page.keyboard.press("Space");
     await expect(page.getByTestId("radio-a1")).toHaveAttribute("aria-checked", "true");
     await expect(page.getByTestId("radio-a2")).toHaveAttribute("aria-checked", "false");
   });
@@ -2249,9 +2335,129 @@ test.describe("Activation (checkbox and radio)", () => {
     await expect(page.getByTestId("radio-a2")).toBeFocused();
   });
 
-  test("activating a regular menuitem still closes the menu", async ({ page }) => {
+  test("activating a regular menuitem closes the menu", async ({ page }) => {
     await page.getByTestId("regular-item").click();
     await expect(page.getByTestId("list")).not.toBeVisible();
+  });
+});
+
+test.describe("Groups", () => {
+  test.beforeEach(async ({ page, renderer }) => {
+    await page.goto(`/${renderer}/menu/groups`);
+  });
+
+  const openWith = async (page: Page, key: string) => {
+    await page.getByTestId("trigger").focus();
+    await page.keyboard.press(key);
+    await expect(page.getByTestId("list")).toBeVisible();
+  };
+
+  test("names each group from its label or `aria-label`", async ({ page }) => {
+    await page.getByTestId("trigger").click();
+    await expect(page.getByRole("group", { name: "Size", exact: true })).toBeVisible();
+    await expect(page.getByRole("group", { name: "Color", exact: true })).toBeVisible();
+    await expect(page.getByTestId("group-a")).toHaveAttribute(
+      "aria-labelledby",
+      (await page
+        .getByTestId("radio-a1")
+        .evaluate((el) => el.closest("ul")?.firstElementChild?.id)) as string,
+    );
+  });
+
+  test("ArrowDown on the trigger enters a leading group past its label", async ({ page }) => {
+    await openWith(page, "ArrowDown");
+    await expect(page.getByTestId("radio-a1")).toBeFocused();
+  });
+
+  test("ArrowUp on the trigger enters a trailing group past its hidden item", async ({ page }) => {
+    await openWith(page, "ArrowUp");
+    await expect(page.getByTestId("radio-b2")).toBeFocused();
+  });
+
+  test("ArrowDown leaves a group past a disabled item, and enters the next", async ({ page }) => {
+    await openWith(page, "ArrowDown");
+    await page.keyboard.press("ArrowDown");
+    await expect(page.getByTestId("radio-a2")).toBeFocused();
+    await page.keyboard.press("ArrowDown");
+    await expect(page.getByTestId("item-cut")).toBeFocused();
+    await page.keyboard.press("ArrowDown");
+    await page.keyboard.press("ArrowDown");
+    await page.keyboard.press("ArrowDown");
+    await expect(page.getByTestId("radio-b1")).toBeFocused();
+  });
+
+  test("ArrowDown from a group's last item wraps to the first item of the menu", async ({
+    page,
+  }) => {
+    await openWith(page, "ArrowUp");
+    await page.keyboard.press("ArrowDown");
+    await expect(page.getByTestId("radio-a1")).toBeFocused();
+  });
+
+  test("ArrowUp leaves a group past its label, and wraps into the last group", async ({ page }) => {
+    await openWith(page, "ArrowDown");
+    await page.keyboard.press("ArrowUp");
+    await expect(page.getByTestId("radio-b2")).toBeFocused();
+    await page.keyboard.press("ArrowUp");
+    await page.keyboard.press("ArrowUp");
+    await expect(page.getByTestId("radio-c2")).toBeFocused();
+  });
+
+  test("Home and End inside a group reach the ends of the whole menu", async ({ page }) => {
+    await openWith(page, "ArrowDown");
+    await page.keyboard.press("ArrowDown");
+    await page.keyboard.press("End");
+    await expect(page.getByTestId("radio-b2")).toBeFocused();
+    await page.keyboard.press("ArrowUp");
+    await page.keyboard.press("Home");
+    await expect(page.getByTestId("radio-a1")).toBeFocused();
+  });
+
+  test("typeahead reaches into a group and out of it", async ({ page }) => {
+    await openWith(page, "ArrowDown");
+    await page.keyboard.press("b");
+    await expect(page.getByTestId("radio-b2")).toBeFocused();
+    await page.keyboard.press("c");
+    await expect(page.getByTestId("item-cut")).toBeFocused();
+    await page.keyboard.press("m");
+    await expect(page.getByTestId("radio-a2")).toBeFocused();
+  });
+
+  test("a radio in a group unchecks only its group", async ({ page }) => {
+    await page.getByTestId("trigger").click();
+    await page.getByTestId("radio-b2").click();
+    await expect(page.getByTestId("radio-b2")).toHaveAttribute("aria-checked", "true");
+    await expect(page.getByTestId("radio-b1")).toHaveAttribute("aria-checked", "false");
+    await expect(page.getByTestId("radio-c1")).toHaveAttribute("aria-checked", "true");
+    await expect(page.getByTestId("radio-a1")).toHaveAttribute("aria-checked", "true");
+  });
+
+  test("Space on a radio in a group unchecks only its group", async ({ page }) => {
+    await openWith(page, "ArrowDown");
+    await page.keyboard.press("ArrowDown");
+    await page.keyboard.press(" ");
+    await expect(page.getByTestId("radio-a2")).toHaveAttribute("aria-checked", "true");
+    await expect(page.getByTestId("radio-a1")).toHaveAttribute("aria-checked", "false");
+    await expect(page.getByTestId("radio-c1")).toHaveAttribute("aria-checked", "true");
+    await expect(page.getByTestId("radio-b1")).toHaveAttribute("aria-checked", "true");
+  });
+
+  test("an ungrouped run next to a group stays its own set", async ({ page }) => {
+    await page.getByTestId("trigger").click();
+    await page.getByTestId("radio-c2").click();
+    await expect(page.getByTestId("radio-c2")).toHaveAttribute("aria-checked", "true");
+    await expect(page.getByTestId("radio-c1")).toHaveAttribute("aria-checked", "false");
+    await expect(page.getByTestId("radio-b1")).toHaveAttribute("aria-checked", "true");
+    await expect(page.getByTestId("radio-a1")).toHaveAttribute("aria-checked", "true");
+  });
+
+  test("hovering a group's label keeps the highlight on the last item", async ({ page }) => {
+    await page.getByTestId("trigger").click();
+    await page.getByTestId("radio-a2").hover();
+    await expect(page.getByTestId("radio-a2")).toBeFocused();
+    await page.getByRole("group", { name: "Size", exact: true }).getByText("Size").hover();
+    await expect(page.getByTestId("radio-a2")).toBeFocused();
+    await expect(page.getByTestId("list")).toBeVisible();
   });
 });
 

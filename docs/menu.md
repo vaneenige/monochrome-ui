@@ -60,7 +60,7 @@ trigger that is also a link never activates as an item.
 
 **Hover focuses and paints.** `pointermove` focuses the enabled
 item under the pointer (React Aria / Base UI) so Arrow keys
-continue from there; `data-highlighted` follows that item through
+continue from there; `data-mc-highlighted` follows that item through
 `menuHighlight`, whose focus is `preventScroll`: the pointer is
 already on the item, so there is nothing to bring into view, and
 a scroll would dismiss the menu it just highlighted. Keyboard
@@ -74,7 +74,7 @@ when it is already in view. A menu's
 `scroll-padding-block` keeps the row at its resting inset.
 Leaving
 the menu, or hovering a disabled item, label, or separator, leaves
-`data-highlighted` on the last item so keyboard still has a
+`data-mc-highlighted` on the last item so keyboard still has a
 visible current item. Hovering a submenu trigger opens its
 submenu with `Focus.None`; hovering any other item closes an open
 submenu; hovering a sibling menubar trigger switches the open
@@ -143,8 +143,19 @@ does: user `onclick` handlers fire, and a menuitem that is also
 another component's trigger (a `mct:dialog-open:` item) works
 without Menu naming that component. Menu's `click` walk only
 activates href items, so that `click()` does not run
-`menuActivate` twice. Checkbox and radio items leave the menu
-open.
+`menuActivate` twice.
+
+**Activation closes unless kept open.** Every activation path
+ends in `menuActivate`: `pointerup`, the href `click` walk, and
+Enter or Space in `keydown`. It toggles a checkbox or sweeps a
+radio set, then calls `menuCloseAll` for every role, unless the
+item has `data-mc-keep-open` or the caller passed `keptOpen`.
+Only `keydown` passes it, for Space on a checkbox or radio item
+(`role !== "menuitem"`: triggers never reach that branch), which
+is APG's "Space changes the state without closing". The attribute
+is read by presence at activation, so markup can add or drop it
+while the menu is open. On the keyboard the menu closes before
+the `click()` above, so an `onclick` handler sees it closed.
 
 **Href items.** Enter on an href menuitem is the exception: no
 `preventDefault`, so the synthesized `click` navigates and the
@@ -220,17 +231,33 @@ optional; the multi-character form belongs to the listbox
 pattern. Menus are short, and repeat-to-cycle covers shared
 first letters.
 
+**Groups are walked through.** `menuNext` and `menuPrevious` are
+Menu's own navigators, not `roving` from `src/dom.ts`: `menuStep`
+takes the next or previous sibling, and past either end of a
+`role="group"` list it steps on from the group's wrapper `li`
+instead of wrapping inside the group, so only the menu list
+itself wraps. `menuRoving` enters a group through its wrapper, at
+the first child going forward and the last going back, so a group
+is never a stop; an empty one is passed over like a label. Home
+and End start from the menu list (`inPopover`), not the item's own
+list, so they reach the whole menu from inside a group. Every key
+walk goes through these two navigators, so arrows, Home, End,
+typeahead, and the disabled and hidden skips behave the same in a
+group as outside one.
+
 **Radio sweep reuses the navigation walker.** Activating a
-`menuitemradio` must clear `aria-checked` on every adjacent radio
-up to the group boundary. Instead of writing a dedicated sweep,
-`menuActivate` sets three flags (`shouldResetRadio`,
-`radioHeadDone`, `radioTailChain`) and calls the same `menuNext`
-used for ArrowDown. `menuRoving` notices the non-null driver
-state and switches into sweep mode: clear radios in the "head"
-half, buffer them past the wrap, flush the tail once the
-activated item is reached. One engine, three behaviours (plain
-roving, typeahead, radio sweep), selected by which flag is
-non-null.
+`menuitemradio` must clear `aria-checked` on every radio in its
+run. Instead of writing a dedicated sweep, `menuActivate` sets
+three flags (`shouldResetRadio`, `radioHeadDone`,
+`radioTailChain`) and calls the same `menuNext` used for
+ArrowDown. `menuRoving` notices the non-null driver state and
+switches into sweep mode: clear radios in the "head" half, buffer
+them past the wrap, flush the tail once the activated item is
+reached. One engine, three behaviours (plain roving, typeahead,
+radio sweep), selected by which flag is non-null. During the sweep
+`menuStep` wraps inside a group and `menuRoving` never enters one,
+so a group's radios are one set and a group's wrapper ends an
+ungrouped run.
 
 ## Focus and nesting
 

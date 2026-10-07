@@ -8,7 +8,7 @@ import {
   isTrigger,
   position,
   type RovingFocusCallback,
-  roving,
+  type RovingNavigator,
   spatialKey,
 } from "./dom.js";
 
@@ -45,9 +45,9 @@ if (hasDocument) {
 
   const menuHighlight = (item: HTMLElement | null) => {
     if (menuHighlighted !== item) {
-      menuHighlighted?.removeAttribute("data-highlighted");
+      menuHighlighted?.removeAttribute("data-mc-highlighted");
       menuHighlighted = item;
-      item?.setAttribute("data-highlighted", "");
+      item?.setAttribute("data-mc-highlighted", "");
     }
     item?.focus({ preventScroll: true });
   };
@@ -83,6 +83,12 @@ if (hasDocument) {
         radioTailChain = [];
         return fallback(node);
       }
+      if (menuitem?.role === "group" && menuitem.firstElementChild) {
+        return menuRoving(
+          fallback === menuNext ? menuitem.firstElementChild : menuitem.lastElementChild,
+          fallback,
+        );
+      }
       if (
         isMenuItem(menuitem) &&
         (!shouldMatchLetter ||
@@ -100,7 +106,23 @@ if (hasDocument) {
     }
     return null;
   };
-  const [menuNext, menuPrevious] = roving(menuRoving);
+  const menuStep = (
+    origin: Element | null | undefined,
+    forward: boolean,
+  ): Element | null | undefined => {
+    const parent = origin?.parentElement;
+    return (
+      (forward ? origin?.nextElementSibling : origin?.previousElementSibling) ||
+      (parent?.role === "group" && !shouldResetRadio
+        ? menuStep(parent.parentElement, forward)
+        : forward
+          ? parent?.firstElementChild
+          : parent?.lastElementChild)
+    );
+  };
+  const menuNext: RovingNavigator = (origin) => menuRoving(menuStep(origin, true), menuNext);
+  const menuPrevious: RovingNavigator = (origin) =>
+    menuRoving(menuStep(origin, false), menuPrevious);
 
   const menu = (trigger: HTMLElement | undefined, mode: Focus) => {
     if (trigger?.id.startsWith(Prefix.TriggerMenu)) {
@@ -142,9 +164,9 @@ if (hasDocument) {
             } else if (menuHighlighted === trigger && document.activeElement !== trigger) {
               trigger.focus({ preventScroll: true });
             } else if (menuHighlighted && menuHighlighted !== trigger) {
-              menuHighlighted.removeAttribute("data-highlighted");
+              menuHighlighted.removeAttribute("data-mc-highlighted");
               menuHighlighted = trigger;
-              trigger.setAttribute("data-highlighted", "");
+              trigger.setAttribute("data-mc-highlighted", "");
             }
           }
         }
@@ -152,7 +174,7 @@ if (hasDocument) {
     }
   };
 
-  const menuActivate = (el: HTMLElement) => {
+  const menuActivate = (el: HTMLElement, keepOpen?: boolean) => {
     if (el.role === "menuitemcheckbox") {
       el.ariaChecked = `${el.ariaChecked !== "true"}`;
     } else if (el.role === "menuitemradio") {
@@ -162,9 +184,8 @@ if (hasDocument) {
       menuNext(el.parentElement);
       shouldResetRadio = null;
       el.ariaChecked = "true";
-    } else {
-      menuCloseAll();
     }
+    if (!keepOpen && !el.hasAttribute("data-mc-keep-open")) menuCloseAll();
   };
 
   const menubarItem = (el: HTMLElement | null | undefined) => {
@@ -213,11 +234,8 @@ if (hasDocument) {
     let el = getTarget(event);
     while (el && !el.id.startsWith(Prefix.ContentMenu)) {
       if (isMenuItem(el) && !el.id.startsWith(Prefix.TriggerMenu)) {
-        if (el.tagName === "A") {
-          if (!el.contains(menuPressed)) el.click();
-        } else {
-          menuActivate(el);
-        }
+        if (el.tagName !== "A") menuActivate(el);
+        if (!el.contains(menuPressed)) el.click();
         return;
       }
       el = el.parentElement;
@@ -364,7 +382,7 @@ if (hasDocument) {
         } else if (isItem) {
           shouldPreventDefault = key === " " || el.tagName !== "A" || el.ariaDisabled === "true";
           if (el.ariaDisabled !== "true" && shouldPreventDefault) {
-            menuActivate(el);
+            menuActivate(el, key === " " && el.role !== "menuitem");
             if (el.tagName !== "A") el.click();
           }
         }
@@ -408,13 +426,15 @@ if (hasDocument) {
         if (isOpenMenuButton) {
           menu(trigger, Focus.First);
           shouldPreventDefault = true;
-        } else if (isItem) menuRoving(parent.parentElement?.firstElementChild, menuNext);
+        } else if (isItem)
+          menuRoving((inPopover || parent.parentElement)?.firstElementChild, menuNext);
         break;
       case "End":
         if (isOpenMenuButton) {
           menu(trigger, Focus.Last);
           shouldPreventDefault = true;
-        } else if (isItem) menuRoving(parent.parentElement?.lastElementChild, menuPrevious);
+        } else if (isItem)
+          menuRoving((inPopover || parent.parentElement)?.lastElementChild, menuPrevious);
         break;
       default:
         if (shouldMatchLetter) {
