@@ -1,12 +1,4 @@
-import {
-  findAncestor,
-  getControls,
-  getLinked,
-  getTarget,
-  hasDocument,
-  isElement,
-  position,
-} from "./dom.js";
+import { findAncestor, getControls, getTarget, hasDocument, isElement, position } from "./dom.js";
 
 enum Prefix {
   ContentPopover = "mcc:popover:",
@@ -27,10 +19,10 @@ if (hasDocument) {
         popoverShown = trigger;
       } else {
         content.hidePopover();
-        if (popoverShown === trigger) popoverShown = null;
       }
       trigger.ariaExpanded = `${show}`;
     }
+    if (!show && popoverShown === trigger) popoverShown = null;
   };
 
   addEventListener("pointerdown", (event: PointerEvent) => {
@@ -59,8 +51,9 @@ if (hasDocument) {
       const trigger = popoverShown;
       const content = getControls(trigger);
       let el = getTarget(event);
-      while (el && el !== content && !el.popover) el = el.parentElement;
-      if (el === content || !el) {
+      while (el && el !== content && !el.popover && !(el instanceof HTMLDialogElement))
+        el = el.parentElement;
+      if (content && (el === content || !content.contains(el))) {
         popover(trigger, false);
         trigger.focus();
         event.preventDefault();
@@ -71,10 +64,7 @@ if (hasDocument) {
   addEventListener(
     "scroll",
     (event) => {
-      if (
-        popoverShown &&
-        !(isElement(event.target) && findAncestor(event.target, Prefix.ContentPopover))
-      ) {
+      if (popoverShown && !findAncestor(getTarget(event), Prefix.ContentPopover)) {
         popover(popoverShown, false);
       }
     },
@@ -89,8 +79,9 @@ if (hasDocument) {
     if (
       popoverShown &&
       isElement(event.relatedTarget) &&
-      popoverShown !== event.relatedTarget &&
-      !getLinked(popoverShown, "aria-controls")?.contains(event.relatedTarget)
+      event.relatedTarget !== popoverShown &&
+      !(event.relatedTarget.tabIndex < 0 && event.relatedTarget.contains(popoverShown)) &&
+      !getControls(popoverShown)?.contains(event.relatedTarget)
     ) {
       popover(popoverShown, false);
     }

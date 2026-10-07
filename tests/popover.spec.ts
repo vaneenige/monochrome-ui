@@ -1,6 +1,6 @@
 import type { Page } from "@playwright/test";
 import { expect, test } from "./fixtures";
-import { loadSpecCss, setRtl } from "./helpers";
+import { loadSpecCss, mimicSafariClick, setRtl } from "./helpers";
 
 test.describe("Popover", () => {
   test.beforeEach(async ({ page, renderer }) => {
@@ -66,6 +66,18 @@ test.describe("Popover", () => {
       await page.getByTestId("click-trigger").click();
       await expect(page.getByTestId("click-content")).toBeVisible();
       await page.getByTestId("click-trigger").click();
+      await expect(page.getByTestId("click-content")).not.toBeVisible();
+    });
+
+    test("closes on second click when the trigger sits in a focusable ancestor", async ({
+      page,
+    }) => {
+      // Think `<main tabindex="-1">`, which the router gives the swapped region.
+      const trigger = page.getByTestId("click-trigger");
+      await trigger.evaluate((el) => el.parentElement?.setAttribute("tabindex", "-1"));
+      await trigger.click();
+      await expect(page.getByTestId("click-content")).toBeVisible();
+      await mimicSafariClick(trigger);
       await expect(page.getByTestId("click-content")).not.toBeVisible();
     });
 
@@ -157,12 +169,43 @@ test.describe("Popover", () => {
       await expect(page.getByTestId("click-content")).not.toBeVisible();
     });
 
+    test('focus moving to a `tabindex="0"` ancestor of the trigger closes it', async ({ page }) => {
+      const trigger = page.getByTestId("click-trigger");
+      await trigger.evaluate((el) => el.parentElement?.setAttribute("tabindex", "0"));
+      await trigger.click();
+      await expect(page.getByTestId("click-content")).toBeVisible();
+      await trigger.evaluate((el) => el.parentElement?.focus());
+      await expect(page.getByTestId("click-content")).not.toBeVisible();
+    });
+
     test("Shift+Tab off the trigger closes the popover", async ({ page, browserName }) => {
       test.skip(browserName === "webkit", "WebKit Tab order after popover");
       await page.getByTestId("click-trigger").click();
       await page.getByTestId("click-trigger").focus();
       await page.keyboard.press("Shift+Tab");
       await expect(page.getByTestId("click-content")).not.toBeVisible();
+    });
+  });
+
+  test.describe("Dynamic", () => {
+    test("an open popover removed from the page leaves Escape to a later dialog", async ({
+      page,
+      renderer,
+    }) => {
+      test.skip(renderer !== "html", "Removes a node the renderer owns");
+      await page.getByTestId("click-trigger").click();
+      await expect(page.getByTestId("click-content")).toBeVisible();
+      await page.evaluate(() => {
+        document.querySelector('[data-testid="click-content"]')?.remove();
+        const dialog = document.createElement("dialog");
+        dialog.dataset.testid = "late-dialog";
+        dialog.textContent = "Later";
+        document.body.append(dialog);
+        dialog.showModal();
+      });
+      await expect(page.getByTestId("late-dialog")).toBeVisible();
+      await page.keyboard.press("Escape");
+      await expect(page.getByTestId("late-dialog")).not.toBeVisible();
     });
   });
 
@@ -250,6 +293,15 @@ test.describe("Popover", () => {
       await expect(page.getByTestId("popover-trigger")).toBeFocused();
     });
 
+    test("ArrowDown after a Safari pointer open focuses the first menu item", async ({ page }) => {
+      await mimicSafariClick(page.getByTestId("menu-trigger"));
+      await expect(page.getByTestId("menu-list")).toBeVisible();
+      await expect(page.getByTestId("popover-content")).toBeFocused();
+      await page.keyboard.press("ArrowDown");
+      await expect(page.getByTestId("menu-trigger")).toHaveAttribute("aria-expanded", "true");
+      await expect(page.getByTestId("menu-item-1")).toBeFocused();
+    });
+
     test("Escape closes a pointer-opened menu inside the popover first", async ({ page }) => {
       await page.getByTestId("menu-trigger").click();
       await expect(page.getByTestId("menu-list")).toBeVisible();
@@ -259,6 +311,43 @@ test.describe("Popover", () => {
       await expect(page.getByTestId("popover-content")).toBeVisible();
       await page.keyboard.press("Escape");
       await expect(page.getByTestId("popover-content")).not.toBeVisible();
+    });
+  });
+
+  test.describe("Composition (dialog)", () => {
+    test("Escape closes a dialog inside the content before the popover", async ({
+      page,
+      renderer,
+    }) => {
+      test.skip(renderer !== "html", "Cross-component fixture is plain HTML");
+      await page.goto("/html/popover/with-dialog");
+      await page.getByTestId("popover-trigger").click();
+      await page.getByTestId("dialog-trigger").click();
+      await expect(page.getByTestId("dialog-content")).toBeVisible();
+      await page.keyboard.press("Escape");
+      await expect(page.getByTestId("dialog-content")).not.toHaveAttribute("open");
+      await expect(page.getByTestId("popover-content")).toBeVisible();
+      await expect(page.getByTestId("dialog-trigger")).toBeFocused();
+      await page.keyboard.press("Escape");
+      await expect(page.getByTestId("popover-content")).not.toBeVisible();
+      await expect(page.getByTestId("popover-trigger")).toBeFocused();
+    });
+
+    test("Escape on the trigger inside a dialog closes only the popover", async ({
+      page,
+      renderer,
+    }) => {
+      test.skip(renderer !== "html", "Cross-component fixture is plain HTML");
+      await page.goto("/html/popover/in-dialog");
+      await page.getByTestId("dialog-trigger").click();
+      await page.getByTestId("popover-trigger").click();
+      await expect(page.getByTestId("popover-content")).toBeVisible();
+      await page.getByTestId("popover-trigger").focus();
+      await expect(page.getByTestId("popover-content")).toBeVisible();
+      await page.keyboard.press("Escape");
+      await expect(page.getByTestId("popover-content")).not.toBeVisible();
+      await expect(page.getByTestId("dialog-content")).toHaveAttribute("open");
+      await expect(page.getByTestId("popover-trigger")).toBeFocused();
     });
   });
 });
