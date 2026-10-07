@@ -1,6 +1,7 @@
 import AxeBuilder from "@axe-core/playwright";
 import type { Page } from "@playwright/test";
 import { expect, test } from "./fixtures";
+import { loadSpecCss } from "./helpers";
 
 // Axe WCAG 2.0, 2.1 and 2.2 A/AA pass over one representative
 // fixture per component, closed and (where one interaction
@@ -140,5 +141,47 @@ test.describe("Accessibility (axe)", () => {
     await page.getByTestId("tooltip-trigger").focus();
     await expect(page.getByTestId("tooltip-content")).toBeVisible();
     expect((await scan(page)).violations).toEqual([]);
+  });
+});
+
+// The CSS in each spec's Styling section, as a project that follows
+// it renders: focus rings the 8% wash cannot replace (WCAG 1.4.11).
+test.describe("Accessibility (spec CSS)", () => {
+  test.beforeEach(({ renderer }) => {
+    test.skip(renderer !== "html", "The spec's CSS is renderer-independent");
+  });
+
+  const ring = (page: Page, testId: string) =>
+    page.getByTestId(testId).evaluate((el) => {
+      const style = getComputedStyle(el);
+      return `${style.outlineStyle} ${style.outlineWidth}`;
+    });
+
+  test("a keyboard-focused menu item draws the focus ring", async ({ page }) => {
+    await page.goto("/html/menu/basic");
+    await loadSpecCss(page, "menu");
+    await page.getByTestId("root-trigger").focus();
+    await page.keyboard.press("ArrowDown");
+    await expect(page.getByTestId("root-item-1")).toBeFocused();
+    expect(await ring(page, "root-item-1")).toBe("solid 2px");
+  });
+
+  test("a keyboard-focused bar item draws the focus ring", async ({ page }) => {
+    await page.goto("/html/menu/menubar");
+    await loadSpecCss(page, "menu", "menubar");
+    await page.getByTestId("menubar-trigger-1").focus();
+    await page.keyboard.press("ArrowRight");
+    await page.keyboard.press("ArrowLeft");
+    await expect(page.getByTestId("menubar-trigger-1")).toBeFocused();
+    expect(await ring(page, "menubar-trigger-1")).toBe("solid 2px");
+  });
+
+  test("popover content takes focus on open without a ring", async ({ page }) => {
+    await page.goto("/html/popover/basic");
+    await loadSpecCss(page, "popover");
+    await page.getByTestId("click-trigger").focus();
+    await page.keyboard.press("Enter");
+    await expect(page.getByTestId("click-content")).toBeFocused();
+    expect(await ring(page, "click-content")).toMatch(/^none /);
   });
 });

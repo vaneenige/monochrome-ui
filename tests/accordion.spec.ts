@@ -16,7 +16,13 @@ test.describe("Accordion", () => {
       await expect(trigger).toHaveAttribute("aria-controls", contentId as string);
       await expect(content).toHaveAttribute("aria-labelledby", triggerId as string);
       await expect(trigger).toHaveAttribute("type", "button");
-      await expect(content).not.toHaveAttribute("role");
+      await expect(content).toHaveAttribute("role", "region");
+    });
+
+    test("the open panel is a region named after its trigger", async ({ page }) => {
+      await page.getByTestId("single-trigger-1").click();
+      await expect(page.getByRole("region", { name: "Section 1", exact: true })).toBeVisible();
+      await expect(page.getByRole("region")).toHaveCount(1);
     });
 
     test("toggles `aria-expanded` and `hidden` across the open and close cycle", async ({

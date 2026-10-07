@@ -7,15 +7,14 @@ test.describe("Collapsible", () => {
       await page.goto(`/${renderer}/collapsible/basic`);
     });
 
-    test("wires trigger and panel via `aria-controls`/`aria-labelledby`", async ({ page }) => {
+    test("wires trigger to panel via `aria-controls` alone", async ({ page }) => {
       const trigger = page.getByTestId("collapsible-trigger");
       const content = page.getByTestId("collapsible-content");
-      const triggerId = await trigger.getAttribute("id");
       const contentId = await content.getAttribute("id");
 
       await expect(trigger).toHaveAttribute("aria-controls", contentId as string);
-      await expect(content).toHaveAttribute("aria-labelledby", triggerId as string);
       await expect(trigger).toHaveAttribute("type", "button");
+      await expect(content).not.toHaveAttribute("aria-labelledby");
       await expect(content).not.toHaveAttribute("role");
     });
 

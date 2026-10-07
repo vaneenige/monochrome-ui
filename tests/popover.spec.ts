@@ -22,6 +22,25 @@ test.describe("Popover", () => {
       await expect(content).toHaveAttribute("popover", "manual");
     });
 
+    test("content is a `dialog` named by its trigger", async ({ page }) => {
+      await page.getByTestId("click-trigger").click();
+      await expect(page.getByRole("dialog", { name: "Open", exact: true })).toBeVisible();
+    });
+
+    test("`aria-describedby={undefined}` drops the Description link", async ({
+      page,
+      renderer,
+    }) => {
+      test.skip(renderer === "html", "The Content part writes the link");
+      await page.goto("/react/popover/no-description");
+      await expect(page.getByTestId("plain-content")).not.toHaveAttribute("aria-describedby");
+      const descId = await page.getByTestId("described-desc").getAttribute("id");
+      await expect(page.getByTestId("described-content")).toHaveAttribute(
+        "aria-describedby",
+        descId as string,
+      );
+    });
+
     test("toggles `aria-expanded` across the open and close cycle", async ({ page }) => {
       const trigger = page.getByTestId("click-trigger");
       const content = page.getByTestId("click-content");

@@ -6,7 +6,7 @@
 <div id="collapsible-host"></div>
 <div>
   <button data-testid="collapsible2-trigger" type="button" id="mct:collapsible:d2" aria-expanded="false" aria-controls="mcc:collapsible:d2">Toggle Content 2</button>
-  <div data-testid="collapsible2-content" id="mcc:collapsible:d2" aria-labelledby="mct:collapsible:d2" hidden>
+  <div data-testid="collapsible2-content" id="mcc:collapsible:d2" hidden>
     <p>Second collapsible content</p>
   </div>
 </div>
@@ -34,7 +34,6 @@
     var panel = document.createElement('div');
     panel.setAttribute('data-testid', 'content');
     panel.id = 'mcc:collapsible:d1';
-    panel.setAttribute('aria-labelledby', 'mct:collapsible:d1');
     if (!startOpen) panel.setAttribute("hidden", "");
     panel.innerHTML = '<p>Collapsible content here</p>';
 
