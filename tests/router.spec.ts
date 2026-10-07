@@ -45,6 +45,28 @@ test.describe("Router", () => {
       await expect(page.getByTestId("page-title")).toHaveText("About");
     });
 
+    test("paints the click before swapping a prefetched page", async ({ page }) => {
+      await page.goto("/html/router/index");
+      const link = page.getByTestId("nav-about");
+      const prefetched = page.waitForResponse((r) => r.url().endsWith("/html/router/about"));
+      await link.hover();
+      await (await prefetched).finished();
+      // A frame callback queued from the click runs at the click's first paint; without the
+      // pause, a cached page swaps inside the click task, before that callback.
+      await page.evaluate(() => {
+        addEventListener("click", () => requestAnimationFrame(() => (window.__painted = true)), {
+          capture: true,
+          once: true,
+        });
+        addEventListener("mc:navigate", () => (window.__paintedBeforeSwap = !!window.__painted), {
+          once: true,
+        });
+      });
+      await link.click();
+      await expect(page.getByTestId("page-title")).toHaveText("About");
+      expect(await page.evaluate(() => window.__paintedBeforeSwap)).toBe(true);
+    });
+
     test("updates the document title", async ({ page }) => {
       await page.goto("/html/router/index");
       await expect(page).toHaveTitle("Home");
@@ -56,14 +78,14 @@ test.describe("Router", () => {
       await page.goto("/html/router/index");
       await page.getByTestId("nav-about").click();
       await expect(page.getByTestId("page-title")).toHaveText("About");
-      await expect(page.locator("[data-area='root']")).toBeFocused();
+      await expect(page.locator("[data-mc-area='root']")).toBeFocused();
     });
 
     test("moves focus to the replaced region when the root is kept", async ({ page }) => {
       await page.goto("/html/router/docs");
       await page.getByTestId("nav-docs-guide").click();
       await expect(page.getByTestId("page-title")).toHaveText("Docs Guide");
-      await expect(page.locator("[data-area='content']")).toBeFocused();
+      await expect(page.locator("[data-mc-area='content']")).toBeFocused();
     });
 
     test("preserves the JS context across navigation", async ({ page }) => {
@@ -75,6 +97,47 @@ test.describe("Router", () => {
       await expect(page).toHaveURL("/html/router/about");
       const sentinel = await page.evaluate(() => window.__sentinel);
       expect(sentinel).toBe(42);
+    });
+
+    test("closes the open dialog that holds the clicked link", async ({ page }) => {
+      await page.goto("/html/router/index");
+      await page.evaluate(() => {
+        const dialog = document.createElement("dialog");
+        dialog.dataset.testid = "dialog";
+        dialog.innerHTML = '<a href="/html/router/about" data-testid="dialog-about">About</a>';
+        document.body.append(dialog);
+        dialog.showModal();
+      });
+      await page.getByTestId("dialog-about").click();
+      await expect(page.getByTestId("page-title")).toHaveText("About");
+      await expect(page.getByTestId("dialog")).not.toHaveAttribute("open");
+    });
+
+    test("leaves a dialog reopened before the swap open", async ({ page }) => {
+      await page.goto("/html/router/index");
+      // Holds the page back, so the dialog closes and reopens while it loads.
+      let release = () => {};
+      const held = new Promise<void>((resolve) => (release = resolve));
+      await page.route("**/html/router/about", async (route) => {
+        await held;
+        await route.continue();
+      });
+      await page.evaluate(() => {
+        const dialog = document.createElement("dialog");
+        dialog.dataset.testid = "dialog";
+        dialog.innerHTML = '<a href="/html/router/about" data-testid="dialog-about">About</a>';
+        document.body.append(dialog);
+        dialog.showModal();
+      });
+      await page.getByTestId("dialog-about").click();
+      await page.evaluate(() => {
+        const dialog = document.querySelector("dialog");
+        dialog?.close();
+        dialog?.showModal();
+      });
+      release();
+      await expect(page.getByTestId("page-title")).toHaveText("About");
+      await expect(page.getByTestId("dialog")).toHaveAttribute("open");
     });
 
     test("never replaces the body or head", async ({ page }) => {
@@ -99,12 +162,18 @@ test.describe("Router", () => {
       expect(await page.locator("nav").getAttribute("data-preserved")).toBe("yes");
     });
 
-    test("swaps `data-area` elements in the head during a root swap", async ({ page }) => {
+    test("swaps `data-mc-area` elements in the head during a root swap", async ({ page }) => {
       await page.goto("/html/router/index");
-      await expect(page.locator("meta[data-area='head-meta']")).toHaveAttribute("content", "index");
+      await expect(page.locator("meta[data-mc-area='head-meta']")).toHaveAttribute(
+        "content",
+        "index",
+      );
       await page.getByTestId("nav-about").click();
       await expect(page).toHaveURL("/html/router/about");
-      await expect(page.locator("meta[data-area='head-meta']")).toHaveAttribute("content", "about");
+      await expect(page.locator("meta[data-mc-area='head-meta']")).toHaveAttribute(
+        "content",
+        "about",
+      );
     });
   });
 
@@ -114,7 +183,7 @@ test.describe("Router", () => {
       await page.getByTestId("nav-docs").click();
       await expect(page).toHaveURL("/html/router/docs");
       await expect(page.getByTestId("page-title")).toHaveText("Docs");
-      await expect(page.locator("[data-area='sidebar']")).toBeVisible();
+      await expect(page.locator("[data-mc-area='sidebar']")).toBeVisible();
     });
 
     test("hard-reloads when falling back without a root area", async ({ page }) => {
@@ -136,28 +205,30 @@ test.describe("Router", () => {
   });
 
   test.describe("Area keys", () => {
-    test("preserves an area whose `data-key` matches across pages", async ({ page }) => {
+    test("preserves an area whose `data-mc-key` matches across pages", async ({ page }) => {
       await page.goto("/html/router/docs");
       await page.evaluate(() => {
-        document.querySelector("[data-area='sidebar']")?.setAttribute("data-preserved", "yes");
+        document.querySelector("[data-mc-area='sidebar']")?.setAttribute("data-preserved", "yes");
       });
       await page.getByTestId("nav-docs-guide").click();
       await expect(page).toHaveURL("/html/router/docs-guide");
       await expect(page.getByTestId("page-title")).toHaveText("Docs Guide");
-      expect(await page.locator("[data-area='sidebar']").getAttribute("data-preserved")).toBe(
+      expect(await page.locator("[data-mc-area='sidebar']").getAttribute("data-preserved")).toBe(
         "yes",
       );
     });
 
-    test("swaps an area whose `data-key` differs across pages", async ({ page }) => {
+    test("swaps an area whose `data-mc-key` differs across pages", async ({ page }) => {
       await page.goto("/html/router/docs");
       await page.evaluate(() => {
-        document.querySelector("[data-area='sidebar']")?.setAttribute("data-preserved", "yes");
+        document.querySelector("[data-mc-area='sidebar']")?.setAttribute("data-preserved", "yes");
       });
       await page.getByTestId("nav-reference").click();
       await expect(page).toHaveURL("/html/router/reference");
       await expect(page.getByTestId("page-title")).toHaveText("Reference");
-      expect(await page.locator("[data-area='sidebar']").getAttribute("data-preserved")).toBeNull();
+      expect(
+        await page.locator("[data-mc-area='sidebar']").getAttribute("data-preserved"),
+      ).toBeNull();
     });
   });
 
@@ -844,11 +915,13 @@ test.describe("Router", () => {
     test("no-ops a click on the current URL", async ({ page }) => {
       await page.goto("/html/router/index");
       await page.evaluate(() => {
-        document.querySelector("[data-area='root']")?.setAttribute("data-preserved", "yes");
+        document.querySelector("[data-mc-area='root']")?.setAttribute("data-preserved", "yes");
       });
       await page.getByTestId("nav-home").click();
       await page.waitForTimeout(80);
-      expect(await page.locator("[data-area='root']").getAttribute("data-preserved")).toBe("yes");
+      expect(await page.locator("[data-mc-area='root']").getAttribute("data-preserved")).toBe(
+        "yes",
+      );
     });
 
     test("drops a stale in-flight navigation when a later one arrives", async ({ page }) => {

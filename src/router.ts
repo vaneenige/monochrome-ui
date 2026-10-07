@@ -8,6 +8,7 @@ if (navigation) {
   const stripHash = (url: string) => url.replace(/#.*/, "");
   let lastKey = stripHash(location.href);
   let prefetching: Promise<unknown> = Promise.resolve();
+  let routerDialog: HTMLDialogElement | null = null;
 
   const fetchPage = (key: string, init?: RequestInit): Promise<Fetched | null> => {
     const hit = cache.get(key);
@@ -45,8 +46,8 @@ if (navigation) {
 
   const collectAreas = (root: Document | ParentNode) => {
     const map = new Map<string, HTMLElement>();
-    root.querySelectorAll<HTMLElement>("[data-area]").forEach((el) => {
-      const name = el.dataset.area;
+    root.querySelectorAll<HTMLElement>("[data-mc-area]").forEach((el) => {
+      const name = el.dataset.mcArea;
       if (name && !map.has(name)) map.set(name, el);
     });
     return map;
@@ -81,8 +82,8 @@ if (navigation) {
     const newRoot = incoming.get("root");
     if (!curRoot || !newRoot) return;
 
-    const curKey = curRoot.dataset.key;
-    let keepRoot = incoming.size === current.size && curKey && curKey === newRoot.dataset.key;
+    const curKey = curRoot.dataset.mcKey;
+    let keepRoot = incoming.size === current.size && curKey && curKey === newRoot.dataset.mcKey;
     for (const name of incoming.keys()) keepRoot &&= current.has(name);
 
     let area = keepRoot ? null : newRoot;
@@ -90,9 +91,9 @@ if (navigation) {
     for (const [name, el] of current) {
       if (el.isConnected) {
         const next = incoming.get(name);
-        if (next && (!el.dataset.key || el.dataset.key !== next.dataset.key)) {
+        if (next && (!el.dataset.mcKey || el.dataset.mcKey !== next.dataset.mcKey)) {
+          if (!document.head.contains(el)) area ||= next;
           el.replaceWith(next);
-          area ||= next;
         }
       }
     }
@@ -100,6 +101,19 @@ if (navigation) {
     area.tabIndex = -1;
     area.focus({ preventScroll: true });
     return true;
+  };
+
+  const afterPaint = () =>
+    new Promise<void>((resolve) => requestAnimationFrame(() => setTimeout(resolve)));
+
+  const settleScroll = (href: string) => {
+    let id = new URL(href).hash.slice(1);
+    try {
+      id = decodeURIComponent(id);
+    } catch {}
+    const target = id ? document.getElementById(id) : null;
+    if (target) target.scrollIntoView();
+    else scrollTo(0, 0);
   };
 
   const hint = (event: Event) => {
@@ -131,6 +145,14 @@ if (navigation) {
   for (const type of ["pointerdown", "pointermove", "keydown", "wheel", "scroll"])
     addEventListener(type, prefetchArm, { passive: true });
 
+  addEventListener(
+    "close",
+    (event) => {
+      if (event.target === routerDialog) routerDialog = null;
+    },
+    true,
+  );
+
   navigation.addEventListener("navigate", (event) => {
     const type = event.navigationType;
     const href = event.destination.url;
@@ -145,8 +167,12 @@ if (navigation) {
     ) {
       return;
     }
+    let el = event.sourceElement;
+    while (el && !(el instanceof HTMLDialogElement)) el = el.parentElement;
+    routerDialog = el instanceof HTMLDialogElement && el.open ? el : null;
     const key = stripHash(href);
     const same = key === lastKey;
+    const fresh = type !== "traverse";
     const intercept: {
       focusReset: "manual";
       scroll?: "manual";
@@ -157,15 +183,18 @@ if (navigation) {
         if (same) return;
         try {
           const result = await fetchPage(key);
+          await afterPaint();
           if (event.signal.aborted) return;
           if (result) {
             const [html, url] = result;
+            routerDialog?.close();
             const newDoc = parser.parseFromString(html, "text/html");
             document.title = newDoc.title;
             if (swap(newDoc)) {
               lastKey = stripHash(url);
               if (lastKey !== key)
                 history.replaceState(history.state, "", lastKey + href.slice(key.length));
+              if (fresh) settleScroll(href);
               dispatchEvent(new Event("mc:navigate"));
               prefetchDocument();
               return;
@@ -175,7 +204,7 @@ if (navigation) {
         location.reload();
       },
     };
-    if (same) intercept.scroll = "manual";
+    if (same || fresh) intercept.scroll = "manual";
     event.intercept(intercept);
   });
 }

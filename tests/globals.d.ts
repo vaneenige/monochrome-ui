@@ -8,6 +8,8 @@ interface Window {
   __fetchPriority?: [url: string, priority: RequestInit["priority"]][];
   __navigations?: boolean[];
   __fetchLog?: string[];
+  __painted?: boolean;
+  __paintedBeforeSwap?: boolean;
 }
 
 declare module "*.vue" {

@@ -79,8 +79,14 @@ test.describe("Architecture invariants", () => {
     ]);
   });
 
-  test("router contains no timers", () => {
-    for (const banned of timers) expect(router).not.toContain(banned);
+  // One paint yield, and nothing else: after the fetch, the router
+  // waits for the click's frame to paint before it swaps (PRINCIPLES.md
+  // #3, docs/router.md). No delay, interval, or microtask.
+  test("router yields once for paint and has no other timers", () => {
+    const yieldForPaint = "requestAnimationFrame(() => setTimeout(resolve))";
+    expect(router.split(yieldForPaint).length - 1).toBe(1);
+    const rest = router.replace(yieldForPaint, "");
+    for (const banned of timers) expect(rest).not.toContain(banned);
   });
 
   test("router uses `querySelectorAll` exactly once, for the area lookup", () => {
