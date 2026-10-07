@@ -54,6 +54,29 @@ test.describe("Tooltip", () => {
       await expect(page.getByTestId("tooltip-content")).toBeVisible();
     });
 
+    test("the pointer crosses the gap onto the tooltip without hiding it", async ({
+      page,
+      renderer,
+    }) => {
+      await page.goto(`/${renderer}/tooltip/basic`);
+      await loadSpecCss(page, "tooltip");
+      const trigger = page.getByTestId("tooltip-trigger");
+      const content = page.getByTestId("tooltip-content");
+      await trigger.evaluate((el) => {
+        el.style.marginTop = "120px";
+      });
+      await trigger.hover();
+      await expect(content).toBeVisible();
+      await expect(content).toHaveAttribute("data-mc-y", "top");
+      const from = await trigger.boundingBox();
+      const to = await content.boundingBox();
+      if (!from || !to) throw new Error("missing bounding box");
+      const x = from.x + from.width / 2;
+      await page.mouse.move(x, from.y + 1);
+      await page.mouse.move(x, to.y + to.height / 2, { steps: 24 });
+      await expect(content).toBeVisible();
+    });
+
     test("touch pointermove does not show the tooltip", async ({ page }) => {
       await page.getByTestId("tooltip-trigger").dispatchEvent("pointermove", {
         pointerType: "touch",
@@ -141,7 +164,30 @@ test.describe("Tooltip", () => {
       await expect(page.getByTestId("tooltip-content")).toBeVisible();
     });
 
-    test("scroll hides the tooltip", async ({ page }) => {
+    test("scroll keeps a focus-shown tooltip and repositions it", async ({ page }) => {
+      await page.setViewportSize({ width: 800, height: 300 });
+      await page.evaluate(() => {
+        const div = document.createElement("div");
+        div.style.height = "2000px";
+        document.body.appendChild(div);
+      });
+      await page.getByTestId("tooltip-trigger").focus();
+      await expect(page.getByTestId("tooltip-content")).toBeVisible();
+      const before = await page
+        .getByTestId("tooltip-content")
+        .evaluate((el) => el.style.getPropertyValue("--mc-trigger-top"));
+      await page.evaluate(() => window.scrollTo(0, 200));
+      await expect(page.getByTestId("tooltip-content")).toBeVisible();
+      await expect
+        .poll(() =>
+          page
+            .getByTestId("tooltip-content")
+            .evaluate((el) => el.style.getPropertyValue("--mc-trigger-top")),
+        )
+        .not.toBe(before);
+    });
+
+    test("scroll hides a hover-shown tooltip", async ({ page }) => {
       await page.setViewportSize({ width: 800, height: 300 });
       await page.evaluate(() => {
         const div = document.createElement("div");

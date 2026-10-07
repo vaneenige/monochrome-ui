@@ -18,7 +18,13 @@ as on hover. `focusout` only checks `relatedTarget`: while
 blur to nowhere always means leaving it. `pointermove` ignores
 touch pointers and returns early while the target is unchanged,
 and a move onto the tooltip content itself keeps it shown (WCAG
-1.4.13 Hoverable).
+1.4.13 Hoverable). A move over the gap between trigger and
+tooltip would hide it, so the Required CSS bridges the gap
+with the content's `::after` (hit-testing reports the content as
+the target). Hover is read from `pointermove` alone, with
+no leave listener, so a pointer that leaves the window straight
+from a trigger keeps its tooltip shown until the next move over
+the page, a scroll, or Escape.
 
 **Click suppresses until the trigger is left.** A click on a
 trigger records it as `tooltipSuppressed` and hides its tooltip;

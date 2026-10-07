@@ -134,11 +134,16 @@ hover bridge, so its measurement is unchanged.
 `popoverShown`, `tooltipShown`) instead of closing it. On Android
 the soft keyboard fires a window `resize`, so a popover holding
 an input would otherwise close the moment its field gained focus.
-Scroll still dismisses. The listener runs in capture so a scroll
-inside a nested scroller is seen too; Menu and Popover ignore
-scrolls that originate inside their own content, so a scrollable
-list in the surface does not close it. A surface that follows a
-moving trigger is a different design.
+Scroll still dismisses, in capture so a nested scroller counts (an
+SVG target counts as its parent element). Popover ignores a
+scroll inside its content. Menu trims instead: it hands `menuTrim`
+the scrolled `mcc:menu:`, or `body` for any other scroll, so a
+scroll inside a menu closes only the submenus below it (their
+triggers may have moved) and any other scroll closes every menu. A
+tooltip shown by hover hides; one shown by focus stays and is
+repositioned, because Tab onto an off-screen trigger scrolls it
+into view after the `focusin` that showed it. A surface that
+follows a moving trigger is a different design.
 
 **`toggleDisclosure`.** `toggleDisclosure` flips `aria-expanded`
 on the trigger and `hidden` on the `aria-controls` content.

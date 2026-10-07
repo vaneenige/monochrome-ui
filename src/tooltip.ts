@@ -24,12 +24,6 @@ if (hasDocument) {
     }
   };
 
-  const tooltipReset = () => {
-    tooltipFocused = null;
-    tooltipHovered = null;
-    tooltipSync();
-  };
-
   const tooltipSuppress = () => {
     if (tooltipShown) {
       tooltipSuppressed = tooltipShown;
@@ -86,7 +80,9 @@ if (hasDocument) {
   addEventListener(
     "scroll",
     () => {
-      if (tooltipShown) tooltipReset();
+      tooltipHovered = null;
+      tooltipSync();
+      if (tooltipShown) position(tooltipShown, getLinked(tooltipShown, "aria-describedby"), "top");
       pointerTarget = null;
     },
     true,
