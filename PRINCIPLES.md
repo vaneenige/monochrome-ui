@@ -19,13 +19,18 @@ any more:
    `pointerdown`, `pointerup`, `click`, `pointermove`, `keydown`,
    `scroll`, `resize`, `focusin`, `focusout`.
 3. **Zero timers.** No `setTimeout`, `requestAnimationFrame`,
-   `queueMicrotask`, debounce, or throttle. Every action is
-   synchronous within its event.
+   `queueMicrotask`, debounce, or throttle in a component. Every
+   action is synchronous within its event. The router is the one
+   exception, and only for paint: it already awaits a fetch, and
+   after it yields once (`afterPaint`, a `setTimeout` queued from
+   `requestAnimationFrame`) so the click paints before the swap
+   (`docs/router.md`). Nothing in it waits for a length of time.
 4. **Zero runtime dependencies.** Shared helpers (`src/dom.ts`)
    import nothing. Components import only those helpers. The
-   wrappers import only their framework (as peer deps) plus one
-   side-effect import of their own core file, so a single wrapper
-   import ships both markup and behavior.
+   React and Vue parts `add` copies import only their framework
+   plus one side-effect import of their own core module
+   (`monochrome/<component>`), so one component ships both markup
+   and behavior.
 5. **Baseline 2024 browsers.** The core relies on the Popover
    API, the router on the Navigation API (Baseline 2026). Those
    set the floors `package.json` `browserslist` declares, and
