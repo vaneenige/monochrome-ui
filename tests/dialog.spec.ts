@@ -39,6 +39,20 @@ test.describe("Dialog", () => {
       );
     });
 
+    test("`aria-describedby={undefined}` drops the Description link", async ({
+      page,
+      renderer,
+    }) => {
+      test.skip(renderer === "html", "The Content part writes the link");
+      await page.goto("/react/dialog/no-description");
+      await expect(page.getByTestId("plain-content")).not.toHaveAttribute("aria-describedby");
+      const descId = await page.getByTestId("described-desc").getAttribute("id");
+      await expect(page.getByTestId("described-content")).toHaveAttribute(
+        "aria-describedby",
+        descId as string,
+      );
+    });
+
     test("a user-supplied `aria-label` suppresses the default `aria-labelledby`", async ({
       page,
     }) => {

@@ -1,4 +1,4 @@
-import { Tabs } from "monochrome/react";
+import { Tabs } from "@/components/ui";
 
 export default () => (
   <>

@@ -2221,7 +2221,7 @@ test.describe("Activation (checkbox and radio)", () => {
   });
 
   test("the wrap seam scopes a bottom radio group from a top one", async ({ page, renderer }) => {
-    test.skip(renderer !== "html", "Structure edge case; wrappers emit the canonical shape");
+    test.skip(renderer !== "html", "Structure edge case; parts emit the canonical shape");
     // Groups touch the physical ends of the menu, so the sweep's
     // last-to-first wrap runs straight from group B into group A. The
     // seam must act as a group boundary or selecting in B clears A.
@@ -2235,7 +2235,7 @@ test.describe("Activation (checkbox and radio)", () => {
   });
 
   test("the wrap seam scopes a top radio group from a bottom one", async ({ page, renderer }) => {
-    test.skip(renderer !== "html", "Structure edge case; wrappers emit the canonical shape");
+    test.skip(renderer !== "html", "Structure edge case; parts emit the canonical shape");
     await page.goto("/html/menu/radio-groups-at-ends");
     await page.getByTestId("trigger").click();
     await page.getByTestId("radio-a2").click();

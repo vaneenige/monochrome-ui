@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Menubar } from "monochrome/vue"
+import { Menubar } from "@/components/ui"
 </script>
 
 <template>
@@ -21,7 +21,7 @@ import { Menubar } from "monochrome/vue"
         <Menubar.Item>
           MenuItem 1.3
         </Menubar.Item>
-        <Menubar.Group>
+        <Menubar.Sub>
           <Menubar.Trigger data-testid="menubar-submenu-trigger-1">
             Submenu 1
           </Menubar.Trigger>
@@ -33,7 +33,7 @@ import { Menubar } from "monochrome/vue"
               Submenu Item 1.2
             </Menubar.Item>
           </Menubar.Popover>
-        </Menubar.Group>
+        </Menubar.Sub>
       </Menubar.Popover>
     </Menubar.Menu>
     <Menubar.Item data-testid="menubar-item-1">
@@ -53,12 +53,12 @@ import { Menubar } from "monochrome/vue"
         <Menubar.Item>
           MenuItem 2.3
         </Menubar.Item>
-        <Menubar.Group>
+        <Menubar.Sub>
           <Menubar.Trigger data-testid="menubar-empty-trigger">
             Empty
           </Menubar.Trigger>
           <Menubar.Popover data-testid="menubar-empty-list" />
-        </Menubar.Group>
+        </Menubar.Sub>
       </Menubar.Popover>
     </Menubar.Menu>
     <Menubar.Menu>

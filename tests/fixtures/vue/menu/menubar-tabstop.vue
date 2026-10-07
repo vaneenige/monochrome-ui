@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Menubar } from "monochrome/vue"
+import { Menubar } from "@/components/ui"
 </script>
 
 <template>

@@ -1,4 +1,4 @@
-import { Tooltip } from "monochrome/react";
+import { Tooltip } from "@/components/ui";
 
 export default () => (
   <Tooltip.Root>

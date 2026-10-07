@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Popover } from "monochrome/vue"
+import { Popover } from "@/components/ui"
 </script>
 
 <template>

@@ -1,4 +1,4 @@
-import { Collapsible, Menu } from "monochrome/react";
+import { Collapsible, Menu } from "@/components/ui";
 
 export default () => (
   <>

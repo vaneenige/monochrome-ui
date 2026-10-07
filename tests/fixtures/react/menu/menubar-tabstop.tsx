@@ -1,4 +1,4 @@
-import { Menubar } from "monochrome/react";
+import { Menubar } from "@/components/ui";
 
 export default () => (
   <Menubar.Root data-testid="menubar">

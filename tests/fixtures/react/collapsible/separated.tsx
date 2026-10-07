@@ -1,4 +1,4 @@
-import { Collapsible } from "monochrome/react";
+import { Collapsible } from "@/components/ui";
 
 export default () => (
   <Collapsible.Root>

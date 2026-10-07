@@ -106,7 +106,7 @@ test.describe("Tooltip", () => {
     });
 
     test("shows on focus for a non-button trigger", async ({ page, renderer }) => {
-      test.skip(renderer !== "html", "Wrappers always render a button trigger");
+      test.skip(renderer !== "html", "Parts always render a button trigger");
       await page.getByTestId("link-trigger").focus();
       await expect(page.getByTestId("link-content")).toBeVisible();
       await page.getByTestId("focus-before").focus();

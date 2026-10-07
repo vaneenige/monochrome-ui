@@ -1,4 +1,4 @@
-import { Menu } from "monochrome/react";
+import { Menu } from "@/components/ui";
 
 export default () => (
   <>

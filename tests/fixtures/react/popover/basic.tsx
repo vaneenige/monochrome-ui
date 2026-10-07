@@ -1,4 +1,4 @@
-import { Menu, Popover } from "monochrome/react";
+import { Menu, Popover } from "@/components/ui";
 
 export default () => (
   <>

@@ -16,8 +16,7 @@ const ssrDir = fileURLToPath(new URL("../.ssr", import.meta.url));
 mkdirSync(ssrDir, { recursive: true });
 
 // Compile `.vue` SFCs on load; hand the compiled `<script>` back to
-// rolldown as TypeScript so oxc finishes the transform. `.ts`/`.tsx`
-// (incl. JSX) rolldown handles natively.
+// rolldown as TypeScript so oxc finishes the transform.
 const vuePlugin: Plugin = {
   name: "vue-sfc",
   load(id) {
@@ -32,17 +31,19 @@ const vuePlugin: Plugin = {
   },
 };
 
-// Fixtures import the library by its published name; map that to the
-// freshly built `dist/`.
-const alias = {
-  "monochrome/react": `${distDir}/react/index.js`,
-  "monochrome/vue": `${distDir}/vue/index.js`,
-  monochrome: `${distDir}/index.js`,
-};
+// Fixtures import the parts from `@/components/ui`, as a project does:
+// that resolves to the templates `add` copies into projects, React or
+// Vue by the fixture's folder, so the suite tests the files people
+// actually get. The core resolves to the freshly built `dist/`.
+const templatesFor = (name: string) => ({
+  "@/components/ui": fileURLToPath(
+    new URL(`templates/${name.startsWith("vue/") ? "vue" : "react"}.ts`, import.meta.url),
+  ),
+});
 
 // Client bundles are self-contained (the browser has no resolver);
-// SSR bundles keep the frameworks and the library external so Node
-// resolves them at import time.
+// SSR bundles keep React and the library external so Node resolves
+// them at import time.
 const ssrExternal = [
   "react",
   "react-dom",
@@ -51,32 +52,37 @@ const ssrExternal = [
   "vue",
   "vue/server-renderer",
   "monochrome",
-  "monochrome/react",
-  "monochrome/vue",
+  /^monochrome\//,
 ];
 
-// The wrappers side-effect-import their core as `../{name}.js`.
-// Client bundles keep those external, rewritten to the absolute
-// `/{name}.js` URLs the page-level `/index.js` shim also imports,
-// so the browser loads one module instance per core file — exactly
-// like a bundler deduping the published package.
+// The templates side-effect-import their core by package subpath
+// (`monochrome/menu`; menubar is menu). Client bundles keep those
+// external, rewritten to the absolute `/{name}.js` URLs the page-level
+// `/index.js` shim also imports, so the browser loads one module
+// instance per core file, like a bundler deduping the published
+// package.
 const coreExternal: Plugin = {
   name: "core-external",
-  resolveId: (id) =>
-    /^\.\.\/[a-z]+\.js$/.test(id) ? { id: `/${id.slice(3)}`, external: "absolute" as const } : null,
+  resolveId: (id) => {
+    const core = /^monochrome\/([a-z]+)$/.exec(id)?.[1];
+    if (core) {
+      return { id: `/${core === "menubar" ? "menu" : core}.js`, external: "absolute" };
+    }
+    return null;
+  },
 };
 
 const clientCache = new Map<string, Promise<string>>();
 const ssrPathCache = new Map<string, Promise<string>>();
 
-const bundleForClient = (filePath: string): Promise<string> => {
+const bundleForClient = (name: string, filePath: string): Promise<string> => {
   const cached = clientCache.get(filePath);
   if (cached) return cached;
   const pending = (async () => {
     const bundle = await rolldown({
       input: filePath,
       plugins: [vuePlugin, coreExternal],
-      resolve: { alias },
+      resolve: { alias: { ...templatesFor(name), monochrome: `${distDir}/index.js` } },
     });
     const { output } = await bundle.generate({ format: "es" });
     await bundle.close();
@@ -95,6 +101,7 @@ const bundleForSSR = (name: string, filePath: string): Promise<string> => {
       input: filePath,
       plugins: [vuePlugin],
       external: ssrExternal,
+      resolve: { alias: templatesFor(name) },
     });
     await bundle.write({ dir: ssrDir, entryFileNames, format: "es" });
     await bundle.close();
@@ -126,8 +133,7 @@ const page = (title: string, body: string): string =>
 </html>`;
 
 const findFixture = (name: string): string | null => {
-  const exts = name.startsWith("vue/") ? [".vue", ".ts"] : [".tsx"];
-  for (const ext of exts) {
+  for (const ext of name.startsWith("vue/") ? [".vue", ".ts"] : [".tsx"]) {
     const path = `${fixturesDir}/${name}${ext}`;
     if (existsSync(path)) return path;
   }
@@ -147,7 +153,7 @@ const resolve = async (pathname: string): Promise<Reply | null> => {
   // `dist/index.js` is the flat standalone build; serving it next to
   // the granular files the fixture bundles import would register
   // every listener twice. Pages get a shim over the granular modules
-  // instead — the same graph a bundler resolves for the package.
+  // instead: the same graph a bundler resolves for the package.
   if (pathname === "/index.js") {
     const shim = ["accordion", "collapsible", "dialog", "menu", "popover", "tabs", "tooltip"]
       .map((name) => `import "/${name}.js";`)
@@ -168,7 +174,11 @@ const resolve = async (pathname: string): Promise<Reply | null> => {
     const name = pathname.slice(8).replace(/\.js$/, "");
     const filePath = findFixture(name);
     if (filePath) {
-      return { status: 200, type: "application/javascript", body: await bundleForClient(filePath) };
+      return {
+        status: 200,
+        type: "application/javascript",
+        body: await bundleForClient(name, filePath),
+      };
     }
     return null;
   }
@@ -197,12 +207,10 @@ const resolve = async (pathname: string): Promise<Reply | null> => {
 
   const filePath = findFixture(name);
   if (filePath) {
-    // `.vue` SFCs always SSR (script setup has an implicit default
-    // export); `.ts`/`.tsx` are static only if they export a component
-    // directly, otherwise they are dynamic (client-mounted) fixtures.
-    const isStatic =
-      filePath.endsWith(".vue") || /^export default/m.test(readFileSync(filePath, "utf8"));
-    if (isStatic) {
+    // A fixture that exports a component directly is server-rendered, as
+    // is every SFC (`script setup` has an implicit default export); the
+    // rest are dynamic (client-mounted).
+    if (filePath.endsWith(".vue") || /^export default/m.test(readFileSync(filePath, "utf8"))) {
       return { status: 200, type: "text/html", body: page(name, await ssr(name, filePath)) };
     }
     return {

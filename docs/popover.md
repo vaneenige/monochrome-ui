@@ -46,13 +46,16 @@ any element whose `popover` IDL property is set, or at a
 a surface, and Escape is its native close; taking that Escape
 would hide the popover around a dialog that stays open. The walk
 reads the DOM, so a keyboard session inside a nested menu is safe
-in any registration order. A pointer-opened menu leaves focus on
-its trigger, outside the nested surface, so that case rests on
-the first check and on Menu's `keydown` running before Popover's:
-`src/index.ts` and the wrapper indexes import `menu` before
-`popover` (alphabetical order guarantees it), and per-component
-imports must keep that order. Otherwise Escape closes the popover
+in any registration order. Otherwise Escape closes the popover
 and focuses its trigger.
+
+**Menu's `keydown` runs first.** A pointer-opened menu leaves
+focus on its trigger, outside the nested surface, so Escape there
+rests on the `defaultPrevented` check and on Menu's `keydown`
+running before Popover's. `src/index.ts` imports `menu` before
+`popover` (alphabetical order guarantees it), the popover part
+(`templates/react/popover.tsx`) imports `monochrome/menu` first,
+and per-component imports must keep that order.
 
 **One popover at a time.** Opening a popover closes the one in
 `popoverShown` first. Closing clears `popoverShown` even when the

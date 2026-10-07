@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from "vue"
-import { Accordion } from "monochrome/vue"
+import { Accordion } from "@/components/ui"
 
 const items = ref([
   { label: "Section 1", content: "Content 1" },

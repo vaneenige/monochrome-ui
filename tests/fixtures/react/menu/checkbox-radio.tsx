@@ -1,4 +1,4 @@
-import { Menu } from "monochrome/react";
+import { Menu } from "@/components/ui";
 
 export default () => (
   <>
@@ -35,6 +35,12 @@ export default () => (
           Blue
         </Menu.RadioItem>
         <Menu.Item data-testid="regular-item">Regular Action</Menu.Item>
+        <Menu.Item data-testid="kept-item" keepOpen>
+          Zoom in
+        </Menu.Item>
+        <Menu.CheckboxItem data-testid="kept-checkbox" defaultChecked={false} keepOpen>
+          Show grid
+        </Menu.CheckboxItem>
       </Menu.Popover>
     </Menu.Root>
     <button type="button" data-testid="focus-after">

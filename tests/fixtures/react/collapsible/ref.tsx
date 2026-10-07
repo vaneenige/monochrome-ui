@@ -1,5 +1,5 @@
 import { createRoot } from "react-dom/client";
-import { Collapsible } from "monochrome/react";
+import { Collapsible } from "@/components/ui";
 
 function App() {
   return (

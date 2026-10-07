@@ -17,6 +17,13 @@
     "isolatedModules": true,
     "noUncheckedSideEffectImports": true,
     "moduleDetection": "force",
-    "skipLibCheck": true
+    "skipLibCheck": true,
+
+    // The examples `add` prints import the parts from the project's
+    // components folder; here that is the templates they are built from.
+    "paths": {
+      "@/components/ui": ["./tests/templates/react.ts"],
+      "@/components/ui/*": ["./templates/react/*"]
+    }
   }
 }

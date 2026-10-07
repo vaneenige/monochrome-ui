@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, nextTick } from "vue"
-import { Collapsible } from "monochrome/vue"
+import { Collapsible } from "@/components/ui"
 
 const mounted = ref(true)
 const startOpen = ref(false)

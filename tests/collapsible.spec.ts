@@ -256,6 +256,19 @@ test.describe("Collapsible", () => {
   });
 
   test.describe("Edge cases", () => {
+    test('`role="region"` on the panel names it after the trigger', async ({ page, renderer }) => {
+      test.skip(renderer === "html", "The Panel part adds the link");
+      await page.goto("/react/collapsible/region");
+      const triggerId = await page.getByTestId("region-trigger").getAttribute("id");
+      await expect(page.getByTestId("region-content")).toHaveAttribute(
+        "aria-labelledby",
+        triggerId as string,
+      );
+      await expect(page.getByTestId("plain-content")).not.toHaveAttribute("aria-labelledby");
+      await page.getByTestId("region-trigger").click();
+      await expect(page.getByRole("region", { name: "Shipping", exact: true })).toBeVisible();
+    });
+
     test("`ref` attaches to the trigger host", async ({ page, renderer }) => {
       test.skip(renderer !== "react", "Ref as a prop is a React wrapper API");
       await page.goto("/react/collapsible/ref");

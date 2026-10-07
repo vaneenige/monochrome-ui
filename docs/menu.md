@@ -2,7 +2,7 @@
 
 How `src/menu.ts` works. Shared mechanisms (roving boundary, RTL
 key mirror, positioning, resize and scroll) live in `docs/dom.md`;
-the authored first menubar tab stop lives in `docs/wrappers.md`.
+the authored first menubar tab stop lives in `docs/parts.md`.
 
 ## State
 
@@ -215,7 +215,7 @@ leave from there; that one scripted focus predates the moving
 stop and exists because closing the menu has to move focus out
 of it anyway. Tabbing back in lands on the item the reader left
 from, as in Tabs and toolbars; the authored `tabindex="0"` is
-only where the first visit starts (see `docs/wrappers.md`).
+only where the first visit starts (see `docs/parts.md`).
 
 **Single-letter typeahead, on purpose.** A printable key (any
 single character except Space, in any script) moves focus to

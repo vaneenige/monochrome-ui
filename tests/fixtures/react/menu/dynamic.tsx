@@ -1,4 +1,4 @@
-import { Menu } from "monochrome/react";
+import { Menu } from "@/components/ui";
 import { useState } from "react";
 import { createRoot } from "react-dom/client";
 
@@ -93,13 +93,13 @@ function App() {
             Radio B
           </Menu.RadioItem>
           {hasSubmenu && (
-            <Menu.Group>
+            <Menu.Sub>
               <Menu.Trigger data-testid="submenu-trigger">Submenu</Menu.Trigger>
               <Menu.Popover data-testid="submenu-list">
                 <Menu.Item data-testid="submenu-item-1">Sub Item 1</Menu.Item>
                 <Menu.Item>Sub Item 2</Menu.Item>
               </Menu.Popover>
-            </Menu.Group>
+            </Menu.Sub>
           )}
         </Menu.Popover>
       </Menu.Root>

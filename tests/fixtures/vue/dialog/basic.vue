@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Dialog, Menu, Popover, Tabs, Tooltip } from "monochrome/vue"
+import { Dialog, Menu, Popover, Tabs, Tooltip } from "@/components/ui"
 </script>
 
 <template>
@@ -183,6 +183,16 @@ import { Dialog, Menu, Popover, Tabs, Tooltip } from "monochrome/vue"
             >Link</a>
           </Tabs.Panel>
         </Tabs.Root>
+      </Dialog.Content>
+    </Dialog.Root>
+
+    <Dialog.Root>
+      <Dialog.Trigger data-testid="initial-trigger">Open initial focus</Dialog.Trigger>
+      <Dialog.Content initial-focus="close">
+        <Dialog.Title>Delete this file?</Dialog.Title>
+        <Dialog.Description>This cannot be undone.</Dialog.Description>
+        <Dialog.Close data-testid="initial-close">Cancel</Dialog.Close>
+        <Dialog.Action>Delete</Dialog.Action>
       </Dialog.Content>
     </Dialog.Root>
 

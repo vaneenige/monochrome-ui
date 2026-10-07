@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Accordion } from "monochrome/vue"
+import { Accordion } from "@/components/ui"
 </script>
 
 <template>
