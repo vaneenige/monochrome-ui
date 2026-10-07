@@ -56,3 +56,23 @@ export const pointerDown = (locator: Locator, init: PointerEventInit = {}) =>
   locator.dispatchEvent("pointerdown", init);
 export const pointerUp = (locator: Locator, init: PointerEventInit = {}) =>
   locator.dispatchEvent("pointerup", init);
+
+/** Clicks the way Safari does: WebKit does not focus a clicked
+ *  button, so focus lands on the nearest ancestor with a `tabindex`.
+ *  Reproduced here so the path is tested in every browser. */
+export const mimicSafariClick = async (locator: Locator) => {
+  await locator.evaluate((button) => {
+    button.addEventListener(
+      "mousedown",
+      (event) => {
+        event.preventDefault();
+        let el = button.parentElement;
+        while (el && !el.hasAttribute("tabindex")) el = el.parentElement;
+        if (el) el.focus();
+        else if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
+      },
+      { once: true },
+    );
+  });
+  await locator.click();
+};

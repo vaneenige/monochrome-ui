@@ -1,4 +1,5 @@
 import { expect, test } from "./fixtures";
+import { mimicSafariClick } from "./helpers";
 
 test.describe("Dialog", () => {
   test.beforeEach(async ({ page, renderer }) => {
@@ -92,10 +93,12 @@ test.describe("Dialog", () => {
   test.describe("Modality", () => {
     test("blocks interaction with background content while open", async ({ page }) => {
       await page.getByTestId("primary-trigger").click();
-      await page
-        .getByTestId("focus-before")
-        .click({ force: true, timeout: 100 })
-        .catch(() => {});
+      await expect(page.getByTestId("primary-content")).toBeVisible();
+      const box = await page.getByTestId("focus-before").boundingBox();
+      if (!box) throw new Error("missing bounding box");
+      await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+      await expect(page.getByTestId("focus-before")).not.toBeFocused();
+      await expect(page.getByTestId("primary-content")).toBeVisible();
       const inside = await page
         .getByTestId("primary-content")
         .evaluate((el) => el.contains(document.activeElement));
@@ -163,14 +166,28 @@ test.describe("Dialog", () => {
   });
 
   test.describe("Focus management", () => {
-    test("focuses the first focusable element when no autofocus is set", async ({ page }) => {
+    test("focuses the dialog itself when no autofocus is set", async ({ page }) => {
       await page.getByTestId("primary-trigger").click();
-      await expect(page.getByTestId("primary-close")).toBeFocused();
+      await expect(page.getByTestId("primary-content")).toBeFocused();
     });
 
     test("honors the autofocus attribute", async ({ page }) => {
       await page.getByTestId("autofocus-trigger").click();
       await expect(page.getByTestId("autofocus-target")).toBeFocused();
+    });
+
+    test("focuses the element `data-mc-autofocus` names", async ({ page }) => {
+      await page.getByTestId("initial-trigger").click();
+      await expect(page.getByTestId("initial-close")).toBeFocused();
+    });
+
+    test("reads `data-mc-autofocus` on every open, not at load", async ({ page }) => {
+      await page.getByTestId("primary-action").evaluate((el) => {
+        el.id = "late-target";
+        el.closest("dialog")?.setAttribute("data-mc-autofocus", "late-target");
+      });
+      await page.getByTestId("primary-trigger").click();
+      await expect(page.getByTestId("primary-action")).toBeFocused();
     });
 
     test("lands inside the dialog even when only Close is focusable", async ({ page }) => {
@@ -192,6 +209,14 @@ test.describe("Dialog", () => {
       test.skip(browserName === "webkit", "WebKit does not focus the trigger on click");
       await page.getByTestId("primary-trigger").click();
       await page.keyboard.press("Escape");
+      await expect(page.getByTestId("primary-trigger")).toBeFocused();
+    });
+
+    test("Escape after a Safari pointer open returns focus to the trigger", async ({ page }) => {
+      await mimicSafariClick(page.getByTestId("primary-trigger"));
+      await expect(page.getByTestId("primary-content")).toBeVisible();
+      await page.keyboard.press("Escape");
+      await expect(page.getByTestId("primary-content")).not.toBeVisible();
       await expect(page.getByTestId("primary-trigger")).toBeFocused();
     });
 
@@ -236,6 +261,7 @@ test.describe("Dialog", () => {
     }) => {
       test.skip(browserName === "webkit", "WebKit Tab order inside a dialog");
       await page.getByTestId("tabs-dialog-trigger").click();
+      await page.keyboard.press("Tab");
       await expect(page.getByTestId("tabs-dialog-close")).toBeFocused();
       await page.keyboard.press("Tab");
       await expect(page.getByTestId("t1-trigger")).toBeFocused();
@@ -262,7 +288,7 @@ test.describe("Dialog", () => {
       await page.goto(`/${renderer}/dialog/structure-independence`);
       await page.getByTestId("trigger").click();
       await expect(page.getByTestId("content")).toBeVisible();
-      await expect(page.getByTestId("close")).toBeFocused();
+      await expect(page.getByTestId("content")).toBeFocused();
       await page.keyboard.press("Escape");
       await expect(page.getByTestId("content")).not.toBeVisible();
       await expect(page.getByTestId("trigger")).toBeFocused();

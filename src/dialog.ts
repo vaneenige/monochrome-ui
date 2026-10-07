@@ -1,4 +1,4 @@
-import { findAncestor, getLinked, getTarget, hasDocument } from "./dom.js";
+import { findAncestor, getControls, getLinked, getTarget, hasDocument, isElement } from "./dom.js";
 
 enum Prefix {
   TriggerDialogClose = "mct:dialog-close:",
@@ -10,24 +10,26 @@ if (hasDocument) {
   let dialogTrigger: HTMLElement | null = null;
 
   const dialogClose = () => {
-    if (!dialogContent?.open || !dialogTrigger) return;
-    const content = dialogContent;
-    const trigger = dialogTrigger;
-    dialogContent = null;
-    dialogTrigger = null;
-    content.close();
-    if (document.activeElement !== trigger) trigger.focus();
+    if (dialogContent?.open && dialogTrigger) {
+      dialogContent.close();
+      if (document.activeElement !== dialogTrigger) dialogTrigger.focus();
+    }
   };
 
   const dialogOpen = (trigger: HTMLElement) => {
-    const content = getLinked(trigger, "aria-controls");
+    const content = getControls(trigger);
     if (
       !(dialogContent?.open && dialogContent.isConnected) &&
       content instanceof HTMLDialogElement
     ) {
       dialogContent = content;
       dialogTrigger = trigger;
+      trigger.focus({ preventScroll: true });
       content.showModal();
+      const focused = document.activeElement;
+      if (!isElement(focused) || !focused.autofocus) {
+        (getLinked(content, "data-mc-autofocus") || content).focus();
+      }
     }
   };
 
